@@ -1,0 +1,30 @@
+--- src/App.tsx
++++ src/App.tsx
+@@ -10,6 +10,7 @@
+ import Kundli from './components/Kundli';
+ import Numerology from './components/Numerology';
+ import IntelligenceDashboard from './components/IntelligenceDashboard';
++import ReportCenter from './components/ReportCenter';
+ import Settings from './components/Settings';
+ 
+ function App() {
+@@ -51,6 +52,8 @@
+         return <Numerology profile={profile} navigate={setView} showToast={setToastMessage} />;
+       case 'intelligence_dashboard':
+         return <IntelligenceDashboard profile={profile} navigate={setView} showToast={setToastMessage} />;
++      case 'reports':
++        return <ReportCenter profile={profile} navigate={setView} showToast={setToastMessage} />;
+       case 'settings':
+         return <Settings navigate={setView} />;
+       default:
+@@ -108,8 +111,8 @@
+               <Sparkles className="w-6 h-6" />
+               <span className="text-[10px] uppercase font-semibold tracking-wider">AI</span>
+             </button>
+-            <button onClick={() => setToastMessage('यह मॉड्यूल अगले चरण में सक्रिय होगा।')} className="flex flex-col items-center gap-1.5 transition-colors hover:text-[#d4af37]/80">
+-              <BookOpen className="w-6 h-6" />
++            <button onClick={() => setView('reports')} className={`flex flex-col items-center gap-1.5 transition-colors ${view === 'reports' ? 'text-[#d4af37]' : 'hover:text-[#d4af37]/80'}`}>
++              <FileText className="w-6 h-6" />
+               <span className="text-[10px] uppercase font-semibold tracking-wider">Reports</span>
+             </button>
+           </div>

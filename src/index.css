@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --royal-gold: #FFD700;
+  --royal-dark: #020617;
+  --cosmic-obsidian: #010409;
+  --gold-glow: rgba(255, 215, 0, 0.4);
+}
+
+body {
+  background-color: var(--cosmic-obsidian);
+  color: #F5F5F5;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+
+@layer utilities {
+  .bg-cosmic-obsidian {
+    background-color: var(--cosmic-obsidian);
+  }
+  .text-radiant-gold {
+    color: var(--royal-gold);
+    text-shadow: 0 0 15px var(--gold-glow);
+  }
+  .bg-gold-gradient {
+    background: linear-gradient(180deg, #FFF5A5 0%, #FFD700 50%, #B8860B 100%);
+  }
+  .bg-gold-radial {
+    background: radial-gradient(circle at center, #FFF5A5 0%, #FFD700 60%, transparent 100%);
+  }
+  
+  .shadow-radiant {
+    box-shadow: 0 0 30px var(--gold-glow), inset 0 0 10px rgba(255, 255, 255, 0.2);
+  }
+  
+  .border-radiant-gold {
+    border: 1px solid rgba(255, 215, 0, 0.5);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+  }
+
+  .text-embossed {
+    text-shadow: 1px 1px 0px #FFF, -1px -1px 0px #000;
+  }
+  
+  .glass-cosmic {
+    background: rgba(10, 15, 29, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 215, 0, 0.1);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.6); }
+}
+.animate-pulse-gold {
+  animation: pulse-gold 3s ease-in-out infinite;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 215, 0, 0.3);
+  border-radius: 10px;
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.2);
+  border-radius: 10px;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Sapt Tara Vedic Jyotish",
+  "description": "सप्त ऋषियों का ज्ञान • ग्रहों का विज्ञान • जीवन का मार्गदर्शन - Advanced Vedic Astrology & Spiritual Companion",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

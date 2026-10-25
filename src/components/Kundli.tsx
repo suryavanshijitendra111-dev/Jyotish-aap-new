@@ -1,0 +1,3058 @@
+import { TransitAnalysisResult } from '../services/jyotish/transitEngine';
+import { NumerologyEngine } from '../services/numerology/numerologyEngine';
+import { LoShuEngine } from '../services/numerology/loShuEngine';
+import { DashaIntelResult } from '../services/jyotish/dashaIntelligenceEngine';
+import { NakshatraIntel } from '../services/jyotish/nakshatraIntelligence';
+import { VargaAnalysisResult } from '../services/jyotish/vargaEngine';
+import { LalKitabAnalysisResult } from '../services/jyotish/lalKitabEngine';
+import { KPAnalysisResult } from '../services/jyotish/kpEngine';
+import { JaiminiAnalysisResult } from '../services/jyotish/jaiminiEngine';
+import { globalJyotishRegistry } from '../services/jyotish/systemRegistry';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { ArrowLeft, Loader2, AlertCircle, Volume2, Sparkles, X } from 'lucide-react';
+import { AstronomyService } from '../services/astronomy/astronomyService';
+import { BirthProfile, EngineResult, AyanamsaType } from '../types/kundli';
+import { RelationshipEngine } from '../services/jyotish/relationshipEngine';
+import { JyotishRelationships } from '../types/jyotish';
+import { analyzeChart } from '../services/jyotish/analysisLayer';
+import { ChartAnalysisResult, PlanetAnalysisData, HouseAnalysisData } from '../types/analysis';
+import { useTranslation } from '../i18n';
+import { SpeechEngine } from '../services/companion/speechEngine';
+import { PlanetSpeaksControl } from './kundli/PlanetSpeaksControl';
+import { HouseSpeaksControl } from './kundli/HouseSpeaksControl';
+import { HouseSpeaksService } from '../services/astrology/houseSpeaksService';
+import { VargaChartModal, SHODASHAVARGA_LIST } from './kundli/VargaChartModal';
+import LiveTransitChart from './kundli/LiveTransitChart';
+import { PlanetStoryModal } from './cinema/PlanetStoryModal';
+import { KPDetailModal, KPDetailItem } from './kundli/KPDetailModal';
+import { KPQuestionJudgment } from './kundli/KPQuestionJudgment';
+import CarvedCard from './ui/CarvedCard';
+import OrnateCorner from './ui/OrnateCorner';
+import YantraMotif from './ui/YantraMotif';
+import { AshtakavargaView } from './kundli/AshtakavargaView';
+import { ShadbalaView } from './kundli/ShadbalaView';
+import { GocharVedhaView } from './kundli/GocharVedhaView';
+import { YogaDoshaView } from './kundli/YogaDoshaView';
+import { SpecialPointsView } from './kundli/SpecialPointsView';
+import { YoginiDashaView } from './kundli/YoginiDashaView';
+import { DashaChartView } from './kundli/DashaChartView';
+import { SphutasView } from './kundli/SphutasView';
+import { SarvatobhadraView } from './kundli/SarvatobhadraView';
+import { LongevityArgalaView } from './kundli/LongevityArgalaView';
+import { UpagrahaView } from './kundli/UpagrahaView';
+import { ArudhaCharaView } from './kundli/ArudhaCharaView';
+import { JaiminiView } from './kundli/JaiminiView';
+import { SudarshanaChakraView } from './kundli/SudarshanaChakraView';
+import { AshtottariDashaView } from './kundli/AshtottariDashaView';
+import {
+  getLocalizedPlanet,
+  getLocalizedRashi,
+  getLocalizedDignity,
+  getLocalizedRelationship,
+  getLocalizedHouse,
+  getLocalizedKaraka,
+  getLocalizedYogaName,
+  getLocalizedConditionName,
+  getLocalizedAuditResult,
+  getPlanetAbbreviation
+} from '../i18n/astrology';
+
+import { FamilyMemberProfile } from '../types/profile/profileTypes';
+
+interface KundliProps {
+  profile: FamilyMemberProfile;
+  navigate: (view: string) => void;
+  showToast: (msg: string | null) => void;
+}
+
+const planetAbbreviations: Record<string, string> = {
+  Sun: 'सू', Moon: 'च', Mars: 'मं', Mercury: 'बु',
+  Jupiter: 'गु', Venus: 'शु', Saturn: 'श', Rahu: 'रा', Ketu: 'के'
+};
+
+const housePolygons: Record<number, string> = {
+  1: "50,0 25,25 50,50 75,25",
+  2: "0,0 50,0 25,25",
+  3: "0,0 25,25 0,50",
+  4: "0,50 25,25 50,50 25,75",
+  5: "0,50 25,75 0,100",
+  6: "0,100 50,100 25,75",
+  7: "50,100 25,75 50,50 75,75",
+  8: "50,100 100,100 75,75",
+  9: "100,100 100,50 75,75",
+  10: "100,50 75,75 50,50 75,25",
+  11: "100,50 100,0 75,25",
+  12: "100,0 50,0 75,25"
+};
+
+const housePositions: Record<number, string> = {
+  1: 'top-[22%] left-1/2 -translate-x-1/2 -translate-y-1/2',
+  2: 'top-[10%] left-[25%] -translate-x-1/2 -translate-y-1/2',
+  3: 'top-[25%] left-[10%] -translate-x-1/2 -translate-y-1/2',
+  4: 'top-[50%] left-[23%] -translate-x-1/2 -translate-y-1/2',
+  5: 'top-[75%] left-[10%] -translate-x-1/2 -translate-y-1/2',
+  6: 'top-[90%] left-[25%] -translate-x-1/2 -translate-y-1/2',
+  7: 'top-[77%] left-1/2 -translate-x-1/2 -translate-y-1/2',
+  8: 'top-[90%] left-[75%] -translate-x-1/2 -translate-y-1/2',
+  9: 'top-[75%] left-[90%] -translate-x-1/2 -translate-y-1/2',
+  10: 'top-[50%] left-[77%] -translate-x-1/2 -translate-y-1/2',
+  11: 'top-[25%] left-[90%] -translate-x-1/2 -translate-y-1/2',
+  12: 'top-[10%] left-[75%] -translate-x-1/2 -translate-y-1/2'
+};
+
+const houseCentroids: Record<number, { x: number; y: number }> = {
+  1: { x: 50, y: 25 },
+  2: { x: 25, y: 8.33 },
+  3: { x: 8.33, y: 25 },
+  4: { x: 25, y: 50 },
+  5: { x: 8.33, y: 75 },
+  6: { x: 25, y: 91.67 },
+  7: { x: 50, y: 75 },
+  8: { x: 75, y: 91.67 },
+  9: { x: 91.67, y: 75 },
+  10: { x: 75, y: 50 },
+  11: { x: 91.67, y: 25 },
+  12: { x: 75, y: 8.33 }
+};
+
+/**
+ * Computes inward-offset polygon coordinates towards house centroid
+ * to render a delicate, crisp metallic-gold inner rim.
+ */
+function getHouseInsetPoints(house: number, scale = 0.88): string {
+  const polyStr = housePolygons[house];
+  if (!polyStr) return '';
+  const centroid = houseCentroids[house] || { x: 50, y: 50 };
+  return polyStr
+    .split(' ')
+    .map(pair => {
+      const [xStr, yStr] = pair.split(',');
+      const x = parseFloat(xStr);
+      const y = parseFloat(yStr);
+      const ix = centroid.x + (x - centroid.x) * scale;
+      const iy = centroid.y + (y - centroid.y) * scale;
+      return `${ix.toFixed(2)},${iy.toFixed(2)}`;
+    })
+    .join(' ');
+}
+
+/**
+ * Deterministically maps a planet to a house based on the MasterKundliData.
+ * The MasterKundliData interface provides 'd1House' for this purpose.
+ */
+function getHouseForPlanet(planetName: string, masterData: any): number | null {
+  const planet = masterData.planets[planetName];
+  if (!planet) return null;
+  return planet.d1House || planet.house || null;
+}
+
+function validateChartData(masterData: any): string | null {
+  if (!masterData) return 'masterKundliData is missing';
+  if (!masterData.lagna) return 'ascendant is missing';
+  if (!masterData.d1Chart || Object.keys(masterData.d1Chart).length < 12) return 'houses are missing';
+  if (!masterData.planets) return 'planetaryPositions are missing';
+  
+  const requiredPlanets = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'];
+  for (const p of requiredPlanets) {
+    if (!masterData.planets[p]) return 'Planet ' + p + ' is missing from data';
+    const house = getHouseForPlanet(p, masterData);
+    if (!house || house < 1 || house > 12) return 'Planet ' + p + ' has invalid house assignment';
+  }
+  return null;
+}
+
+export function KundliIntro({ onSkip }: { onSkip: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onSkip, 4500);
+    return () => clearTimeout(timer);
+  }, [onSkip]);
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen w-full bg-[#010403] relative overflow-hidden">
+      {/* Animated cosmic elements (CSS ONLY) */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        {/* Expanding rings */}
+        <div className="absolute w-40 h-40 border-[0.5px] border-[#d4af37]/20 rounded-full animate-[ping_4s_cubic-bezier(0,0,0.2,1)_infinite]"></div>
+        <div className="absolute w-72 h-72 border-[0.5px] border-[#d4af37]/10 rounded-full animate-[ping_4s_cubic-bezier(0,0,0.2,1)_infinite_1s]"></div>
+        
+        {/* Rotating mandala layer */}
+        <div className="absolute w-64 h-64 border border-[#d4af37]/30 rounded-full animate-spin" style={{ animationDuration: '15s' }}>
+          <div className="w-3 h-3 bg-gradient-to-b from-[#d4af37] to-transparent rounded-full absolute top-0 left-1/2 transform -translate-x-1/2 -mt-1.5 shadow-[0_0_15px_#d4af37]"></div>
+          <div className="w-2 h-2 bg-[#d4af37]/50 rounded-full absolute bottom-0 left-1/2 transform -translate-x-1/2 mt-1"></div>
+        </div>
+      </div>
+      
+      <div className="z-10 text-center px-6 flex flex-col items-center">
+        <h2 className="text-[#d4af37] text-xl md:text-2xl font-light tracking-[0.3em] animate-pulse uppercase">
+          Cosmic Blueprint
+        </h2>
+        <p className="text-gray-400 text-sm mt-4 tracking-widest opacity-70">
+          INITIALIZING...
+        </p>
+      </div>
+      
+      <button 
+        onClick={onSkip}
+        className="absolute bottom-20 px-8 py-2 border border-[#d4af37]/40 text-[#d4af37]/80 rounded-full text-xs tracking-widest uppercase hover:bg-[#d4af37]/10 transition-colors z-10"
+      >
+        Skip
+      </button>
+    </div>
+  );
+}
+
+
+
+function WhyPanel({ audit, onClose }: { audit: any, onClose: () => void }) {
+  const { t, language } = useTranslation();
+  if (!audit) return null;
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-[#030a08] border border-[#d4af37]/60 p-6 rounded-2xl w-full max-w-md shadow-2xl relative flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white">✕</button>
+         <h2 className="text-xl font-semibold text-[#d4af37] mb-2 uppercase tracking-widest">
+           {t('kundli.whyThisResult') || 'Why This Result?'}
+         </h2>
+         
+         <div className="space-y-4 text-sm mt-4 overflow-y-auto custom-scrollbar pr-2">
+           <div>
+             <span className="text-gray-500 text-xs block uppercase">{t('kundli.ruleId') || 'Rule ID'}</span>
+             <span className="text-white font-mono text-xs">{audit.ruleId}</span>
+           </div>
+           <div>
+             <span className="text-gray-500 text-xs block uppercase">{t('kundli.system') || 'System'}</span>
+             <span className="text-white font-mono text-xs">{audit.system}</span>
+           </div>
+           <div>
+             <span className="text-gray-500 text-xs block uppercase">{t('kundli.input') || 'Input'}</span>
+             <span className="text-white font-mono text-xs">{audit.input}</span>
+           </div>
+           
+           <div>
+             <span className="text-gray-500 text-xs block uppercase mb-1">{t('kundli.evaluationConditions') || 'Evaluation Conditions'}</span>
+             <div className="space-y-1">
+               {audit.conditions.map((c: any, i: number) => (
+                 <div key={i} className="flex justify-between border-b border-gray-800 pb-1">
+                   <span className="text-gray-300">{getLocalizedConditionName(c.name, language) || c.name}</span>
+                   <span className={c.passed ? "text-emerald-400" : "text-red-400"}>
+                     {c.passed ? (t('kundli.pass') || 'PASS') : (t('kundli.fail') || 'FAIL')}
+                   </span>
+                 </div>
+               ))}
+             </div>
+           </div>
+           
+           <div className="pt-2 border-t border-[#d4af37]/30">
+             <span className="text-gray-500 text-xs block uppercase">{t('kundli.finalCalculatedResult') || 'Final Calculated Result'}</span>
+             <span className="text-[#d4af37] font-medium">{getLocalizedAuditResult(audit.result, language) || audit.result}</span>
+           </div>
+         </div>
+      </div>
+    </div>
+  );
+}
+
+function getPlanetSpeaksText(planet: any, analysis: PlanetAnalysisData | undefined, lang: string): string {
+  const pName = getLocalizedPlanet(planet.name, lang as any) || planet.name;
+  const houseStr = planet.d1House || planet.house || '1';
+  const rashi = getLocalizedRashi(planet.rashiName || '', lang as any) || planet.rashiName || '';
+  const deg = planet.degree != null ? Math.floor(planet.degree) : null;
+  const nak = analysis && analysis.nakshatraName !== 'Unknown' ? analysis.nakshatraName : '';
+  const pada = analysis?.pada ? String(analysis.pada) : '';
+
+  switch (lang) {
+    case 'en':
+      return `I am ${pName}. I am in house ${houseStr}, in the sign of ${rashi}.${deg != null ? ` My longitude is ${deg} degrees.` : ''}${nak ? ` I am in ${nak} Nakshatra, Pada ${pada || '1'}.` : ''}`;
+    case 'mr':
+      return `मी ${pName} आहे. मी ${houseStr} भावात आहे, ${rashi} राशीत आहे.${deg != null ? ` माझे अंश ${deg} आहेत.` : ''}${nak ? ` मी ${nak} नक्षत्रात, चरण ${pada || '१'} मध्ये आहे.` : ''}`;
+    case 'gu':
+      return `હું ${pName} છું. હું ${houseStr} ભાવમાં છું, ${rashi} રાશિમાં છું.${deg != null ? ` મારા અંશ ${deg} છે.` : ''}${nak ? ` હું ${nak} નક્ષત્ર, ચરણ ${pada || '૧'} માં છું.` : ''}`;
+    case 'bn':
+      return `আমি ${pName}। আমি ${houseStr}ম ভাবে আছি, ${rashi} রাশিতে আছি।${deg != null ? ` আমার অংশ ${deg} ডিগ্রি।` : ''}${nak ? ` আমি ${nak} নক্ষত্রে আছি।` : ''}`;
+    case 'ta':
+      return `நான் ${pName}. நான் ${houseStr}ஆம் வீட்டில், ${rashi} ராசியில் இருக்கிறேன்.${deg != null ? ` எனது பாகை ${deg} டிகிரி.` : ''}${nak ? ` நான் ${nak} நட்சத்திரத்தில் இருக்கிறேன்.` : ''}`;
+    case 'te':
+      return `నేను ${pName}ని. నేను ${houseStr}వ స్థానంలో, ${rashi} రాశిలో ఉన్నాను.${deg != null ? ` నా డిగ్రీ ${deg}.` : ''}${nak ? ` నేను ${nak} నక్షత్రంలో ఉన్నాను.` : ''}`;
+    case 'kn':
+      return `ನಾನು ${pName}. ನಾನು ${houseStr}ನೇ ಮನೆಯಲ್ಲಿ, ${rashi} ರಾಶಿಯಲ್ಲಿದ್ದೇನೆ.${deg != null ? ` ನನ್ನ ಡಿಗ್ರಿ ${deg}.` : ''}${nak ? ` ನಾನು ${nak} ನಕ್ಷತ್ರದಲ್ಲಿದ್ದೇನೆ.` : ''}`;
+    case 'ml':
+      return `ഞാൻ ${pName} ആകുന്നു. ഞാൻ ${houseStr}-ാം ഭാവത്തിൽ, ${rashi} രാശിയിലാണ്.${deg != null ? ` എന്റെ ഡിഗ്രി ${deg}.` : ''}${nak ? ` ഞാൻ ${nak} നക്ഷത്രത്തിലാണ്.` : ''}`;
+    case 'pa':
+      return `ਮੈਂ ${pName} ਹਾਂ। ਮੈਂ ${houseStr}ਵੇਂ ਘਰ ਵਿੱਚ, ${rashi} ਰਾਸ਼ੀ ਵਿੱਚ ਹਾਂ।${deg != null ? ` ਮੇਰਾ ਅੰਸ਼ ${deg} ਡਿਗਰੀ ਹੈ।` : ''}${nak ? ` ਮੈਂ ${nak} ਨਕਸ਼ਤਰ ਵਿੱਚ ਹਾਂ।` : ''}`;
+    case 'or':
+      return `ମୁଁ ${pName}। ମୁଁ ${houseStr}ମ ଭାବରେ, ${rashi} ରାଶିରେ ଅଛି।${deg != null ? ` ମୋର ଅଂଶ ${deg} ଡିଗ୍ରୀ।` : ''}${nak ? ` ମୁଁ ${nak} ନକ୍ଷତ୍ରରେ ଅଛି।` : ''}`;
+    case 'as':
+      return `মই ${pName}। মই ${houseStr}ম গৃহত, ${rashi} ৰাশিত আছোঁ।${deg != null ? ` মোৰ অংশ ${deg} ডিগ্ৰী।` : ''}${nak ? ` মই ${nak} নক্ষত্ৰত আছোঁ।` : ''}`;
+    case 'sa':
+      return `अहं ${pName} अस्मि। अहं ${houseStr} भावे, ${rashi} राशौ स्थितः अस्मि।${deg != null ? ` मम अंशः ${deg} अस्ति।` : ''}${nak ? ` अहं ${nak} नक्षत्रे अस्मि।` : ''}`;
+    case 'hi':
+    default:
+      return `मैं ${pName} हूँ। मैं ${houseStr} भाव में हूँ। मैं ${rashi} राशि में हूँ।${deg != null ? ` मेरा अंश ${deg} है।` : ''}${nak ? ` मैं ${nak} नक्षत्र में हूँ, पद ${pada || '१'} है।` : ''}`;
+  }
+}
+
+function PlanetPanel({ 
+  planet, 
+  analysis, 
+  masterData,
+  onSelectPlanet,
+  onClose 
+}: { 
+  planet: any; 
+  analysis?: PlanetAnalysisData; 
+  masterData?: any;
+  onSelectPlanet?: (planetName: string) => void;
+  onClose: () => void; 
+}) {
+  const [showWhy, setShowWhy] = useState(false);
+  const { t, language } = useTranslation();
+
+  if (!planet) return null;
+
+  const handleClose = () => {
+    SpeechEngine.stop();
+    onClose();
+  };
+
+  const a = analysis;
+
+  return (
+    <>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm" onClick={handleClose}>
+      <div className="bg-[#082218] border border-[#d4af37]/40 p-4 sm:p-6 rounded-2xl w-full max-w-md shadow-2xl relative flex flex-col max-h-[92vh]" onClick={e => e.stopPropagation()}>
+         
+         {/* Unified Header Row: [Planet Title] ... [कारण?] [🔊 Planet Speaks] [✕] */}
+         <div className="flex justify-between items-start mb-3 border-b border-[#d4af37]/20 pb-3 gap-2">
+           <div className="min-w-0 pr-1">
+             <h2 className="text-2xl sm:text-3xl font-semibold text-[#d4af37] truncate">
+               {getLocalizedPlanet(planet.name, language)}
+             </h2>
+             <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5 truncate">
+               {t('kundli.deepBhavaAnalysis') || 'Deep Jyotish Analysis'}
+             </p>
+           </div>
+           
+           {/* Header Controls: [कारण?] [🔊 Planet Speaks] [✕] */}
+           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+             {a && a.audit && (
+               <button 
+                 onClick={() => setShowWhy(true)}
+                 className="px-2.5 py-1.5 h-9 rounded-lg text-xs font-medium border border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/20 transition-colors"
+               >
+                 {t('kundli.why') || 'Why?'}
+               </button>
+             )}
+             
+             {/* Universal Reusable Planet Speaks Control */}
+             <PlanetSpeaksControl 
+               planet={planet}
+               analysis={a}
+               masterData={masterData}
+             />
+
+             <button 
+               onClick={handleClose} 
+               className="w-9 h-9 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 flex items-center justify-center transition-colors text-base"
+               title={t('common.close') || 'Close'}
+             >
+               ✕
+             </button>
+           </div>
+         </div>
+
+         {/* 9 Navagraha Quick Switcher Bar */}
+         <div className="flex items-center gap-1 overflow-x-auto pb-2 mb-3 border-b border-[#d4af37]/10 custom-scrollbar text-[11px]">
+           {['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'].map(pName => {
+             const isCurr = pName === planet.name;
+             return (
+               <button
+                 key={pName}
+                 onClick={() => onSelectPlanet?.(pName)}
+                 className={`px-2 py-1 rounded-md whitespace-nowrap transition-all flex items-center gap-1 ${
+                   isCurr 
+                     ? 'bg-[#d4af37] text-black font-bold shadow-[0_0_10px_rgba(212,175,55,0.4)]' 
+                     : 'bg-[#030a08]/80 text-gray-300 hover:text-[#d4af37] border border-[#d4af37]/20 hover:border-[#d4af37]/60'
+                 }`}
+               >
+                 <span>{getLocalizedPlanet(pName, language)}</span>
+               </button>
+             );
+           })}
+         </div>
+         
+         <div className="overflow-y-auto pr-2 custom-scrollbar">
+           {a ? (
+             <div className="space-y-6 text-sm pb-4">
+               
+               {/* A. Basic Position */}
+               <div>
+                 <span className="text-[#d4af37]/80 text-[10px] font-bold uppercase tracking-widest mb-2 block border-b border-[#d4af37]/20 pb-1">
+                   {t('kundli.planetaryPositions') || 'Basic Position'}
+                 </span>
+                 <div className="grid grid-cols-2 gap-2 text-xs">
+                   <div className="flex flex-col"><span className="text-gray-500 uppercase text-[9px]">{t('kundli.moonSign') || 'Rashi'}</span><span className="text-white">{getLocalizedRashi(a.rashiName || planet.rashiName, language)}</span></div>
+                   <div className="flex flex-col"><span className="text-gray-500 uppercase text-[9px]">{t('kundli.houseLabel') || 'House'}</span><span className="text-white">{getLocalizedHouse(a.house || planet.d1House, language).label}</span></div>
+                   <div className="flex flex-col"><span className="text-gray-500 uppercase text-[9px]">{t('kundli.degree') || 'Degree'}</span><span className="text-white">{a.degree != null && a.minutes != null && a.seconds != null ? `${a.degree}° ${a.minutes}' ${a.seconds}"` : 'N/A'}</span></div>
+                   <div className="flex flex-col"><span className="text-gray-500 uppercase text-[9px]">{t('kundli.nakshatra') || 'Nakshatra'}</span><span className="text-white">{a.nakshatraName} <span className="text-gray-400 text-[10px]">({t('kundli.pada') || 'Pada'} {a.pada})</span></span></div>
+                 </div>
+               </div>
+
+               {/* B. Lords */}
+               <div>
+                 <span className="text-[#d4af37]/80 text-[10px] font-bold uppercase tracking-widest mb-2 block border-b border-[#d4af37]/20 pb-1">
+                   {t('kundli.signLordLabel') || 'Lords'}
+                 </span>
+                 <div className="grid grid-cols-2 gap-2 text-xs">
+                   <div className="flex flex-col"><span className="text-gray-500 uppercase text-[9px]">{t('kundli.signLordLabel') || 'Sign Lord'}</span><span className="text-emerald-400 font-medium">{getLocalizedPlanet(a.rashiLord, language)}</span></div>
+                   <div className="flex flex-col"><span className="text-gray-500 uppercase text-[9px]">{t('kundli.nakLordLabel') || 'Nakshatra Lord'}</span><span className="text-emerald-400 font-medium">{getLocalizedPlanet(a.nakshatraLord, language)}</span></div>
+                 </div>
+               </div>
+
+               {/* C. Dignity */}
+               <div>
+                 <span className="text-[#d4af37]/80 text-[10px] font-bold uppercase tracking-widest mb-2 block border-b border-[#d4af37]/20 pb-1">
+                   {t('kundli.dignityLabel') || 'Dignity & Status'}
+                 </span>
+                 <div className="grid grid-cols-2 gap-2 text-xs">
+                   <div className="flex flex-col"><span className="text-gray-500 uppercase text-[9px]">{t('kundli.dignityLabel') || 'Dignity'}</span><span className="text-[#d4af37] font-medium">{getLocalizedDignity(a.dignity, language)}</span></div>
+                   <div className="flex flex-col"><span className="text-gray-500 uppercase text-[9px]">{t('kundli.vargottama') || 'Vargottama'}</span><span className="text-gray-300">{a.vargottama ? (t('common.yes') || 'Yes') : (t('common.no') || 'Not Applicable')}</span></div>
+                   <div className="flex flex-col"><span className="text-gray-500 uppercase text-[9px]">{t('kundli.retrograde') || 'Retrograde'}</span><span className={a.isRetrograde ? "text-amber-400 font-medium" : "text-gray-400"}>{a.isRetrograde ? (t('kundli.retrogradeMotion') || 'Retrograde') : (t('kundli.directMotion') || 'Direct')}</span></div>
+                   <div className="flex flex-col"><span className="text-gray-500 uppercase text-[9px]">{t('kundli.combust') || 'Combust'}</span><span className={a.isCombust ? "text-red-400 font-medium" : "text-gray-400"}>{a.isCombust ? (t('kundli.combustMotion') || 'Combust') : (t('common.no') || 'Not Combust')}</span></div>
+                 </div>
+               </div>
+
+               {/* D. Relationships */}
+               <div>
+                 <span className="text-[#d4af37]/80 text-[10px] font-bold uppercase tracking-widest mb-2 block border-b border-[#d4af37]/20 pb-1">
+                   {t('kundli.relationshipsLabel') || 'Planetary Relationships'}
+                 </span>
+                 <div className="space-y-2">
+                   <div className="bg-black/30 p-2 rounded">
+                     <span className="text-gray-500 uppercase text-[9px] block mb-1">{t('kundli.naturalRelationshipsLabel') || 'Natural Relationships'}</span>
+                     <div className="flex flex-wrap gap-1">
+                       {a.naturalRelationships?.map(r => (
+                         <span key={r.planet} className={`text-[10px] px-1.5 py-0.5 rounded border ${r.status === 'Friend' ? 'bg-emerald-900/30 text-emerald-400 border-emerald-800' : r.status === 'Enemy' ? 'bg-red-900/30 text-red-400 border-red-800' : 'bg-gray-800 text-gray-300 border-gray-700'}`}>
+                           {getLocalizedPlanet(r.planet, language)}: {getLocalizedRelationship(r.status, language)}
+                         </span>
+                       ))}
+                     </div>
+                   </div>
+                   <div className="bg-black/30 p-2 rounded">
+                     <span className="text-gray-500 uppercase text-[9px] block mb-1">{t('kundli.temporaryRelationshipsLabel') || 'Temporary (Tatkalik)'}</span>
+                     <div className="flex flex-wrap gap-1">
+                       {a.temporaryRelationships?.map(r => (
+                         <span key={r.planet} className={`text-[10px] px-1.5 py-0.5 rounded border ${r.status === 'Friend' ? 'bg-emerald-900/30 text-emerald-400 border-emerald-800' : 'bg-red-900/30 text-red-400 border-red-800'}`}>
+                           {getLocalizedPlanet(r.planet, language)}: {getLocalizedRelationship(r.status, language)}
+                         </span>
+                       ))}
+                     </div>
+                   </div>
+                   <div className="bg-black/30 p-2 rounded">
+                     <span className="text-gray-500 uppercase text-[9px] block mb-1">{t('kundli.compoundRelationshipsLabel') || 'Compound (Panchadha)'}</span>
+                     <div className="flex flex-wrap gap-1">
+                       {a.compoundRelationships?.map(r => {
+                         const bg = r.status.includes('Friend') ? 'bg-emerald-900/30 text-emerald-400 border-emerald-800' : r.status.includes('Enemy') ? 'bg-red-900/30 text-red-400 border-red-800' : 'bg-gray-800 text-gray-300 border-gray-700';
+                         return (
+                           <span key={r.planet} className={`text-[10px] px-1.5 py-0.5 rounded border ${bg}`}>
+                             {getLocalizedPlanet(r.planet, language)}: {getLocalizedRelationship(r.status, language)}
+                           </span>
+                         );
+                       })}
+                     </div>
+                   </div>
+                 </div>
+               </div>
+
+               {/* E. Aspects */}
+               <div>
+                 <span className="text-[#d4af37]/80 text-[10px] font-bold uppercase tracking-widest mb-2 block border-b border-[#d4af37]/20 pb-1">
+                   {t('kundli.aspectsTitle') || 'Aspects (Parashari)'}
+                 </span>
+                 <div className="grid grid-cols-2 gap-2">
+                   <div>
+                     <span className="text-gray-500 uppercase text-[9px] block mb-1">{t('kundli.aspectsGiven') || 'Aspects Given'}</span>
+                     {a.aspectsGiven?.length > 0 ? (
+                       <ul className="text-[10px] text-gray-300 space-y-1">
+                         {a.aspectsGiven.map((asp, i) => (
+                           <li key={i}>• {asp.aspectType}th {t('kundli.aspectSuffix') || 'aspect'} → {getLocalizedHouse(asp.targetHouse, language).label} {asp.targetPlanets.length > 0 ? `(${asp.targetPlanets.map(tp => getLocalizedPlanet(tp, language)).join(', ')})` : ''}</li>
+                         ))}
+                       </ul>
+                     ) : <span className="text-[10px] text-gray-600 italic">None</span>}
+                   </div>
+                   <div>
+                     <span className="text-gray-500 uppercase text-[9px] block mb-1">{t('kundli.aspectsReceived') || 'Aspects Received'}</span>
+                     {a.aspectsReceived?.length > 0 ? (
+                       <ul className="text-[10px] text-gray-300 space-y-1">
+                         {a.aspectsReceived.map((asp, i) => (
+                           <li key={i}>• {t('kundli.aspectFrom', { planet: getLocalizedPlanet(asp.sourcePlanet, language), type: asp.aspectType }) || (`From ${getLocalizedPlanet(asp.sourcePlanet, language)} (${asp.aspectType}th)`)}</li>
+                         ))}
+                       </ul>
+                     ) : <span className="text-[10px] text-gray-600 italic">None</span>}
+                   </div>
+                 </div>
+               </div>
+
+               {/* F. Conjunction */}
+               <div>
+                 <span className="text-[#d4af37]/80 text-[10px] font-bold uppercase tracking-widest mb-2 block border-b border-[#d4af37]/20 pb-1">
+                   {t('kundli.conjunctionsTitle') || 'Conjunctions'}
+                 </span>
+                 {a.conjunctions?.length > 0 ? (
+                   <div className="flex flex-wrap gap-2">
+                     {a.conjunctions.map((c, i) => {
+                       const other = c.planetA === planet.name ? c.planetB : c.planetA;
+                       return (
+                         <span key={i} className="text-xs bg-[#d4af37]/10 text-[#d4af37] px-2 py-1 rounded">
+                           {t('kundli.withPlanet', { planet: getLocalizedPlanet(other, language), deg: (c.degreeSeparation||0).toFixed(1) }) || `with ${getLocalizedPlanet(other, language)} (${(c.degreeSeparation||0).toFixed(1)}°)`}
+                         </span>
+                       );
+                     })}
+                   </div>
+                 ) : <span className="text-xs text-gray-500 italic">No conjunctions</span>}
+               </div>
+
+               {/* G. Dasha */}
+               <div>
+                 <span className="text-[#d4af37]/80 text-[10px] font-bold uppercase tracking-widest mb-2 block border-b border-[#d4af37]/20 pb-1">
+                   {t('kundli.dashaTimingTitle') || 'Dasha Timing'}
+                 </span>
+                 <div className="grid grid-cols-2 gap-2 text-xs">
+                   <div className="flex flex-col"><span className="text-gray-500 uppercase text-[9px]">{t('kundli.mahadasha') || 'Current Mahadasha'}</span><span className="text-white">{getLocalizedPlanet(a.currentMahadasha || '', language) || 'N/A'}</span></div>
+                   <div className="flex flex-col"><span className="text-gray-500 uppercase text-[9px]">{t('kundli.antardasha') || 'Current Antardasha'}</span><span className="text-white">{getLocalizedPlanet(a.currentAntardasha || '', language) || 'N/A'}</span></div>
+                 </div>
+               </div>
+               
+             </div>
+           ) : (
+             <div className="text-gray-400 text-sm">Analysis unavailable for current calculation dataset.</div>
+           )}
+         </div>
+      </div>
+    </div>
+    {showWhy && a && a.audit && <WhyPanel audit={a.audit} onClose={() => setShowWhy(false)} />}
+    </>
+  );
+}
+
+
+function HousePanel({ 
+  houseNum, 
+  houseData, 
+  planets, 
+  analysis, 
+  masterData,
+  onSelectHouse,
+  onSelectPlanet,
+  onClose 
+}: { 
+  houseNum: number; 
+  houseData: any; 
+  planets: any[]; 
+  analysis?: HouseAnalysisData; 
+  masterData?: any;
+  onSelectHouse?: (house: number) => void;
+  onSelectPlanet?: (planetName: string) => void;
+  onClose: () => void; 
+}) {
+  const [showWhy, setShowWhy] = useState(false);
+  const { t, language } = useTranslation();
+  
+  if (!houseData) return null;
+  const a = analysis;
+
+  const handleClose = () => {
+    SpeechEngine.stop();
+    onClose();
+  };
+
+  const isHindi = language === 'hi' || (language as string) === 'Hindi' || language === 'sa';
+  const script = useMemo(() => {
+    try {
+      return HouseSpeaksService.generateScript(houseNum, masterData, a, language);
+    } catch {
+      return null;
+    }
+  }, [houseNum, masterData, a, language]);
+
+  return (
+    <>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm" onClick={handleClose}>
+      <div className="bg-[#082218] border border-[#d4af37]/40 p-4 sm:p-6 rounded-2xl w-full max-w-md shadow-2xl relative flex flex-col max-h-[92vh]" onClick={e => e.stopPropagation()}>
+         
+         {/* Unified Header Row */}
+         <div className="flex justify-between items-start mb-3 border-b border-[#d4af37]/20 pb-3 gap-2">
+           <div className="min-w-0 pr-1">
+             <h2 className="text-2xl sm:text-3xl font-semibold text-[#d4af37] truncate">
+               {getLocalizedHouse(houseNum, language).full}
+             </h2>
+             <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5 truncate">
+               {t('kundli.deepBhavaAnalysis') || 'Deep Bhava Analysis'}
+             </p>
+           </div>
+           
+           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+             {a && a.audit && (
+               <button 
+                 onClick={() => setShowWhy(true)}
+                 className="px-2.5 py-1.5 h-9 rounded-lg text-xs font-medium border border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/20 transition-colors"
+               >
+                 {t('kundli.why') || 'Why?'}
+               </button>
+             )}
+
+             {/* Universal Reusable House Speaks Control */}
+             <HouseSpeaksControl 
+               houseNum={houseNum}
+               houseData={houseData}
+               planets={planets}
+               analysis={a}
+               masterData={masterData}
+               autoPlay={true}
+             />
+
+             <button 
+               onClick={handleClose} 
+               className="w-9 h-9 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 flex items-center justify-center transition-colors text-base"
+               title={t('common.close') || 'Close'}
+             >
+               ✕
+             </button>
+           </div>
+         </div>
+
+         {/* 12 Bhavas Quick Switcher Bar */}
+         <div className="flex items-center gap-1 overflow-x-auto pb-2 mb-3 border-b border-[#d4af37]/15 custom-scrollbar shrink-0">
+           <span className="text-[10px] text-gray-400 uppercase tracking-wider shrink-0 mr-1">
+             {isHindi ? 'भाव:' : 'House:'}
+           </span>
+           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((h) => {
+             const isActive = h === houseNum;
+             const hPlanets = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'].filter(
+               pName => {
+                 const p = masterData?.planets?.[pName];
+                 return p && (p.d1House === h || p.house === h);
+               }
+             );
+             const isEmptyHouse = hPlanets.length === 0;
+
+             return (
+               <button
+                 key={h}
+                 onClick={() => {
+                   SpeechEngine.stop();
+                   onSelectHouse?.(h);
+                 }}
+                 className={`px-2 py-1 rounded text-xs font-semibold shrink-0 transition-all flex items-center gap-1 ${
+                   isActive
+                     ? 'bg-[#d4af37] text-black shadow-[0_0_8px_rgba(212,175,55,0.4)]'
+                     : 'bg-[#082218] border border-[#d4af37]/30 text-gray-300 hover:bg-[#d4af37]/20 hover:text-[#d4af37]'
+                 }`}
+                 title={`${getLocalizedHouse(h, language).full} ${isEmptyHouse ? (isHindi ? '(रिक्त भाव)' : '(Empty)') : ''}`}
+               >
+                 <span>{h}</span>
+                 {isEmptyHouse && (
+                   <span className="text-[9px] opacity-70">∅</span>
+                 )}
+               </button>
+             );
+           })}
+         </div>
+         
+         <div className="overflow-y-auto pr-2 custom-scrollbar">
+           {a ? (
+             <div className="space-y-5 text-sm pb-4">
+               
+               {/* House Speaks Audio Card & Script Quote */}
+               {script && (
+                 <div className="p-3 bg-[#04120c]/90 border border-[#d4af37]/30 rounded-xl text-xs space-y-1.5 shadow-md">
+                   <div className="flex items-center justify-between text-[#d4af37] text-[11px] font-semibold border-b border-[#d4af37]/20 pb-1">
+                     <span className="flex items-center gap-1.5">
+                       <Volume2 className="w-3.5 h-3.5 text-[#d4af37]" />
+                       <span>{isHindi ? 'भाव वाणी (House Speaks)' : 'House Speaks Statement'}</span>
+                     </span>
+                     <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${script.isEmpty ? 'bg-amber-950/60 text-amber-300 border border-amber-500/30' : 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/30'}`}>
+                       {script.isEmpty ? (isHindi ? 'रिक्त भाव (कोई ग्रह नहीं)' : 'Empty House') : (isHindi ? `${script.occupyingPlanets.length} ग्रह विराजमान` : `${script.occupyingPlanets.length} Planets`)}
+                     </span>
+                   </div>
+                   <p className="text-gray-200 text-xs italic font-serif leading-relaxed">
+                     "{script.spokenText}"
+                   </p>
+                 </div>
+               )}
+               
+               {/* Identity */}
+               <div>
+                 <span className="text-[#d4af37]/80 text-[10px] font-bold uppercase tracking-widest mb-2 block border-b border-[#d4af37]/20 pb-1">
+                   {t('kundli.bhavaIdentity') || 'Bhava Identity'}
+                 </span>
+                 <div className="grid grid-cols-2 gap-2 text-xs">
+                   <div className="flex flex-col"><span className="text-gray-500 uppercase text-[9px]">{t('kundli.houseLabel') || 'House'}</span><span className="text-white">{houseNum}</span></div>
+                   <div className="flex flex-col"><span className="text-gray-500 uppercase text-[9px]">{t('kundli.moonSign') || 'Sign (Rashi)'}</span><span className="text-white">{getLocalizedRashi(a.rashiName || houseData.rashiName, language)} ({a.rashi})</span></div>
+                   <div className="flex flex-col"><span className="text-gray-500 uppercase text-[9px]">{t('kundli.signLord') || 'Sign Lord'}</span><span className="text-emerald-400 font-medium">{getLocalizedPlanet(a.rashiLord, language)}</span></div>
+                   <div className="flex flex-col"><span className="text-gray-500 uppercase text-[9px]">{t('kundli.bhavaType') || 'Bhava Type'}</span><span className="text-gray-300">{getLocalizedHouse(houseNum, language).type}</span></div>
+                 </div>
+               </div>
+
+               {/* Occupants */}
+               <div>
+                 <span className="text-[#d4af37]/80 text-[10px] font-bold uppercase tracking-widest mb-2 block border-b border-[#d4af37]/20 pb-1">
+                   {t('kundli.occupyingPlanets') || 'Occupying Planets'}
+                 </span>
+                 <div className="flex flex-col gap-2">
+                   {planets.length > 0 ? (
+                     <div className="space-y-2">
+                       {planets.map(p => (
+                         <button 
+                           key={p.name} 
+                           onClick={() => {
+                             onClose();
+                             onSelectPlanet?.(p.name);
+                           }}
+                           className="w-full flex justify-between items-center bg-[#d4af37]/10 hover:bg-[#d4af37]/20 p-2.5 rounded-lg border border-[#d4af37]/20 hover:border-[#d4af37]/60 transition-all text-left group cursor-pointer"
+                           title={`${t('kundli.planetSpeaks') || 'Planet Speaks'}: ${getLocalizedPlanet(p.name, language)}`}
+                         >
+                           <div className="flex items-center gap-2">
+                             <span className="text-[#d4af37] font-medium group-hover:text-emerald-300 transition-colors">
+                               {getLocalizedPlanet(p.name, language)}
+                             </span>
+                             <span className="text-[10px] text-[#d4af37]/80 bg-[#d4af37]/10 border border-[#d4af37]/30 px-1.5 py-0.5 rounded flex items-center gap-1">
+                               🔊 {t('kundli.planetSpeaks') || 'Speaks'}
+                             </span>
+                           </div>
+                           <div className="text-right">
+                             <span className="block text-white text-xs font-mono">{(p.degree||0).toFixed(2)}°</span>
+                             <span className="block text-gray-400 text-[9px]">
+                               {p.isRetrograde ? (t('kundli.retrograde') || 'Retrograde') : (t('kundli.directMotion') || 'Direct')}
+                             </span>
+                           </div>
+                         </button>
+                       ))}
+                     </div>
+                   ) : <span className="text-gray-500 italic text-xs">{t('kundli.noOccupyingPlanets') || 'House is empty'}</span>}
+                 </div>
+               </div>
+
+               {/* Aspects */}
+               <div>
+                 <span className="text-[#d4af37]/80 text-[10px] font-bold uppercase tracking-widest mb-2 block border-b border-[#d4af37]/20 pb-1">
+                   {t('kundli.aspectsReceived') || 'Aspects Received'}
+                 </span>
+                 <div className="flex flex-col gap-2">
+                   {a.aspectsReceived && a.aspectsReceived.length > 0 ? (
+                     <div className="space-y-2">
+                       {a.aspectsReceived.map((asp, i) => (
+                         <div key={i} className="flex justify-between items-center bg-black/40 p-2 rounded border border-gray-800">
+                           <span className="text-emerald-400 text-xs">{t('kundli.aspectFrom', { planet: getLocalizedPlanet(asp.sourcePlanet, language), type: asp.aspectType }) || (`From ${getLocalizedPlanet(asp.sourcePlanet, language)}`)}</span>
+                           <span className="text-gray-400 text-[10px]">{asp.aspectType}th {t('kundli.aspectSuffix') || 'Aspect'} ({t('kundli.parashariSystem') || 'Parashari'})</span>
+                         </div>
+                       ))}
+                     </div>
+                   ) : <span className="text-gray-500 italic text-xs">{t('kundli.noAspectsReceived') || 'No aspects received'}</span>}
+                 </div>
+               </div>
+               
+               {/* Markers */}
+               {a.calculatedMarkers && a.calculatedMarkers.length > 0 && (
+                 <div>
+                   <span className="text-[#d4af37]/80 text-[10px] font-bold uppercase tracking-widest mb-2 block border-b border-[#d4af37]/20 pb-1">Special Markers</span>
+                   <div className="flex gap-2">
+                     {a.calculatedMarkers.map(m => (
+                       <span key={m} className="px-2 py-1 bg-emerald-900/30 text-emerald-400 border border-emerald-800/50 rounded text-xs">
+                         {m}
+                       </span>
+                     ))}
+                   </div>
+                 </div>
+               )}
+
+             </div>
+           ) : (
+             <div className="text-gray-400 text-sm">Analysis unavailable for current calculation dataset.</div>
+           )}
+         </div>
+      </div>
+    </div>
+    {showWhy && a && a.audit && <WhyPanel audit={a.audit} onClose={() => setShowWhy(false)} />}
+    </>
+  );
+}
+
+export function KundliShell({ profile, navigate, showToast }: KundliProps) {
+  const { t, language, currentLanguageInfo } = useTranslation();
+  const [ayanamsa, setAyanamsa] = useState<AyanamsaType>('Lahiri');
+  const [calcResult, setCalcResult] = useState<EngineResult>({ 
+    status: 'Calculating', 
+    data: null, 
+    message: 'इंजन लोड हो रहा है...' 
+  });
+  
+  const [showDebug, setShowDebug] = useState(false);
+  const [selectedPlanet, setSelectedPlanet] = useState<string | null>(null);
+  const [selectedHouse, setSelectedHouse] = useState<number | null>(null);
+  const [selectedVargaChart, setSelectedVargaChart] = useState<string | null>(null);
+  const [selectedKpDetail, setSelectedKpDetail] = useState<KPDetailItem | null>(null);
+  const [kpActiveTab, setKpActiveTab] = useState<'planets' | 'cusps' | 'significators' | 'ruling_planets' | 'judgment'>('planets');
+  const [showDiscoveryHint, setShowDiscoveryHint] = useState<boolean>(() => {
+    try {
+      return !sessionStorage.getItem('jeevandarpan_bhava_hint_dismissed');
+    } catch {
+      return true;
+    }
+  });
+
+  const dismissDiscoveryHint = useCallback(() => {
+    setShowDiscoveryHint(false);
+    try {
+      sessionStorage.setItem('jeevandarpan_bhava_hint_dismissed', 'true');
+    } catch {}
+  }, []);
+
+  // Auto-dismiss discovery hint after ~3 seconds as requested
+  useEffect(() => {
+    if (!showDiscoveryHint) return;
+    const timer = setTimeout(() => {
+      dismissDiscoveryHint();
+    }, 3200);
+    return () => clearTimeout(timer);
+  }, [showDiscoveryHint, dismissDiscoveryHint]);
+
+  const handleSelectHouse = useCallback((house: number) => {
+    if (showDiscoveryHint) dismissDiscoveryHint();
+    setSelectedPlanet(null);
+    setSelectedHouse(house);
+  }, [showDiscoveryHint, dismissDiscoveryHint]);
+
+  const handleSelectPlanet = useCallback((pName: string) => {
+    if (showDiscoveryHint) dismissDiscoveryHint();
+    setSelectedHouse(null);
+    setSelectedPlanet(pName);
+  }, [showDiscoveryHint, dismissDiscoveryHint]);
+  const [lifeQuestion, setLifeQuestion] = useState("");
+  const [aiAnswer, setAiAnswer] = useState<string | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  const askAi = async () => {
+    if (!lifeQuestion.trim() || !calcResult.data || isAiLoading) return;
+    setIsAiLoading(true);
+    setAiError(null);
+    setAiAnswer(null);
+    try {
+      const response = await fetch('/api/ai-jyotish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: lifeQuestion,
+          chartContext: {
+            planets: calcResult.data.planets,
+            d1Chart: calcResult.data.d1Chart,
+            dasha: dashaIntelResult,
+            varga: vargaResult,
+            yogas: analysisResult?.yogas,
+            numerology: profile ? NumerologyEngine.evaluate(profile) : null,
+            loShuGrid: profile ? LoShuEngine.evaluate(profile) : null
+          },
+          language: currentLanguageInfo.name
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to get answer');
+      setAiAnswer(data.answer);
+    } catch (err: any) {
+      setAiError(err.message);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
+  const [showYogaWhy, setShowYogaWhy] = useState<any>(null);
+
+  // Stop ongoing speech synthesis immediately when Kundli component unmounts
+  useEffect(() => {
+    return () => {
+      SpeechEngine.stop();
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    // Clear active modal selections and speech when profile or ayanamsa changes
+    setSelectedPlanet(null);
+    setSelectedHouse(null);
+    setShowYogaWhy(null);
+    setSelectedVargaChart(null);
+    setSelectedKpDetail(null);
+    SpeechEngine.stop();
+
+    if (!profile) {
+      setCalcResult({
+        status: 'Error',
+        data: null,
+        message: 'Master Profile is missing. Please setup profile first.'
+      });
+      return () => {
+        isMounted = false;
+      };
+    }
+    
+    setCalcResult(prev => ({ ...prev, status: 'Calculating', message: 'गणना हो रही है...' }));
+
+    AstronomyService.calculateKundli(profile, ayanamsa)
+      .then(res => {
+        if (isMounted) {
+          setCalcResult(res);
+        }
+      })
+      .catch(err => {
+        if (isMounted) {
+          setCalcResult({
+            status: 'Error',
+            data: null,
+            message: 'Engine error: ' + err.message
+          });
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [profile, ayanamsa]);
+
+  useEffect(() => {
+    if (calcResult.status === 'Ready') {
+      try {
+        const scrollTo = sessionStorage.getItem('jeevandarpan_scroll_to');
+        if (scrollTo === 'dasha') {
+          sessionStorage.removeItem('jeevandarpan_scroll_to');
+          setTimeout(() => {
+            const el = document.getElementById('kundli-dasha-section');
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 300);
+        } else if (scrollTo === 'kp') {
+          sessionStorage.removeItem('jeevandarpan_scroll_to');
+          setTimeout(() => {
+            const el = document.getElementById('kundli-kp-section');
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 300);
+        }
+      } catch {}
+    }
+  }, [calcResult.status]);
+
+  
+  const jaiminiResult = useMemo<JaiminiAnalysisResult | null>(() => {
+    if (calcResult.status === 'Ready' && calcResult.data) {
+      try {
+        return globalJyotishRegistry.evaluate<JaiminiAnalysisResult>('JAIMINI', calcResult.data);
+      } catch (err) {
+        return null;
+      }
+    }
+    return null;
+  }, [calcResult]);
+
+  
+  const kpResult = useMemo<KPAnalysisResult | null>(() => {
+    if (calcResult.status === 'Ready' && calcResult.data) {
+      try { return globalJyotishRegistry.evaluate<KPAnalysisResult>('KP', calcResult.data); } catch(e) { return null; }
+    }
+    return null;
+  }, [calcResult]);
+
+  const lalKitabResult = useMemo<LalKitabAnalysisResult | null>(() => {
+    if (calcResult.status === 'Ready' && calcResult.data) {
+      try { return globalJyotishRegistry.evaluate<LalKitabAnalysisResult>('LAL_KITAB', calcResult.data); } catch(e) { return null; }
+    }
+    return null;
+  }, [calcResult]);
+
+  
+  const vargaResult = useMemo<VargaAnalysisResult | null>(() => {
+    if (calcResult.status === 'Ready' && calcResult.data) {
+      try { return globalJyotishRegistry.evaluate<VargaAnalysisResult>('VARGA' as any, calcResult.data); } catch(e) { return null; }
+    }
+    return null;
+  }, [calcResult]);
+
+  const nakshatraIntelResult = useMemo<any | null>(() => {
+    if (calcResult.status === 'Ready' && calcResult.data) {
+      try { return globalJyotishRegistry.evaluate<any>('NAKSHATRA_INTEL' as any, calcResult.data); } catch(e) { return null; }
+    }
+    return null;
+  }, [calcResult]);
+
+  
+  const dashaIntelResult = useMemo<DashaIntelResult | null>(() => {
+    if (calcResult.status === 'Ready' && calcResult.data) {
+      try { return globalJyotishRegistry.evaluate<DashaIntelResult>('DASHA_INTEL' as any, calcResult.data); } catch(e) { return null; }
+    }
+    return null;
+  }, [calcResult]);
+
+  const transitResult = useMemo<TransitAnalysisResult | null>(() => {
+    if (calcResult.status === 'Ready' && calcResult.data) {
+      try { return globalJyotishRegistry.evaluate<TransitAnalysisResult>('TRANSIT' as any, calcResult.data); } catch(e) { return null; }
+    }
+    return null;
+  }, [calcResult]);
+
+  const analysisResult = useMemo<ChartAnalysisResult | null>(() => {
+    if (calcResult.status === 'Ready' && calcResult.data) {
+      try {
+        return analyzeChart(calcResult.data);
+      } catch (err) {
+        console.warn("Analysis Engine failed:", err);
+        return null;
+      }
+    }
+    return null;
+  }, [calcResult]);
+
+  const relationships = useMemo<JyotishRelationships | null>(() => {
+    if (calcResult.status === 'Ready' && calcResult.data) {
+      try {
+        return RelationshipEngine.analyze(calcResult.data);
+      } catch (err) {
+        console.error('Relationship engine error:', err);
+        return null;
+      }
+    }
+    return null;
+  }, [calcResult]);
+
+
+
+  
+  const yogaAudit = showYogaWhy ? {
+    ruleId: showYogaWhy.ruleId,
+    system: showYogaWhy.system,
+    input: `MasterKundliData (Planets: ${showYogaWhy.planets.join(', ')})`,
+    conditions: showYogaWhy.conditions,
+    result: showYogaWhy.status === 'VERIFIED' ? 'Yoga Verified' : 'Conditions Not Met',
+    engineVersion: '1.0.0',
+    masterDataVersion: calcResult.data?.metadata?.timestamp || 'Unknown',
+    isVerified: showYogaWhy.status === 'VERIFIED'
+  } : null;
+
+  return (
+    <div className="flex flex-col w-full max-w-md mx-auto min-h-screen pb-28">
+      {/* Header */}
+      <header className="flex items-center justify-between p-5 border-b border-[#d4af37]/20 bg-[#030a08]/90 backdrop-blur-md sticky top-0 z-20">
+        <div className="flex items-center">
+          <button 
+            onClick={() => navigate('dashboard')} 
+            className="text-[#d4af37] p-2 -ml-2 rounded-full hover:bg-[#d4af37]/10 transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <h1 className="text-xl font-semibold text-[#d4af37] ml-2 tracking-wide">
+            {t('kundli.kundliShell') || 'Kundli Shell'}
+          </h1>
+        </div>
+      </header>
+
+      <main className="p-5 flex flex-col items-center flex-1">
+        
+        {/* Ayanamsa Selection */}
+        <div className="w-full flex items-center justify-between mb-4 bg-black/40 border border-gray-800 rounded-lg p-3">
+          <label className="text-gray-400 text-xs tracking-widest uppercase">
+            {t('kundli.ayanamsaLabel') || 'Ayanamsa'}
+          </label>
+          <select 
+            value={ayanamsa} 
+            onChange={(e) => setAyanamsa(e.target.value as AyanamsaType)}
+            className="bg-[#082218] border border-[#d4af37]/40 text-[#d4af37] text-xs rounded px-2 py-1 outline-none focus:border-[#d4af37]"
+          >
+            <option value="Raman">Raman</option>
+            <option value="Lahiri">Lahiri</option>
+            <option value="Future">Future (Custom)</option>
+          </select>
+        </div>
+
+        {/* Calculation Status Panel */}
+        <div className={`w-full p-4 mb-2 rounded-xl border flex items-center justify-between shadow-lg backdrop-blur-md
+          ${calcResult.status === 'Ready' ? 'bg-[#082218] border-[#d4af37]/50' : ''}
+          ${calcResult.status === 'Calculating' ? 'bg-[#0a1510] border-[#d4af37]/30 animate-pulse' : ''}
+          ${calcResult.status === 'Not Connected' ? 'bg-amber-950/40 border-amber-500/50' : ''}
+          ${calcResult.status === 'Error' ? 'bg-red-950/40 border-red-500/50' : ''}
+        `}>
+          <div>
+            <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">
+              {t('kundli.calculationStatus') || 'Calculation Status'}
+            </p>
+            <p className={`text-sm font-medium
+              ${calcResult.status === 'Ready' ? 'text-[#d4af37]' : ''}
+              ${calcResult.status === 'Calculating' ? 'text-white' : ''}
+              ${calcResult.status === 'Not Connected' ? 'text-amber-400' : ''}
+              ${calcResult.status === 'Error' ? 'text-red-400' : ''}
+            `}>
+              {calcResult.status === 'Ready' ? (t('kundli.statusReady') || 'Ready') : calcResult.status === 'Calculating' ? (t('kundli.statusCalculating') || 'Calculating') : calcResult.status === 'Not Connected' ? (t('kundli.statusNotConnected') || 'Not Connected') : (t('kundli.statusError') || 'Error')}
+            </p>
+          </div>
+          <div>
+            {calcResult.status === 'Calculating' && <Loader2 className="w-6 h-6 text-[#d4af37] animate-spin" />}
+            {calcResult.status === 'Not Connected' && <AlertCircle className="w-6 h-6 text-amber-400" />}
+            {calcResult.status === 'Error' && <AlertCircle className="w-6 h-6 text-red-400" />}
+          </div>
+        </div>
+
+        {/* Main Lagna Kundli Chart in Royal Carved Temple Card */}
+        <CarvedCard className="w-full mb-6" cornerSize={32}>
+          <div className="text-center mb-6">
+            <h2 className="text-[#d4af37] text-2xl font-semibold tracking-wider">
+              {t('kundli.lagnaChart') || 'Lagna Chart'}
+            </h2>
+            <p className="text-[#d4af37]/60 text-sm tracking-widest uppercase mt-1">
+              {t('kundli.northIndianStyle') || 'North Indian Style'}
+            </p>
+          </div>
+
+        {/* First-Time Discovery Hint (Session Dismissible) */}
+        {showDiscoveryHint && (
+          <div 
+            id="d1-discovery-hint"
+            className="relative mb-3 w-full max-w-[min(340px,calc(100vw-32px))] mx-auto bg-gradient-to-r from-[#082218] via-[#0f3f2c] to-[#082218] border border-[#d4af37]/80 rounded-xl px-3.5 py-2.5 text-xs flex items-center justify-between shadow-[0_4px_20px_rgba(0,0,0,0.6),0_0_16px_rgba(212,175,55,0.4)] animate-pulse transition-opacity duration-500"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-base select-none animate-bounce">✨</span>
+              <span className="text-[#fae19c] font-semibold text-xs sm:text-[13px] tracking-wide">
+                {language === 'hi' ? '✨ किसी भी भाव को स्पर्श करें — भाव वाणी सुनें' : '✨ Touch any house — Listen to Bhava Speaks'}
+              </span>
+            </div>
+            <button
+              onClick={dismissDiscoveryHint}
+              className="text-gray-300 hover:text-white p-1 ml-1 rounded-md hover:bg-white/10 transition-colors cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center"
+              title={language === 'hi' ? 'हटाएँ' : 'Dismiss'}
+              aria-label="Dismiss discovery hint"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Dynamic Visual Legend (Updates with Selection) */}
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-3 text-[11px] font-medium select-none">
+          <span 
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full border transition-all duration-300 shadow-sm ${
+              selectedHouse != null
+                ? 'bg-[#0f3f2c] border-[#fae19c] text-[#ffe89e] shadow-[0_0_10px_rgba(250,225,156,0.4)] scale-105'
+                : 'bg-black/60 border-emerald-500/40 text-emerald-300'
+            }`}
+          >
+            <span className="text-xs">🏛️</span>
+            <span className="font-semibold">
+              {selectedHouse != null 
+                ? `${language === 'hi' ? 'भाव' : 'House'} ${selectedHouse} ${language === 'hi' ? 'सक्रिय' : 'Active'}` 
+                : (language === 'hi' ? 'भाव = भाव वाणी' : 'House = House Speaks')}
+            </span>
+          </span>
+
+          <span 
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full border transition-all duration-300 shadow-sm ${
+              selectedPlanet != null
+                ? 'bg-[#3b2a05] border-[#ffe89e] text-[#ffe89e] shadow-[0_0_10px_rgba(250,225,156,0.5)] scale-105'
+                : 'bg-black/60 border-[#d4af37]/40 text-[#fae19c]'
+            }`}
+          >
+            <span className="text-xs">🪐</span>
+            <span className="font-semibold">
+              {selectedPlanet != null 
+                ? `${getLocalizedPlanet(selectedPlanet, language)} ${language === 'hi' ? 'सक्रिय' : 'Active'}` 
+                : (language === 'hi' ? 'ग्रह = ग्रह वाणी' : 'Planet = Planet Speaks')}
+            </span>
+          </span>
+
+          <span className="flex items-center gap-1.5 bg-black/50 px-2.5 py-1 rounded-full border border-gray-700/60 text-gray-300 shadow-sm">
+            <span className="text-xs text-amber-300">✨</span>
+            <span>{language === 'hi' ? 'स्पर्श करें = विवरण' : 'Tap = Details'}</span>
+          </span>
+        </div>
+
+        {/* North Indian Chart SVG Container */}
+        <div className="w-full aspect-square max-w-[min(340px,calc(100vw-32px))] relative mb-4 mx-auto select-none">
+          <svg viewBox="0 0 100 100" className="w-full h-full shadow-[0_6px_36px_rgba(0,0,0,0.9),0_0_24px_rgba(212,175,55,0.2)] rounded-2xl backdrop-blur-md pointer-events-auto bg-[#030d08]">
+            <defs>
+              {/* Soft Emerald Depth: Centroid-aligned radial gradients for each Bhava */}
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(h => (
+                <radialGradient 
+                  key={`ambient-grad-${h}`}
+                  id={`d1BhavaAmbientGrad-${h}`} 
+                  cx={`${houseCentroids[h].x}%`} 
+                  cy={`${houseCentroids[h].y}%`} 
+                  r="36%"
+                >
+                  <stop offset="0%" stopColor="#0f4430" stopOpacity="0.85" />
+                  <stop offset="60%" stopColor="#072b1d" stopOpacity="0.92" />
+                  <stop offset="100%" stopColor="#03160e" stopOpacity="0.98" />
+                </radialGradient>
+              ))}
+
+              {/* Stronger Gold/Emerald Radiance for Selected Bhava */}
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(h => (
+                <radialGradient 
+                  key={`selected-grad-${h}`}
+                  id={`d1BhavaSelectedGrad-${h}`} 
+                  cx={`${houseCentroids[h].x}%`} 
+                  cy={`${houseCentroids[h].y}%`} 
+                  r="40%"
+                >
+                  <stop offset="0%" stopColor="#ffe89e" stopOpacity="0.75" />
+                  <stop offset="42%" stopColor="#d4af37" stopOpacity="0.55" />
+                  <stop offset="85%" stopColor="#0c432d" stopOpacity="0.85" />
+                  <stop offset="100%" stopColor="#041a10" stopOpacity="0.98" />
+                </radialGradient>
+              ))}
+
+              {/* Subtle 3D Tactile Elevation Shadow for Non-Selected Bhavas */}
+              <filter id="d1BhavaTactileElevation" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="0.6" stdDeviation="0.6" floodColor="#000000" floodOpacity="0.75" />
+              </filter>
+
+              {/* 3D Elevated Shadow and Strong Golden Glow for Selected Bhava */}
+              <filter id="d1BhavaSelectedGlow" x="-35%" y="-35%" width="170%" height="170%">
+                <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" floodColor="#000000" floodOpacity="0.95" />
+                <feGaussianBlur in="SourceAlpha" stdDeviation="1.4" result="blur" />
+                <feComponentTransfer in="blur" result="glow">
+                  <feFuncA type="linear" slope="1" />
+                </feComponentTransfer>
+                <feMerge>
+                  <feMergeNode in="glow" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+
+            {/* Base Background for the whole SVG */}
+            <rect x="0" y="0" width="100" height="100" className="fill-[#04140d] stroke-none" />
+            
+            {/* Draw individual clickable houses with 3D tactile depth and metallic-gold inner rim */}
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(house => {
+              const isSelected = selectedHouse === house;
+              return (
+                <g key={house}>
+                  {/* Base Facet Polygon with soft emerald depth & tactile elevation */}
+                  <polygon 
+                    id={`d1-bhava-facet-${house}`}
+                    points={housePolygons[house]} 
+                    filter={isSelected ? "url(#d1BhavaSelectedGlow)" : "url(#d1BhavaTactileElevation)"}
+                    fill={isSelected ? `url(#d1BhavaSelectedGrad-${house})` : `url(#d1BhavaAmbientGrad-${house})`}
+                    className={`cursor-pointer transition-all duration-300 ease-out ${
+                      isSelected 
+                        ? 'stroke-[#ffe89e] stroke-[1.8] opacity-100' 
+                        : 'stroke-[#d4af37]/65 hover:stroke-[#fae19c] hover:stroke-[1.3] active:stroke-[#ffe89e] stroke-[0.8] opacity-90 hover:opacity-100'
+                    }`}
+                    onClick={() => handleSelectHouse(house)}
+                    onTouchEnd={() => handleSelectHouse(house)}
+                  >
+                    <title>{`${getLocalizedHouse(house, language).full} - ${t('kundli.houseSpeaks') || 'House Speaks'}`}</title>
+                  </polygon>
+
+                  {/* Thin Metallic-Gold Inner Rim */}
+                  <polygon
+                    id={`d1-bhava-inner-rim-${house}`}
+                    points={getHouseInsetPoints(house, 0.88)}
+                    className={`pointer-events-none fill-none transition-all duration-300 ${
+                      isSelected
+                        ? 'stroke-[#ffe89e] stroke-[0.8] opacity-90'
+                        : 'stroke-[#d4af37] stroke-[0.45] opacity-40 hover:opacity-75'
+                    }`}
+                  />
+                </g>
+              );
+            })}
+            
+            {/* Overlay the crisp traditional North Indian geometry lines with Rich Golden Stroke */}
+            <rect x="0" y="0" width="100" height="100" className="fill-none pointer-events-none stroke-[#d4af37]/60 stroke-[0.8]" />
+            <line x1="0" y1="0" x2="100" y2="100" className="pointer-events-none stroke-[#d4af37]/80 stroke-[0.7]" />
+            <line x1="100" y1="0" x2="0" y2="100" className="pointer-events-none stroke-[#d4af37]/80 stroke-[0.7]" />
+            <polygon points="50,0 100,50 50,100 0,50" className="fill-none pointer-events-none stroke-[#d4af37]/80 stroke-[0.7]" />
+
+            {/* Sacred Central Vedic Yantra Motif */}
+            <YantraMotif cx={50} cy={50} radius={16} opacity={0.25} />
+
+            {/* Discovery Guided Soft Golden Ripple Pulses on Bhava 1 (Lagna) */}
+            {showDiscoveryHint && (
+              <g className="pointer-events-none">
+                <circle
+                  cx={houseCentroids[1].x}
+                  cy={houseCentroids[1].y}
+                  r="5"
+                  className="fill-[#fae19c]/40 animate-ping"
+                  style={{ animationDuration: '1.8s' }}
+                />
+                <circle
+                  cx={houseCentroids[1].x}
+                  cy={houseCentroids[1].y}
+                  r="12"
+                  className="fill-none stroke-[#ffe89e] stroke-[0.8] opacity-80 animate-pulse"
+                />
+                <circle
+                  cx={houseCentroids[1].x}
+                  cy={houseCentroids[1].y}
+                  r="18"
+                  className="fill-none stroke-[#d4af37]/60 stroke-[0.5] opacity-50 animate-ping"
+                  style={{ animationDuration: '2.5s' }}
+                />
+              </g>
+            )}
+
+            {/* 3D Elevated Selection Soft Ripple Effect */}
+            {selectedHouse && houseCentroids[selectedHouse] && (
+              <g className="pointer-events-none">
+                <circle
+                  cx={houseCentroids[selectedHouse].x}
+                  cy={houseCentroids[selectedHouse].y}
+                  r="5"
+                  className="fill-[#fae19c]/40 animate-ping"
+                />
+                <circle
+                  cx={houseCentroids[selectedHouse].x}
+                  cy={houseCentroids[selectedHouse].y}
+                  r="11"
+                  className="fill-none stroke-[#fae19c] stroke-[0.8] opacity-80 animate-pulse"
+                />
+                <circle
+                  cx={houseCentroids[selectedHouse].x}
+                  cy={houseCentroids[selectedHouse].y}
+                  r="18"
+                  className="fill-none stroke-[#d4af37]/50 stroke-[0.5] opacity-50"
+                />
+              </g>
+            )}
+          </svg>
+          
+          {/* Placeholders for houses (1-12) */}
+          {calcResult.status === 'Ready' && calcResult.data ? (
+             validateChartData(calcResult.data) ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                   <div className="bg-red-950/80 border border-red-500 rounded p-3 text-center text-red-200">
+                     <p className="font-bold text-xs mb-1">Lagna Chart Data Error</p>
+                     <p className="text-[10px]">{validateChartData(calcResult.data)}</p>
+                   </div>
+                </div>
+             ) : (
+                <div className="absolute inset-0 text-[#d4af37]/90 font-medium text-xs pointer-events-none">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(house => {
+                     const houseData = calcResult.data!.d1Chart[house];
+                     const isLagna = house === 1;
+                     const isHouseSelected = selectedHouse === house;
+                     const occupyingPlanets = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'].filter(pName => getHouseForPlanet(pName, calcResult.data) === house);
+                     
+                     // Layout orientation based on triangle geometry to prevent diagonal/border collision
+                     const isHorizontal = house === 2 || house === 12 || house === 6 || house === 8;
+                     const isVertical = house === 3 || house === 11 || house === 5 || house === 9;
+
+                     return (
+                        <div 
+                          key={house} 
+                          className={`absolute ${housePositions[house]} flex flex-col items-center pointer-events-none p-0.5 text-center z-10 leading-tight transition-all duration-300 ${
+                            isHorizontal ? 'max-w-[86px]' : isVertical ? 'max-w-[46px]' : 'max-w-[80px]'
+                          } ${
+                            isHouseSelected ? 'scale-105 z-30 drop-shadow-[0_4px_14px_rgba(0,0,0,0.95)]' : 'hover:scale-[1.02]'
+                          }`}
+                        >
+                           {/* Bhava Badge with 44px+ Accessible Touch Target */}
+                           <div className="relative flex items-center justify-center mb-0.5 pointer-events-auto">
+                             <button
+                               id={`d1-bhava-badge-${house}`}
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 handleSelectHouse(house);
+                               }}
+                               className={`group relative cursor-pointer transition-all duration-200 px-2 py-0.5 rounded-full flex items-center justify-center gap-1 text-[9px] font-bold shadow-md select-none ${
+                                 isHouseSelected
+                                   ? 'bg-gradient-to-r from-[#ffe89e] via-[#d4af37] to-[#b3861d] text-black font-extrabold ring-2 ring-[#fae19c] shadow-[0_0_12px_rgba(250,225,156,0.9)] scale-105'
+                                   : 'bg-[#04150e]/95 text-emerald-300 border border-[#d4af37]/50 hover:border-[#fae19c] hover:bg-[#0c3523] hover:scale-105 active:scale-95'
+                               }`}
+                               title={`${getLocalizedHouse(house, language).full} (${language === 'hi' ? 'भाव वाणी' : 'House Speaks'})`}
+                               aria-label={`House ${house} ${language === 'hi' ? 'भाव वाणी' : 'House Speaks'}`}
+                             >
+                               {/* Touch Expander for 44px+ Touch Target without visual footprint bloat */}
+                               <span className="absolute -inset-2 pointer-events-auto" style={{ minWidth: '44px', minHeight: '44px' }} aria-hidden="true" />
+                               <span className="text-[8px] opacity-80 relative z-10">🏛️</span>
+                               <span className="relative z-10">{houseData.rashi}</span>
+                             </button>
+                           </div>
+                           
+                           {isLagna && (
+                             <span className="text-emerald-400 text-[9px] font-bold tracking-widest select-none -mt-0.5 mb-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                               {t('kundli.ascendant') || 'ल / Asc'}
+                             </span>
+                           )}
+                           
+                           {/* Collision-Safe Planet Badges Flow & Empty House Indicator */}
+                           <div className={`${
+                             isHorizontal 
+                               ? 'flex flex-row flex-wrap justify-center items-center gap-1 max-w-[84px]' 
+                               : isVertical 
+                                 ? 'flex flex-col items-center gap-1 max-w-[44px]' 
+                                 : 'flex flex-wrap justify-center items-center gap-1 max-w-[78px]'
+                           } text-[10px] leading-tight`}>
+                              {occupyingPlanets.map(pName => {
+                                 const p = calcResult.data!.planets[pName];
+                                 let suffix = '';
+                                 if (p.isRetrograde) suffix += '*';
+                                 if (p.isCombust) suffix += '^';
+                                 if (p.dignity === 'Exalted') suffix += '↑';
+                                 if (p.dignity === 'Debilitated') suffix += '↓';
+                                 const abbr = getPlanetAbbreviation(pName, language);
+                                 const isPlanetSelected = selectedPlanet === pName;
+                                 const isCrowded = occupyingPlanets.length >= 3;
+                                 const isMulti = occupyingPlanets.length >= 2;
+
+                                 return (
+                                   <div key={pName} className="relative flex items-center justify-center pointer-events-auto">
+                                     <button 
+                                       id={`d1-planet-btn-${pName}`}
+                                       className={`group relative cursor-pointer transition-all duration-200 flex items-center justify-center select-none rounded-md ${
+                                         isCrowded 
+                                           ? 'px-1 py-0.5 gap-0.5 text-[8.5px]' 
+                                           : isMulti 
+                                             ? 'px-1.5 py-0.5 gap-0.5 text-[9px]' 
+                                             : 'px-2 py-0.5 gap-1 text-[10px]'
+                                       } font-bold ${
+                                         isPlanetSelected
+                                           ? 'bg-gradient-to-b from-[#ffe89e] via-[#d4af37] to-[#aa831b] text-black font-extrabold shadow-[0_4px_14px_rgba(0,0,0,0.9),0_0_12px_rgba(212,175,55,0.95)] scale-110 border border-white/80 ring-2 ring-[#fae19c] z-30'
+                                           : 'bg-gradient-to-b from-[#181a13] to-[#0c1209] text-[#fae19c] border border-[#d4af37]/65 shadow-[0_2px_6px_rgba(0,0,0,0.7)] hover:border-[#fae19c] hover:bg-[#d4af37]/25 hover:scale-105 active:scale-95'
+                                       }`} 
+                                       onClick={(e) => { 
+                                         e.stopPropagation(); 
+                                         handleSelectPlanet(pName); 
+                                       }}
+                                       title={`${t('kundli.planetSpeaks') || 'Planet Speaks'}: ${getLocalizedPlanet(pName, language)} (${p.degree.toFixed(1)}°)`}
+                                       aria-label={`Planet ${pName} ${language === 'hi' ? 'ग्रह वाणी' : 'Planet Speaks'}`}
+                                     >
+                                       {/* Touch target hit area ensuring >= 44x44px for finger taps */}
+                                       <span className="absolute -inset-2 pointer-events-auto" style={{ minWidth: '44px', minHeight: '44px' }} aria-hidden="true" />
+                                       <span className="text-[7.5px] opacity-80 relative z-10">🪐</span>
+                                       <span className="font-black relative z-10 whitespace-nowrap">{abbr}{suffix}</span>
+                                       <span className={`font-mono text-[7.5px] relative z-10 whitespace-nowrap ${isPlanetSelected ? 'text-black font-bold' : 'text-gray-300'}`}>
+                                         {p.degree.toFixed(0)}°
+                                       </span>
+                                     </button>
+                                   </div>
+                                 );
+                              })}
+
+                              {/* Empty Bhava Animated 🔊 Speaker Trigger - Minimum 44x44px Touch Target */}
+                              {occupyingPlanets.length === 0 && (
+                                 <div className="relative flex items-center justify-center pointer-events-auto">
+                                   <button
+                                     id={`d1-empty-house-btn-${house}`}
+                                     className={`group relative cursor-pointer p-2 rounded-full transition-all duration-200 flex items-center justify-center select-none ${
+                                       isHouseSelected
+                                         ? 'bg-gradient-to-br from-[#fae19c] via-[#d4af37] to-[#aa831b] text-black shadow-[0_0_14px_rgba(212,175,55,0.95)] scale-110 ring-2 ring-[#fae19c]'
+                                         : 'bg-[#041a11]/95 border border-emerald-500/40 text-emerald-400 hover:text-[#fae19c] hover:border-[#d4af37] hover:bg-[#0c3523] hover:scale-105 active:scale-95 shadow-[0_2px_6px_rgba(0,0,0,0.6)]'
+                                     }`}
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       handleSelectHouse(house);
+                                     }}
+                                     title={`${getLocalizedHouse(house, language).full} (${language === 'hi' ? 'रिक्त भाव - वाणी सुनें' : 'Empty House - Speaks'})`}
+                                     aria-label={`Empty House ${house} ${language === 'hi' ? 'भाव वाणी' : 'House Speaks'}`}
+                                   >
+                                     <span className="absolute -inset-2 pointer-events-auto" style={{ minWidth: '44px', minHeight: '44px' }} aria-hidden="true" />
+                                     <span className="absolute inset-0 rounded-full border border-emerald-400/50 animate-ping pointer-events-none opacity-40" />
+                                     <Volume2 className="w-3.5 h-3.5 relative z-10 animate-pulse" />
+                                   </button>
+                                 </div>
+                              )}
+                           </div>
+                        </div>
+                     );
+                  })}
+                </div>
+             )
+          ) : (
+            <div className="absolute inset-0 text-[#d4af37]/50 font-medium text-xs pointer-events-none">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(house => (
+                <div key={house} className={`absolute ${housePositions[house]} flex flex-col items-center pointer-events-none p-2 text-center z-10 leading-tight`}>
+                  <span className={house === 1 ? 'text-lg' : 'text-sm'}>{house}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Universal Navagraha Bar - Tap any of the 9 Navagrahas to open Planet Speaks */}
+        {calcResult.status === 'Ready' && calcResult.data && (
+          <div className="w-full max-w-md mx-auto mb-8 bg-[#030a08]/80 border border-[#d4af37]/25 rounded-xl p-3 backdrop-blur-md">
+            <div className="flex justify-between items-center mb-2 px-1">
+              <span className="text-xs font-semibold text-[#d4af37] flex items-center gap-1.5">
+                <Volume2 className="w-3.5 h-3.5 text-[#d4af37]" />
+                {t('kundli.planetSpeaks') || 'Planet Speaks'} • {t('kundli.navagraha') || 'Navagrahas'}
+              </span>
+              <span className="text-[10px] text-gray-400">
+                {t('kundli.tapToListen') || 'Tap any planet to listen'}
+              </span>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+              {['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'].map(pName => {
+                const p = calcResult.data!.planets[pName];
+                const isSel = selectedPlanet === pName;
+                return (
+                  <button
+                    key={pName}
+                    onClick={() => setSelectedPlanet(pName)}
+                    className={`flex items-center justify-between px-2 py-1.5 rounded-lg border text-xs transition-all ${
+                      isSel 
+                        ? 'bg-[#d4af37] text-black border-[#d4af37] font-bold shadow-[0_0_10px_rgba(212,175,55,0.4)]'
+                        : 'bg-[#082218]/90 text-gray-200 border-[#d4af37]/20 hover:border-[#d4af37] hover:bg-[#d4af37]/15'
+                    }`}
+                  >
+                    <span className="truncate">{getLocalizedPlanet(pName, language)}</span>
+                    <span className="text-[9px] opacity-75 ml-1 font-mono">{p?.d1House || 1}H</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        </CarvedCard>
+
+        {/* Verified Yogas (Parashari) in Royal Carved Temple Card */}
+        {calcResult.status === 'Ready' && analysisResult && analysisResult.yogas && (
+          <CarvedCard className="w-full mb-4" cornerSize={26}>
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-[#d4af37] font-bold uppercase tracking-widest text-xs flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M12 2l3 6.5L22 9l-5 5.5L18.5 22 12 18.5 5.5 22 7 14.5 2 9l7-1.5z"></path></svg>
+                {t('kundli.verifiedYogas') || 'Verified Yogas'}
+              </h4>
+              <span className="text-[9px] px-2 py-1 bg-[#d4af37]/20 text-[#d4af37] rounded border border-[#d4af37]/30">
+                {t('kundli.parashariSystem') || 'Parashari'}
+              </span>
+            </div>
+            
+            <div className="space-y-3">
+              {analysisResult.yogas.filter(y => y.status === 'VERIFIED').map(yoga => (
+                 <div key={yoga.id} className="bg-black/50 border border-[#d4af37]/20 rounded p-3 text-[10px] text-gray-300 flex justify-between items-center hover:border-[#d4af37]/40 transition-colors">
+                    <div>
+                      <span className="text-[#d4af37] font-bold block text-sm tracking-wide">
+                        {getLocalizedYogaName(yoga.name, language)}
+                      </span>
+                      <span className="text-gray-400 mt-1 block tracking-wider">
+                        {t('kundli.planetsLabel') || 'Planets'}: <span className="text-emerald-400">{yoga.planets.map((p: string) => getLocalizedPlanet(p, language)).join(', ')}</span>
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => setShowYogaWhy(yoga)}
+                      className="px-3 py-1 border border-[#d4af37]/40 text-[#d4af37] rounded uppercase tracking-wider text-[9px] hover:bg-[#d4af37]/20 transition-colors shrink-0 ml-4"
+                    >
+                      {t('kundli.why') || 'Why?'}
+                    </button>
+                 </div>
+              ))}
+              
+              {analysisResult.yogas.filter(y => y.status === 'VERIFIED').length === 0 && (
+                 <div className="text-gray-500 italic text-xs text-center p-4 border border-gray-800 rounded bg-black/30">
+                   {t('kundli.noYogasDetected') || 'No verifiable classical yogas detected in current calculation dataset.'}
+                 </div>
+              )}
+            </div>
+          </CarvedCard>
+        )}
+
+        {/* WhyPanel for Yoga */}
+        {showYogaWhy && yogaAudit && <WhyPanel audit={yogaAudit} onClose={() => setShowYogaWhy(null)} />}
+
+        
+        {/* Foundation Demo: Jaimini System in Royal Carved Temple Card */}
+        {calcResult.status === 'Ready' && jaiminiResult && jaiminiResult.status === 'AVAILABLE' && (
+          <CarvedCard className="w-full mb-4" cornerSize={24}>
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-[#d4af37] font-bold uppercase tracking-widest text-xs flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+                {t('kundli.jaiminiCharaKarakas') || 'Jaimini Chara Karakas'}
+              </h4>
+              <span className="text-[9px] px-2 py-1 bg-emerald-900/40 text-emerald-400 rounded border border-emerald-800/50">
+                {t('kundli.foundationEngine') || 'Foundation Engine'}
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {jaiminiResult.charaKarakas.map(ck => (
+                 <div key={ck.karaka} className="bg-black/50 border border-gray-800 rounded p-2 text-center flex flex-col items-center">
+                    <span className="text-[#d4af37] font-bold text-xs">{getLocalizedPlanet(ck.planet, language)}</span>
+                    <span className="text-gray-400 text-[9px] uppercase tracking-widest mt-0.5">{getLocalizedKaraka(ck.karaka, language)}</span>
+                    <span className="text-gray-500 text-[10px] mt-1">{ck.longitudeInSign.toFixed(2)}°</span>
+                 </div>
+              ))}
+            </div>
+          </CarvedCard>
+        )}
+
+        {/* Foundation Demo: Jaimini Rashi Drishti (Aspects) in Royal Carved Temple Card */}
+        {calcResult.status === 'Ready' && jaiminiResult && jaiminiResult.status === 'AVAILABLE' && (
+          <CarvedCard className="w-full mb-4" cornerSize={24}>
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-[#d4af37] font-bold uppercase tracking-widest text-xs flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><line x1="12" y1="22" x2="12" y2="12"></line></svg>
+                {t('kundli.jaiminiRashiDrishti') || 'Jaimini Rashi Drishti'}
+              </h4>
+              <span className="text-[9px] px-2 py-1 bg-emerald-900/40 text-emerald-400 rounded border border-emerald-800/50">JAIMINI</span>
+            </div>
+            
+            <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-2">
+              {jaiminiResult.rashiDrishti.filter(rd => rd.sourcePlanets.length > 0 && rd.targetPlanets.length > 0).map(rd => (
+                 <div key={rd.ruleId} className="bg-black/50 border border-gray-800 rounded p-2 text-xs flex justify-between items-center">
+                    <div>
+                      <span className="text-[#d4af37] font-medium">
+                        {rd.sourcePlanets.map((p: string) => getLocalizedPlanet(p, language)).join(', ')} ({t('kundli.moonSign') || 'Sign'} {getLocalizedRashi(rd.sourceSign, language)})
+                      </span>
+                      <span className="text-gray-500 mx-2">{t('kundli.aspects') || 'aspects'}</span>
+                      <span className="text-emerald-400 font-medium">
+                        {rd.targetPlanets.map((p: string) => getLocalizedPlanet(p, language)).join(', ')} ({t('kundli.moonSign') || 'Sign'} {getLocalizedRashi(rd.targetSign, language)})
+                      </span>
+                    </div>
+                 </div>
+              ))}
+              {jaiminiResult.rashiDrishti.filter(rd => rd.sourcePlanets.length > 0 && rd.targetPlanets.length > 0).length === 0 && (
+                <div className="text-gray-500 italic text-xs text-center p-2">
+                  {t('kundli.noRashiDrishti') || 'No active Rashi Drishti relationships detected.'}
+                </div>
+              )}
+            </div>
+          </CarvedCard>
+        )}
+
+        {/* Ashtakavarga (अष्टकवर्ग) - Royal Classical Module */}
+        {calcResult.status === 'Ready' && calcResult.data && (
+          <CarvedCard className="w-full mb-6" cornerSize={32}>
+            <AshtakavargaView data={calcResult.data} />
+          </CarvedCard>
+        )}
+
+        {/* Shadbala & Bhava Bala (षड्बल और भाव बल) - Royal Strength Module */}
+        {calcResult.status === 'Ready' && calcResult.data && (
+          <CarvedCard className="w-full mb-6" cornerSize={32}>
+            <ShadbalaView data={calcResult.data} />
+          </CarvedCard>
+        )}
+
+        {/* Gochara Vedha & Sade Sati (गोचर-वेध और साढ़ेसाती) - Real-Time Transit Module */}
+        {calcResult.status === 'Ready' && calcResult.data && (
+          <CarvedCard className="w-full mb-6" cornerSize={32}>
+            <GocharVedhaView natalData={calcResult.data} transitResult={transitResult} />
+          </CarvedCard>
+        )}
+
+        {/* Classical Yogas & Doshas (शास्त्रीय योग और दोष) - Royal Wisdom Module */}
+        {calcResult.status === 'Ready' && calcResult.data && (
+          <CarvedCard className="w-full mb-6" cornerSize={32}>
+            <YogaDoshaView data={calcResult.data} />
+          </CarvedCard>
+        )}
+
+        {/* Special Lagnas & Sahams (विशेष लग्न और सहम) - Arabic & Mathematical Points */}
+        {calcResult.status === 'Ready' && calcResult.data && (
+          <CarvedCard className="w-full mb-6" cornerSize={32}>
+            <SpecialPointsView data={calcResult.data} />
+          </CarvedCard>
+        )}
+
+        {/* Yogini Dasha (योगिनी दशा) - Classical 36-Year Cycle */}
+        {calcResult.status === 'Ready' && calcResult.data && (
+          <CarvedCard className="w-full mb-6" cornerSize={32}>
+            <YoginiDashaView data={calcResult.data} />
+          </CarvedCard>
+        )}
+
+        {/* Ashtottari Dasha (अष्टोत्तरी दशा) - Classical 108-Year Cycle */}
+        {calcResult.status === 'Ready' && calcResult.data && (
+          <CarvedCard className="w-full mb-6" cornerSize={32}>
+            <AshtottariDashaView data={calcResult.data} />
+          </CarvedCard>
+        )}
+
+        {/* Foundation Demo: KP Jyotish in Royal Carved Temple Card */}
+        {calcResult.status === 'Ready' && kpResult && (
+          <CarvedCard id="kundli-kp-section" className="w-full mb-4 scroll-mt-20" cornerSize={26}>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
+              <div className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-[#d4af37]"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                <h4 className="text-[#d4af37] font-bold uppercase tracking-widest text-xs">
+                  {language === 'hi' ? 'केपी ज्योतिष (कृष्णमूर्ति पद्धति)' : (t('kundli.kpSubLords') || 'KP Jyotish Sub-Lords')}
+                </h4>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] px-2 py-1 bg-emerald-900/40 text-emerald-400 rounded border border-emerald-800/50 uppercase font-semibold">
+                  {t('kundli.kpSystem') || 'KP SYSTEM'}
+                </span>
+              </div>
+            </div>
+
+            {/* KP Sub-Tabs Navigation */}
+            <div className="flex flex-wrap gap-2 mb-4 border-b border-emerald-900/40 pb-3">
+              <button
+                onClick={() => setKpActiveTab('planets')}
+                className={`min-h-[44px] min-w-[44px] px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer active:scale-95 ${
+                  kpActiveTab === 'planets'
+                    ? 'bg-[#d4af37]/20 border-[#d4af37] text-[#d4af37] shadow-[0_0_10px_rgba(212,175,55,0.25)]'
+                    : 'bg-black/40 border-gray-800 text-gray-400 hover:text-gray-200 hover:border-gray-700'
+                }`}
+              >
+                {language === 'hi' ? 'ग्रह व उप-स्वामी (9)' : 'Planets & Sub-Lords (9)'}
+              </button>
+              <button
+                onClick={() => setKpActiveTab('cusps')}
+                className={`min-h-[44px] min-w-[44px] px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer active:scale-95 ${
+                  kpActiveTab === 'cusps'
+                    ? 'bg-[#d4af37]/20 border-[#d4af37] text-[#d4af37] shadow-[0_0_10px_rgba(212,175,55,0.25)]'
+                    : 'bg-black/40 border-gray-800 text-gray-400 hover:text-gray-200 hover:border-gray-700'
+                }`}
+              >
+                {language === 'hi' ? '12 भाव कस्प्स' : '12 Placidus Cusps'}
+              </button>
+              <button
+                onClick={() => setKpActiveTab('significators')}
+                className={`min-h-[44px] min-w-[44px] px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer active:scale-95 ${
+                  kpActiveTab === 'significators'
+                    ? 'bg-[#d4af37]/20 border-[#d4af37] text-[#d4af37] shadow-[0_0_10px_rgba(212,175,55,0.25)]'
+                    : 'bg-black/40 border-gray-800 text-gray-400 hover:text-gray-200 hover:border-gray-700'
+                }`}
+              >
+                {language === 'hi' ? '4-स्तरीय कारकत्व' : '4-Fold Significators'}
+              </button>
+              <button
+                onClick={() => setKpActiveTab('ruling_planets')}
+                className={`min-h-[44px] min-w-[44px] px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer active:scale-95 ${
+                  kpActiveTab === 'ruling_planets'
+                    ? 'bg-[#d4af37]/20 border-[#d4af37] text-[#d4af37] shadow-[0_0_10px_rgba(212,175,55,0.25)]'
+                    : 'bg-black/40 border-gray-800 text-gray-400 hover:text-gray-200 hover:border-gray-700'
+                }`}
+              >
+                {language === 'hi' ? 'रूलिंग प्लैनेट्स (RP)' : 'Ruling Planets (RP)'}
+              </button>
+              <button
+                onClick={() => setKpActiveTab('judgment')}
+                className={`min-h-[44px] min-w-[44px] px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer active:scale-95 ${
+                  kpActiveTab === 'judgment'
+                    ? 'bg-[#d4af37]/20 border-[#d4af37] text-[#d4af37] shadow-[0_0_10px_rgba(212,175,55,0.25)]'
+                    : 'bg-black/40 border-gray-800 text-gray-400 hover:text-gray-200 hover:border-gray-700'
+                }`}
+              >
+                {language === 'hi' ? 'प्रश्न निर्णय (Event)' : 'Question Judgment'}
+              </button>
+            </div>
+            
+            {kpResult.warnings.length > 0 && (
+              <div className="mb-3 p-2 border border-red-900/50 bg-red-900/20 text-red-400 text-[10px] rounded">
+                {kpResult.warnings[0]}
+              </div>
+            )}
+            
+            {kpResult.availability === 'PARTIAL' && (
+              <div>
+                {/* 1. Planets & Sub-Lords */}
+                {kpActiveTab === 'planets' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                    {kpResult.planetData.map(pd => (
+                      <button
+                        key={pd.planet}
+                        onClick={() => setSelectedKpDetail({
+                          type: 'planet',
+                          data: pd,
+                          significator: kpResult.significators?.byPlanet[pd.planet]
+                        })}
+                        className="min-h-[44px] bg-black/50 border border-gray-800 hover:border-[#d4af37]/70 active:scale-95 transition-all duration-200 rounded-xl p-3 flex flex-col justify-between text-left group cursor-pointer hover:shadow-[0_0_15px_rgba(212,175,55,0.2)]"
+                      >
+                        <div className="flex justify-between items-center mb-1.5">
+                          <span className="text-[#d4af37] font-bold text-xs group-hover:text-amber-300">
+                            {getLocalizedPlanet(pd.planet, language)}
+                          </span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-800/60">
+                            {language === 'hi' ? `KP भाव ${pd.house}` : `KP H${pd.house}`}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-[9px] text-gray-400 mb-0.5">
+                          <span>{t('kundli.signLordLabel') || 'Sign Lord'}:</span>
+                          <span className="text-gray-200">{getLocalizedPlanet(pd.rashiLord, language)}</span>
+                        </div>
+                        <div className="flex justify-between text-[9px] text-gray-400 mb-1">
+                          <span>{t('kundli.nakLordLabel') || 'Nak Lord'}:</span>
+                          <span className="text-gray-200">{getLocalizedPlanet(pd.nakshatraLord, language)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] pt-1.5 border-t border-gray-800/80">
+                          <span className="text-gray-400 font-semibold">{t('kundli.subLordLabel') || 'Sub Lord'}:</span>
+                          <span className="text-emerald-400 font-bold group-hover:text-emerald-300">{getLocalizedPlanet(pd.subLord, language)}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* 2. 12 Placidus Cusps */}
+                {kpActiveTab === 'cusps' && (
+                  <div>
+                    {kpResult.cuspData && kpResult.cuspData.length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+                        {kpResult.cuspData.map(cd => (
+                          <button
+                            key={cd.house}
+                            onClick={() => setSelectedKpDetail({
+                              type: 'cusp',
+                              data: cd,
+                              significator: kpResult.significators?.byHouse[cd.house]
+                            })}
+                            className="min-h-[44px] bg-black/50 border border-gray-800 hover:border-[#d4af37]/70 active:scale-95 transition-all duration-200 rounded-xl p-3 flex flex-col justify-between text-left group cursor-pointer hover:shadow-[0_0_15px_rgba(212,175,55,0.2)]"
+                          >
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-[#d4af37] font-bold text-xs group-hover:text-amber-300">
+                                {language === 'hi' ? `कस्प ${cd.house}` : `Cusp ${cd.house}`}
+                              </span>
+                              <span className="text-[10px] text-gray-400">
+                                {cd.degree.toFixed(1)}°
+                              </span>
+                            </div>
+                            <div className="text-[9px] text-gray-400 mb-0.5 truncate">
+                              {getLocalizedRashi(cd.rashi, language)} ({getLocalizedPlanet(cd.rashiLord, language)})
+                            </div>
+                            <div className="flex justify-between text-[9px] text-gray-400 mb-1">
+                              <span>{language === 'hi' ? 'नक्षत्र' : 'Star'}:</span>
+                              <span className="text-gray-200">{getLocalizedPlanet(cd.nakshatraLord, language)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-[10px] pt-1.5 border-t border-gray-800/80">
+                              <span className="text-gray-400 font-semibold">{language === 'hi' ? 'उप-स्वामी' : 'Sub'}:</span>
+                              <span className="text-emerald-400 font-bold">{getLocalizedPlanet(cd.subLord, language)}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-gray-500 italic text-xs text-center p-4">
+                        {language === 'hi' ? 'इस अनुभाग का विस्तृत डेटा उपलब्ध नहीं है।' : 'Detailed data for this section is not available.'}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 3. 4-Fold Significators */}
+                {kpActiveTab === 'significators' && (
+                  <div className="space-y-4">
+                    {kpResult.significators ? (
+                      <>
+                        {/* By Planet */}
+                        <div>
+                          <h5 className="text-xs font-bold text-[#d4af37] mb-2 uppercase tracking-wider">
+                            {language === 'hi' ? 'ग्रह कारकत्व (Significators by Planet)' : 'Significators by Planet'}
+                          </h5>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                            {Object.values(kpResult.significators.byPlanet).map(sig => (
+                              <button
+                                key={sig.planet}
+                                onClick={() => setSelectedKpDetail({
+                                  type: 'planet_significator',
+                                  data: sig,
+                                  planetData: kpResult.planetData.find(p => p.planet === sig.planet)
+                                })}
+                                className="min-h-[44px] bg-black/50 border border-gray-800 hover:border-[#d4af37]/70 active:scale-95 transition-all duration-200 rounded-xl p-2.5 flex flex-col justify-between text-left group cursor-pointer hover:shadow-[0_0_15px_rgba(212,175,55,0.2)]"
+                              >
+                                <div className="flex justify-between items-center mb-1">
+                                  <span className="text-xs font-bold text-[#d4af37] group-hover:text-amber-300">
+                                    {getLocalizedPlanet(sig.planet, language)}
+                                  </span>
+                                  <span className="text-[10px] text-emerald-400 font-bold">
+                                    {sig.allSignifiedHouses.length > 0 ? `भाव: ${sig.allSignifiedHouses.join(', ')}` : '—'}
+                                  </span>
+                                </div>
+                                <div className="text-[9px] text-gray-400">
+                                  A: {sig.levelA.join(',') || '—'} | B: {sig.levelB.join(',') || '—'} | C: {sig.levelC.join(',') || '—'} | D: {sig.levelD.join(',') || '—'}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* By House */}
+                        <div>
+                          <h5 className="text-xs font-bold text-[#d4af37] mb-2 uppercase tracking-wider">
+                            {language === 'hi' ? 'भाव कारकत्व (Significators by House)' : 'Significators by House'}
+                          </h5>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                            {Object.values(kpResult.significators.byHouse).map(hSig => (
+                              <button
+                                key={hSig.house}
+                                onClick={() => setSelectedKpDetail({
+                                  type: 'house_significator',
+                                  data: hSig,
+                                  cuspData: kpResult.cuspData.find(c => c.house === hSig.house)
+                                })}
+                                className="min-h-[44px] bg-black/50 border border-gray-800 hover:border-[#d4af37]/70 active:scale-95 transition-all duration-200 rounded-xl p-2.5 flex flex-col justify-between text-left group cursor-pointer hover:shadow-[0_0_15px_rgba(212,175,55,0.2)]"
+                              >
+                                <div className="flex justify-between items-center mb-1">
+                                  <span className="text-xs font-bold text-[#d4af37] group-hover:text-amber-300">
+                                    {language === 'hi' ? `भाव ${hSig.house}` : `House ${hSig.house}`}
+                                  </span>
+                                </div>
+                                <div className="text-[9px] text-emerald-400 font-medium truncate">
+                                  {hSig.allSignificatorPlanets.length > 0
+                                    ? hSig.allSignificatorPlanets.map(p => getLocalizedPlanet(p, language)).join(', ')
+                                    : '—'}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-gray-500 italic text-xs text-center p-4">
+                        {language === 'hi' ? 'इस अनुभाग का विस्तृत डेटा उपलब्ध नहीं है।' : 'Detailed data for this section is not available.'}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 4. Ruling Planets (RP) */}
+                {kpActiveTab === 'ruling_planets' && (
+                  <div className="space-y-4">
+                    {kpResult.rulingPlanets ? (
+                      <>
+                        {/* Summary Banner */}
+                        <div className="bg-[#0a2318]/80 border border-[#d4af37]/40 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+                          <div>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
+                              {language === 'hi' ? 'प्राथमिक रूलिंग प्लैनेट्स (Primary RPs)' : 'Primary Ruling Planets (5 RPs)'}
+                            </span>
+                            <div className="flex flex-wrap gap-1.5 mt-1">
+                              {kpResult.rulingPlanets.primaryList.map(p => (
+                                <span
+                                  key={p}
+                                  className="px-2.5 py-0.5 rounded-full bg-[#d4af37]/20 text-[#d4af37] font-bold text-xs border border-[#d4af37]/40"
+                                >
+                                  {getLocalizedPlanet(p, language)}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="sm:text-right">
+                            <span className="text-[10px] text-gray-400 block">
+                              {language === 'hi' ? 'दिन स्वामी (Day Lord)' : 'Day Lord'}
+                            </span>
+                            <span className="text-xs font-bold text-emerald-400">
+                              {getLocalizedPlanet(kpResult.rulingPlanets.dayLord.dayLord, language)} ({kpResult.rulingPlanets.dayLord.dayName})
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* 3 Pillars: Lagna, Moon, Day Lord */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          {/* Lagna Pillar */}
+                          <div className="bg-black/50 border border-gray-800 rounded-xl p-3">
+                            <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-gray-800">
+                              <span className="text-xs font-bold text-[#d4af37] uppercase tracking-wider">
+                                {language === 'hi' ? '1. लग्न (Lagna)' : '1. Lagna (Ascendant)'}
+                              </span>
+                              <span className="text-[10px] text-gray-400">
+                                {kpResult.rulingPlanets.lagna.degree.toFixed(2)}°
+                              </span>
+                            </div>
+                            <div className="space-y-1.5 text-xs">
+                              <div className="flex justify-between items-center bg-[#0a1812] px-2 py-1.5 rounded">
+                                <span className="text-gray-400 text-[11px]">{language === 'hi' ? 'राशि स्वामी' : 'Sign Lord'}</span>
+                                <span className="font-semibold text-gray-200">
+                                  {getLocalizedPlanet(kpResult.rulingPlanets.lagna.signLord, language)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center bg-[#0a1812] px-2 py-1.5 rounded">
+                                <span className="text-gray-400 text-[11px]">{language === 'hi' ? 'नक्षत्र स्वामी' : 'Star Lord'}</span>
+                                <span className="font-semibold text-[#d4af37]">
+                                  {getLocalizedPlanet(kpResult.rulingPlanets.lagna.starLord, language)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center bg-[#082218] px-2 py-1.5 rounded border border-[#d4af37]/30">
+                                <span className="text-[#d4af37] font-semibold text-[11px]">{language === 'hi' ? 'उप-स्वामी' : 'Sub Lord'}</span>
+                                <span className="font-bold text-emerald-400">
+                                  {getLocalizedPlanet(kpResult.rulingPlanets.lagna.subLord, language)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Moon Pillar */}
+                          <div className="bg-black/50 border border-gray-800 rounded-xl p-3">
+                            <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-gray-800">
+                              <span className="text-xs font-bold text-[#d4af37] uppercase tracking-wider">
+                                {language === 'hi' ? '2. चंद्र (Moon)' : '2. Moon'}
+                              </span>
+                              <span className="text-[10px] text-gray-400">
+                                {kpResult.rulingPlanets.moon.degree.toFixed(2)}°
+                              </span>
+                            </div>
+                            <div className="space-y-1.5 text-xs">
+                              <div className="flex justify-between items-center bg-[#0a1812] px-2 py-1.5 rounded">
+                                <span className="text-gray-400 text-[11px]">{language === 'hi' ? 'राशि स्वामी' : 'Sign Lord'}</span>
+                                <span className="font-semibold text-gray-200">
+                                  {getLocalizedPlanet(kpResult.rulingPlanets.moon.signLord, language)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center bg-[#0a1812] px-2 py-1.5 rounded">
+                                <span className="text-gray-400 text-[11px]">{language === 'hi' ? 'नक्षत्र स्वामी' : 'Star Lord'}</span>
+                                <span className="font-semibold text-[#d4af37]">
+                                  {getLocalizedPlanet(kpResult.rulingPlanets.moon.starLord, language)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center bg-[#082218] px-2 py-1.5 rounded border border-[#d4af37]/30">
+                                <span className="text-[#d4af37] font-semibold text-[11px]">{language === 'hi' ? 'उप-स्वामी' : 'Sub Lord'}</span>
+                                <span className="font-bold text-emerald-400">
+                                  {getLocalizedPlanet(kpResult.rulingPlanets.moon.subLord, language)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Day Lord Pillar */}
+                          <div className="bg-black/50 border border-gray-800 rounded-xl p-3">
+                            <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-gray-800">
+                              <span className="text-xs font-bold text-[#d4af37] uppercase tracking-wider">
+                                {language === 'hi' ? '3. दिन स्वामी (Day Lord)' : '3. Day Lord'}
+                              </span>
+                              <span className="text-[10px] text-gray-400">
+                                {kpResult.rulingPlanets.dayLord.dayName}
+                              </span>
+                            </div>
+                            <div className="space-y-1.5 text-xs">
+                              <div className="flex justify-between items-center bg-[#082218] px-2 py-2 rounded border border-[#d4af37]/30">
+                                <span className="text-gray-400 text-[11px]">{language === 'hi' ? 'दिन का स्वामी ग्रह' : 'Vedic Day Lord'}</span>
+                                <span className="font-bold text-emerald-400 text-sm">
+                                  {getLocalizedPlanet(kpResult.rulingPlanets.dayLord.dayLord, language)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center bg-[#0a1812] px-2 py-1.5 rounded">
+                                <span className="text-gray-400 text-[11px]">{language === 'hi' ? 'तिथि / वार' : 'Weekday'}</span>
+                                <span className="font-semibold text-gray-200">
+                                  {kpResult.rulingPlanets.dayLord.dayName}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center bg-[#0a1812] px-2 py-1.5 rounded">
+                                <span className="text-gray-400 text-[11px]">{language === 'hi' ? 'दिनांक' : 'Date'}</span>
+                                <span className="text-gray-300 text-[11px]">
+                                  {kpResult.rulingPlanets.dayLord.dateString}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* RP Detailed Hierarchy (Clickable cards to open KPDetailModal) */}
+                        <div>
+                          <h5 className="text-xs font-bold text-[#d4af37] mb-2 uppercase tracking-wider">
+                            {language === 'hi' ? 'रूलिंग प्लैनेट्स वरीयता क्रम (RP Hierarchy - टच करें)' : 'KP Ruling Planets Hierarchy (Tap to Inspect)'}
+                          </h5>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                            {kpResult.rulingPlanets.details.map(item => (
+                              <button
+                                key={`${item.priority}-${item.planet}-${item.role}`}
+                                onClick={() => setSelectedKpDetail({
+                                  type: 'ruling_planet',
+                                  data: item,
+                                  planetData: kpResult.planetData.find(p => p.planet === item.planet),
+                                  significator: kpResult.significators?.byPlanet[item.planet]
+                                })}
+                                className="min-h-[44px] bg-black/50 border border-gray-800 hover:border-[#d4af37]/70 active:scale-95 transition-all duration-200 rounded-xl p-3 flex flex-col justify-between text-left group cursor-pointer hover:shadow-[0_0_15px_rgba(212,175,55,0.2)]"
+                              >
+                                <div className="flex justify-between items-center w-full mb-1.5">
+                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#d4af37]/20 text-[#d4af37] font-bold border border-[#d4af37]/40">
+                                    #{item.priority}
+                                  </span>
+                                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
+                                    item.isRetrograde ? 'bg-amber-950/60 text-amber-300 border border-amber-800/50' : 'bg-emerald-950/60 text-emerald-400'
+                                  }`}>
+                                    {item.isRetrograde ? (language === 'hi' ? 'वक्री (R)' : 'Retro') : (language === 'hi' ? 'मार्गी' : 'Direct')}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between items-baseline mb-1">
+                                  <span className="text-sm font-bold text-[#d4af37] group-hover:text-amber-300">
+                                    {getLocalizedPlanet(item.planet, language)}
+                                  </span>
+                                  <span className="text-[10px] text-gray-400">
+                                    {item.source}
+                                  </span>
+                                </div>
+                                <div className="text-[10px] text-emerald-400 font-medium">
+                                  {item.label}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Nodal Representatives */}
+                        {kpResult.rulingPlanets.nodeRepresentations.length > 0 && (
+                          <div className="bg-black/40 border border-emerald-900/30 rounded-xl p-3">
+                            <h5 className="text-[11px] font-bold text-[#d4af37] mb-2 uppercase tracking-wider">
+                              {language === 'hi' ? 'राहु / केतु प्रतिनिधित्व (Nodal Agents in RP)' : 'Rahu / Ketu Representation in RP'}
+                            </h5>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                              {kpResult.rulingPlanets.nodeRepresentations.map(node => (
+                                <div
+                                  key={node.node}
+                                  className="bg-[#0a1812] border border-gray-800 rounded-lg p-2.5 flex justify-between items-center"
+                                >
+                                  <div>
+                                    <span className="font-bold text-[#d4af37]">
+                                      {getLocalizedPlanet(node.node, language)}
+                                    </span>
+                                    <span className="text-[10px] text-gray-400 block">
+                                      {language === 'hi' ? 'राशि स्वामी:' : 'Sign Lord:'} {getLocalizedPlanet(node.signLord, language)} | {language === 'hi' ? 'नक्षत्र:' : 'Star:'} {getLocalizedPlanet(node.starLord, language)}
+                                    </span>
+                                  </div>
+                                  <span className={`text-[10px] px-2 py-0.5 rounded font-semibold ${
+                                    node.representsRulingPlanet
+                                      ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-700/50'
+                                      : 'bg-gray-900 text-gray-500'
+                                  }`}>
+                                    {node.representsRulingPlanet
+                                      ? (language === 'hi' ? 'सक्रिय RP' : 'Active RP Agent')
+                                      : (language === 'hi' ? 'सामान्य' : 'Neutral')}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="text-gray-500 italic text-xs text-center p-4">
+                        {language === 'hi' ? 'इस अनुभाग का विस्तृत डेटा उपलब्ध नहीं है।' : 'Detailed data for this section is not available.'}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 5. KP Question & Event Judgment (Phase 3B & 3C) */}
+                {kpActiveTab === 'judgment' && (
+                  <KPQuestionJudgment
+                    kpResult={kpResult}
+                    masterData={calcResult.data}
+                    language={language}
+                    birthLocation={profile?.place || calcResult.data?.birthProfile?.place || 'India'}
+                    onSelectKpDetail={setSelectedKpDetail}
+                    onOpenPlanetStory={planetKey => setSelectedPlanet(planetKey)}
+                  />
+                )}
+              </div>
+            )}
+            {kpResult.availability === 'NOT_AVAILABLE' && (
+              <div className="text-gray-500 italic text-xs text-center p-2">
+                {language === 'hi' ? 'इस अनुभाग का विस्तृत डेटा उपलब्ध नहीं है।' : (t('kundli.notAvailable') || 'Calculation not available for current dataset.')}
+              </div>
+            )}
+          </CarvedCard>
+        )}
+
+        {/* Foundation Demo: Lal Kitab in Royal Carved Temple Card */}
+        {calcResult.status === 'Ready' && lalKitabResult && (
+          <CarvedCard className="w-full mb-4" cornerSize={24}>
+            <div className="flex justify-between items-center mb-3">
+              <h4 className="text-[#d4af37] font-bold uppercase tracking-widest text-[11px] flex items-center">
+                {t('kundli.lalKitabFixedHouses') || 'Lal Kitab Fixed Houses (Kaal Purush)'}
+              </h4>
+              <span className="text-[9px] px-2 py-1 bg-emerald-900/40 text-emerald-400 rounded border border-emerald-800/50">
+                {t('kundli.lalKitab') || 'LAL KITAB'}
+              </span>
+            </div>
+            
+            {lalKitabResult.status === 'AVAILABLE' ? (
+              <div className="flex flex-wrap gap-2">
+                {lalKitabResult.planetsInFixedHouses.map(p => (
+                  <span key={p.planet} className="px-2 py-1 bg-black/40 border border-gray-700 rounded text-[10px] text-gray-300">
+                    <span className="text-[#d4af37]">{getLocalizedPlanet(p.planet, language)}</span> {t('kundli.inFixedHouse') || 'in Fixed House'} <span className="text-emerald-400">{getLocalizedHouse(p.fixedHouse, language).label}</span>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <div className="text-gray-500 italic text-xs text-center p-2">
+                {t('kundli.notAvailable') || 'Calculation not available for current dataset.'}
+              </div>
+            )}
+          </CarvedCard>
+        )}
+
+        
+        {/* Phase 14 Deep Intelligence: Jaimini Arudha & Karakamsha in Royal Carved Temple Card */}
+        {calcResult.status === 'Ready' && jaiminiResult && jaiminiResult.status === 'AVAILABLE' && jaiminiResult.arudhas && (
+          <CarvedCard className="w-full mb-4" cornerSize={24}>
+            <div className="flex justify-between items-center mb-3">
+              <h4 className="text-[#d4af37] font-bold uppercase tracking-widest text-[11px] flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M12 2l3 6.5L22 9l-5 5.5L18.5 22 12 18.5 5.5 22 7 14.5 2 9l7-1.5z"></path></svg>
+                {t('kundli.jaiminiIntelligence') || 'Jaimini Intelligence'}
+              </h4>
+              <span className="text-[9px] px-2 py-1 bg-emerald-900/40 text-emerald-400 rounded border border-emerald-800/50">JAIMINI</span>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {jaiminiResult.arudhas.map(ar => (
+                <div key={ar.name} className="bg-black/50 border border-gray-800 rounded p-2 flex flex-col items-center">
+                  <span className="text-[#d4af37] font-bold text-xs text-center">{ar.name}</span>
+                  <span className="text-gray-400 text-[10px] mt-1">{getLocalizedHouse(ar.house, language).label}</span>
+                  <span className="text-gray-500 text-[10px]">{t('kundli.moonSign') || 'Sign'} {getLocalizedRashi(ar.sign, language)}</span>
+                </div>
+              ))}
+              {jaiminiResult.karakamshaSign && (
+                <div className="bg-black/50 border border-gray-800 rounded p-2 flex flex-col items-center">
+                  <span className="text-[#d4af37] font-bold text-xs text-center">{t('kundli.karakamsha') || 'Karakamsha'}</span>
+                  <span className="text-gray-400 text-[10px] mt-1">{t('kundli.d9Sign') || 'D9 Sign'}</span>
+                  <span className="text-gray-500 text-[10px]">{getLocalizedRashi(jaiminiResult.karakamshaSign, language)}</span>
+                </div>
+              )}
+            </div>
+          </CarvedCard>
+        )}
+
+        {/* Phase 14 Deep Intelligence: Varga (Divisional) Foundation in Royal Carved Temple Card */}
+        {calcResult.status === 'Ready' && vargaResult && vargaResult.status === 'AVAILABLE' && (
+          <CarvedCard className="w-full mb-4" cornerSize={26}>
+            <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-2 mb-3 min-w-0">
+              <h4 className="text-[#d4af37] font-bold uppercase tracking-widest text-[11px] flex items-center truncate">
+                {t('kundli.vargaAnalysis') || 'Varga (Divisional) Analysis Foundation'}
+              </h4>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => setSelectedVargaChart('D9')}
+                  className="text-[10px] px-2.5 py-1 bg-gradient-to-r from-[#d4af37] to-[#b89528] text-black font-bold rounded hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_10px_rgba(212,175,55,0.3)] cursor-pointer"
+                >
+                  {language === 'hi' ? 'वर्ग चक्र देखें' : 'View Varga Charts'}
+                </button>
+                <span className="text-[9px] px-2 py-1 bg-emerald-900/40 text-emerald-400 rounded border border-emerald-800/50">
+                  {t('kundli.vargaEngine') || 'VARGA ENGINE'}
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Shodashavarga Selector Row */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-3 border-b border-[#d4af37]/20 custom-scrollbar">
+              <span className="text-[10px] text-gray-400 shrink-0 font-medium">{language === 'hi' ? 'षोडशवर्ग:' : 'Vargas:'}</span>
+              {SHODASHAVARGA_LIST.map(v => (
+                <button
+                  key={v.key}
+                  onClick={() => setSelectedVargaChart(v.key)}
+                  className={`px-2 py-0.5 rounded text-[10px] font-semibold shrink-0 transition-colors border flex items-center gap-0.5 ${
+                    v.isAvailable
+                      ? 'bg-[#04120c] border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37] hover:text-black cursor-pointer'
+                      : 'bg-black/40 border-gray-800 text-gray-500 hover:text-gray-300 cursor-pointer'
+                  }`}
+                  title={`${v.nameEn} - ${v.isAvailable ? 'Available' : 'Unavailable'}`}
+                >
+                  <span>{v.key}</span>
+                  {!v.isAvailable && <span className="text-[8px] opacity-60">∅</span>}
+                </button>
+              ))}
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+              <div className="col-span-2 md:col-span-4 grid grid-cols-1 sm:grid-cols-3 gap-2 mb-1">
+                 <button 
+                   onClick={() => setSelectedVargaChart('D9')}
+                   className="bg-black/60 hover:bg-[#d4af37]/10 border border-[#d4af37]/30 hover:border-[#d4af37] rounded-xl p-2.5 flex justify-between items-center transition-all cursor-pointer text-left group"
+                 >
+                    <div>
+                      <span className="text-gray-400 text-[10px] block font-medium">{t('kundli.ascendantD9') || 'Ascendant D9 (नवांश)'}</span>
+                      <span className="text-[#d4af37] font-bold text-xs group-hover:text-amber-300">
+                        {vargaResult.ascendantVargas?.D9 ? getLocalizedRashi(['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'][vargaResult.ascendantVargas.D9 - 1], language) : '-'}
+                      </span>
+                    </div>
+                    <span className="text-[9px] px-2 py-1 rounded-lg bg-[#d4af37]/20 text-[#d4af37] font-semibold border border-[#d4af37]/40 group-hover:bg-[#d4af37] group-hover:text-black transition-colors">
+                      {language === 'hi' ? 'चक्र खोलें' : 'Open'}
+                    </span>
+                 </button>
+                 <button 
+                   onClick={() => setSelectedVargaChart('D10')}
+                   className="bg-black/60 hover:bg-[#d4af37]/10 border border-[#d4af37]/30 hover:border-[#d4af37] rounded-xl p-2.5 flex justify-between items-center transition-all cursor-pointer text-left group"
+                 >
+                    <div>
+                      <span className="text-gray-400 text-[10px] block font-medium">{t('kundli.ascendantD10') || 'Ascendant D10 (दशमांश)'}</span>
+                      <span className="text-[#d4af37] font-bold text-xs group-hover:text-amber-300">
+                        {vargaResult.ascendantVargas?.D10 ? getLocalizedRashi(['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'][vargaResult.ascendantVargas.D10 - 1], language) : '-'}
+                      </span>
+                    </div>
+                    <span className="text-[9px] px-2 py-1 rounded-lg bg-[#d4af37]/20 text-[#d4af37] font-semibold border border-[#d4af37]/40 group-hover:bg-[#d4af37] group-hover:text-black transition-colors">
+                      {language === 'hi' ? 'चक्र खोलें' : 'Open'}
+                    </span>
+                 </button>
+                 <button 
+                   onClick={() => setSelectedVargaChart('D60')}
+                   className="bg-gradient-to-r from-[#0d2a1f] to-[#04120c] hover:bg-[#d4af37]/15 border border-[#d4af37]/50 hover:border-[#d4af37] rounded-xl p-2.5 flex justify-between items-center transition-all cursor-pointer text-left group shadow-sm"
+                 >
+                    <div>
+                      <span className="text-amber-300/80 text-[10px] block font-medium">{language === 'hi' ? 'लग्न D60 (षष्ट्यंश)' : 'Ascendant D60 (Shashtiamsha)'}</span>
+                      <span className="text-[#d4af37] font-bold text-xs group-hover:text-amber-300">
+                        {vargaResult.ascendantVargas?.D60 ? getLocalizedRashi(['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'][vargaResult.ascendantVargas.D60 - 1], language) : '-'}
+                      </span>
+                    </div>
+                    <span className="text-[9px] px-2 py-1 rounded-lg bg-emerald-950/80 text-emerald-300 font-semibold border border-emerald-500/50 group-hover:bg-[#d4af37] group-hover:text-black transition-colors shadow-sm">
+                      {language === 'hi' ? 'चक्र खोलें' : 'Open'}
+                    </span>
+                 </button>
+              </div>
+              {vargaResult.planets.map((vp: any) => (
+                <div key={vp.planet} className="bg-black/50 border border-gray-800 rounded p-2 flex flex-col text-center">
+                  <span className="text-[#d4af37] font-bold text-xs">{getLocalizedPlanet(vp.planet, language)}</span>
+                  <button 
+                    onClick={() => setSelectedVargaChart('D9')}
+                    className="flex justify-between text-[9px] mt-1 hover:bg-[#d4af37]/10 px-1 rounded transition-colors cursor-pointer"
+                  >
+                    <span className="text-gray-500">D9 (Nav)</span>
+                    <span className="text-gray-300 font-medium">{getLocalizedRashi(vp.d9Sign, language)}</span>
+                  </button>
+                  <button 
+                    onClick={() => setSelectedVargaChart('D10')}
+                    className="flex justify-between text-[9px] hover:bg-[#d4af37]/10 px-1 rounded transition-colors cursor-pointer"
+                  >
+                    <span className="text-gray-500">D10 (Das)</span>
+                    <span className="text-gray-300 font-medium">{getLocalizedRashi(vp.d10Sign, language)}</span>
+                  </button>
+                  <button 
+                    onClick={() => setSelectedVargaChart('D60')}
+                    className="flex justify-between text-[9px] hover:bg-[#d4af37]/10 px-1 rounded transition-colors cursor-pointer"
+                  >
+                    <span className="text-gray-500">D60</span>
+                    <span className="text-gray-300 font-medium">{getLocalizedRashi(vp.d60Sign, language)}</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </CarvedCard>
+        )}
+        
+        {/* Phase 14 Deep Intelligence: Nakshatra Intel */}
+        {calcResult.status === 'Ready' && nakshatraIntelResult && nakshatraIntelResult.status === 'AVAILABLE' && (
+          <div className="w-full bg-[#082218]/60 border border-[#d4af37]/40 rounded-xl p-4 mb-4 shadow-lg shadow-black/50">
+            <div className="flex justify-between items-center mb-3">
+              <h4 className="text-[#d4af37] font-bold uppercase tracking-widest text-[11px] flex items-center">
+                {t('kundli.nakshatraDeepIntel') || 'Nakshatra Deep Intelligence'}
+              </h4>
+              <span className="text-[9px] px-2 py-1 bg-emerald-900/40 text-emerald-400 rounded border border-emerald-800/50">
+                {t('kundli.nakshatraEngine') || 'NAKSHATRA ENGINE'}
+              </span>
+            </div>
+            
+            <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+               {Object.keys(nakshatraIntelResult.planetNakshatras).map(p => {
+                 const ni = nakshatraIntelResult.planetNakshatras[p];
+                 return (
+                   <div key={p} className="bg-black/50 border border-gray-800 rounded p-2 flex justify-between items-center">
+                      <div className="flex flex-col">
+                        <span className="text-[#d4af37] font-bold text-xs">{getLocalizedPlanet(p, language)} <span className="text-gray-500 font-normal ml-1">{t('kundli.inNakshatra', { nakshatra: ni.name, pada: ni.pada }) || `in ${ni.name} (Pada ${ni.pada})`}</span></span>
+                        <div className="flex gap-2 text-[9px] mt-1">
+                           <span className="text-gray-400">{t('kundli.deity') || 'Deity'}: <span className="text-emerald-400">{ni.deity}</span></span>
+                           <span className="text-gray-400">{t('kundli.gana') || 'Gana'}: <span className="text-emerald-400">{ni.gana}</span></span>
+                           <span className="text-gray-400">{t('kundli.nadi') || 'Nadi'}: <span className="text-emerald-400">{ni.nadi}</span></span>
+                        </div>
+                      </div>
+                      <div className="text-right flex flex-col items-end">
+                        <span className="text-gray-600 text-[9px]">{t('kundli.signLordLabel') || 'Lord'}</span>
+                        <span className="text-gray-300 text-[10px] uppercase">{getLocalizedPlanet(ni.lord, language)}</span>
+                      </div>
+                   </div>
+                 );
+               })}
+            </div>
+          </div>
+        )}
+
+        
+        {/* Phase 15 Deep Intelligence: Dasha & Transit */}
+        {/* Phase 15 Deep Intelligence: Dasha & Transit */}
+        {calcResult.status === 'Ready' && dashaIntelResult && dashaIntelResult.status === 'AVAILABLE' && (
+          <CarvedCard className="w-full mb-4" cornerSize={24}>
+            <div className="flex justify-between items-center mb-3">
+              <h4 className="text-[#d4af37] font-bold uppercase tracking-widest text-[11px] flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                {t('kundli.currentDashaIntel') || 'Current Dasha Intelligence'}
+              </h4>
+              <span className="text-[9px] px-2 py-1 bg-emerald-900/40 text-emerald-400 rounded border border-emerald-800/50">
+                {t('kundli.dashaEngine') || 'DASHA ENGINE'}
+              </span>
+            </div>
+            
+            <div className="flex gap-4 mb-2">
+               <div className="flex-1 bg-black/50 border border-gray-800 rounded p-2 text-center">
+                  <span className="text-gray-400 text-[10px] block mb-1">{t('kundli.mahadashaLord') || 'Mahadasha Lord'}</span>
+                  <span className="text-[#d4af37] font-bold text-sm block">{getLocalizedPlanet(dashaIntelResult.currentMahadasha || '', language)}</span>
+                  <div className="text-[9px] mt-1 text-emerald-400">{getLocalizedHouse(dashaIntelResult.mahadashaLordHouse || 1, language).label} • {getLocalizedDignity(dashaIntelResult.mahadashaLordDignity || '', language)}</div>
+               </div>
+               <div className="flex-1 bg-black/50 border border-gray-800 rounded p-2 text-center">
+                  <span className="text-gray-400 text-[10px] block mb-1">{t('kundli.antardashaLord') || 'Antardasha Lord'}</span>
+                  <span className="text-[#d4af37] font-bold text-sm block">{getLocalizedPlanet(dashaIntelResult.currentAntardasha || '', language)}</span>
+                  <div className="text-[9px] mt-1 text-emerald-400">{getLocalizedHouse(dashaIntelResult.antardashaLordHouse || 1, language).label} • {getLocalizedDignity(dashaIntelResult.antardashaLordDignity || '', language)}</div>
+               </div>
+            </div>
+            <div className="text-center text-[10px] text-gray-500 italic mt-2">{dashaIntelResult.analysisMessage}</div>
+          </CarvedCard>
+        )}
+
+        {/* Phase 15 Deep Intelligence: Live Planetary Transit (प्रत्यक्ष गोचर १२-भाव चक्र) */}
+        {calcResult.status === 'Ready' && (
+          <LiveTransitChart masterData={calcResult.data} className="w-full mb-6" />
+        )}
+
+        {/* Phase 15 Deep Intelligence: AI Jyotish Assistant */}
+        {calcResult.status === 'Ready' && (
+          <div className="w-full bg-[#082218]/60 border border-[#d4af37]/40 rounded-xl p-4 mb-4 shadow-lg shadow-black/50">
+            <div className="flex justify-between items-center mb-3">
+              <h4 className="text-[#d4af37] font-bold uppercase tracking-widest text-[11px] flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 2a10 10 0 1 1-10 10h10V2z"></path><path d="M12 12L2.5 9.5"></path><path d="M12 12l9.5-2.5"></path></svg>
+                {t('kundli.aiJyotishAssistant') || 'AI Jyotish Assistant / Life Question'}
+              </h4>
+              <span className="text-[9px] px-2 py-1 bg-emerald-900/40 text-emerald-400 rounded border border-emerald-800/50">GEMINI AI</span>
+            </div>
+            
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-gray-400 mb-1">
+                {t('kundli.askLifeQuestion') || 'Ask a specific life question (e.g., "How is my career?", "When will I get married?") and our AI will analyze your multi-system chart data to answer.'}
+              </p>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={lifeQuestion}
+                  onChange={(e) => setLifeQuestion(e.target.value)}
+                  placeholder={t('kundli.askQuestionPlaceholder') || 'Ask a question about your chart...'} 
+                  className="flex-1 bg-black/50 border border-gray-700 rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-[#d4af37]/50"
+                  onKeyDown={(e) => { if (e.key === 'Enter') askAi(); }}
+                />
+                <button 
+                  onClick={askAi}
+                  disabled={isAiLoading || !lifeQuestion.trim()}
+                  className="bg-[#d4af37]/20 hover:bg-[#d4af37]/30 text-[#d4af37] border border-[#d4af37]/50 rounded px-4 py-2 text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50"
+                >
+                  {isAiLoading ? (t('kundli.analyzing') || 'Analyzing...') : (t('kundli.askAi') || 'Ask AI')}
+                </button>
+              </div>
+              {aiError && (
+                <div className="text-red-400 text-xs p-2 bg-red-900/20 border border-red-900/50 rounded mt-2">
+                  {aiError}
+                </div>
+              )}
+              {aiAnswer && (
+                <div className="mt-3 p-3 bg-black/60 border border-[#d4af37]/30 rounded text-sm text-gray-300 leading-relaxed max-h-64 overflow-y-auto custom-scrollbar">
+                  <div className="whitespace-pre-wrap">{aiAnswer}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Phase 16: Classical Astrology Extensions (Sphutas, SBC, Longevity, Arudha) */}
+        {calcResult.status === 'Ready' && calcResult.data && (
+          <div className="w-full space-y-8 mb-8">
+            <div className="border-t border-[#d4af37]/20 pt-8">
+              <SphutasView data={calcResult.data} />
+            </div>
+            
+            <div className="border-t border-[#d4af37]/20 pt-8">
+              <SarvatobhadraView data={calcResult.data} />
+            </div>
+
+            <div className="border-t border-[#d4af37]/20 pt-8">
+              <LongevityArgalaView data={calcResult.data} />
+            </div>
+
+            <div className="border-t border-[#d4af37]/20 pt-8">
+              <ArudhaCharaView data={calcResult.data} />
+            </div>
+
+            <div className="border-t border-[#d4af37]/20 pt-8">
+              <UpagrahaView data={calcResult.data} />
+            </div>
+
+            <div className="border-t border-[#d4af37]/20 pt-8">
+              <JaiminiView data={calcResult.data} />
+            </div>
+
+            <div className="border-t border-[#d4af37]/20 pt-8">
+              <SudarshanaChakraView data={calcResult.data} />
+            </div>
+          </div>
+        )}
+
+        {/* Analysis Engine Audit */}
+        {calcResult.status === 'Ready' && analysisResult && (
+          <div className="w-full bg-[#082218]/40 border border-[#d4af37]/30 rounded-xl p-4 mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-[#d4af37] font-bold uppercase tracking-widest text-xs">Analysis Engine Audit</h4>
+              <span className="text-[9px] px-2 py-1 bg-[#d4af37]/20 text-[#d4af37] rounded border border-[#d4af37]/30">v1.0.0</span>
+            </div>
+            
+            <div className="max-h-60 overflow-y-auto custom-scrollbar pr-2 space-y-3">
+              {Object.values(analysisResult.planets).map((p: any) => (
+                <div key={p.planet} className="bg-black/50 border border-gray-800 rounded p-3 text-[10px] font-mono text-gray-300">
+                  <div className="flex justify-between border-b border-gray-800 pb-1 mb-2">
+                    <span className="text-[#d4af37]">{p.audit.ruleId}</span>
+                    <span className={p.audit.isVerified ? "text-emerald-500" : "text-red-500"}>{p.audit.isVerified ? "VERIFIED" : "NOT VERIFIED"}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[9px] text-gray-500 mb-2">
+                    <div>SYSTEM: {p.audit.system}</div>
+                    <div>INPUT: {p.audit.input}</div>
+                  </div>
+                  <div className="space-y-1 pl-2 border-l-2 border-gray-800">
+                    {p.audit.conditions.map((c: any, i: number) => (
+                      <div key={i} className="flex justify-between">
+                        <span>{c.name}</span>
+                        <span className={c.passed ? "text-emerald-400" : "text-red-400"}>{c.passed ? "PASS" : "FAIL"}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              
+              {Object.values(analysisResult.houses).map((h: any) => (
+                <div key={'h'+h.houseNumber} className="bg-black/50 border border-gray-800 rounded p-3 text-[10px] font-mono text-gray-300">
+                  <div className="flex justify-between border-b border-gray-800 pb-1 mb-2">
+                    <span className="text-gray-400">{h.audit.ruleId}</span>
+                    <span className={h.audit.isVerified ? "text-emerald-500" : "text-red-500"}>{h.audit.isVerified ? "VERIFIED" : "NOT VERIFIED"}</span>
+                  </div>
+                  <div className="space-y-1 pl-2 border-l-2 border-gray-800">
+                    {h.audit.conditions.map((c: any, i: number) => (
+                      <div key={i} className="flex justify-between">
+                        <span>{c.name}</span>
+                        <span className={c.passed ? "text-emerald-400" : "text-red-400"}>{c.passed ? "PASS" : "FAIL"}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Debug Audit Section */}
+        {calcResult.status === 'Ready' && calcResult.data && (
+          <div className="w-full bg-black/40 border border-gray-800 rounded-xl p-4 mb-8 text-[10px] font-mono text-gray-400">
+             <h4 className="text-gray-300 mb-2 uppercase tracking-widest text-xs border-b border-gray-800 pb-1">LAGNA CHART RENDER AUDIT</h4>
+             <div className="mb-2">
+               <div className="text-emerald-500">Ascendant: {calcResult.data.lagna?.rashiName} {calcResult.data.lagna?.degree.toFixed(2)}°</div>
+               <div>Ascendant House: 1</div>
+             </div>
+             
+             <div className="grid grid-cols-2 gap-2 mb-3">
+               {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => {
+                  const occupyingPlanets = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'].filter(pName => getHouseForPlanet(pName, calcResult.data) === h);
+                  return <div key={h}>House {h} → {occupyingPlanets.length > 0 ? occupyingPlanets.join(', ') : 'Empty'}</div>;
+               })}
+             </div>
+             
+             <div className="border-t border-gray-800 pt-2 text-gray-500">
+               <div>Total planets received: {Object.keys(calcResult.data.planets).length}</div>
+               <div>Total planets rendered: {['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'].filter(pName => getHouseForPlanet(pName, calcResult.data) !== null).length}</div>
+               <div>Missing planets: {['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'].filter(pName => getHouseForPlanet(pName, calcResult.data) === null).join(', ') || 'None'}</div>
+               <div>Invalid house assignments: {['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'].filter(pName => { const h = getHouseForPlanet(pName, calcResult.data); return h !== null && (h < 1 || h > 12); }).join(', ') || 'None'}</div>
+             </div>
+          </div>
+        )}
+
+        {/* Info Message Box */}
+        {(calcResult.status === 'Not Connected' || calcResult.status === 'Error') && (
+          <div className="bg-amber-950/20 border border-amber-500/40 rounded-2xl p-5 w-full text-center shadow-[0_4px_15px_rgba(0,0,0,0.4)] backdrop-blur-md relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50"></div>
+            <p className="text-amber-400/90 text-base leading-relaxed font-medium">
+              {calcResult.message}
+            </p>
+          </div>
+        )}
+
+        {calcResult.status === 'Ready' && calcResult.data && (
+          <div className="w-full space-y-4">
+            
+            {calcResult.isVerified && (
+              <div className="bg-emerald-900/20 border border-emerald-500/40 rounded-xl p-3 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                <span className="text-emerald-400 text-xs font-semibold tracking-widest uppercase">
+                  {t('kundli.verified') || 'Calculation Verified'}
+                </span>
+              </div>
+            )}
+
+            <div className="bg-[#082218]/80 border border-[#d4af37]/30 rounded-xl p-4 backdrop-blur-md">
+              <h3 className="text-[#d4af37] font-semibold tracking-wide border-b border-[#d4af37]/20 pb-2 mb-3">
+                {t('kundli.lagnaAndAyanamsa') || 'Lagna & Ayanamsa'}
+              </h3>
+              <div className="flex justify-between text-sm text-gray-300">
+                <span>{t('kundli.ayanamsaName') || 'Ayanamsa Name'}</span>
+                <span className="text-[#d4af37] font-medium">{calcResult.data.metadata?.ayanamsa || calcResult.data.ayanamsa}</span>
+              </div>
+              <div className="flex justify-between text-sm text-gray-300 mt-2">
+                <span>{t('kundli.ayanamsaValue') || 'Ayanamsa Value'}</span>
+                <span className="text-[#d4af37]">{calcResult.data.metadata?.ayanamsaValue?.toFixed(6)}°</span>
+              </div>
+              <div className="flex justify-between text-sm text-gray-300 mt-2">
+                <span>{t('kundli.ascendantSidereal') || 'Ascendant (Sidereal)'}</span>
+                <span className="text-white">{getLocalizedRashi(calcResult.data.lagna?.rashiName, language)} {calcResult.data.lagna?.degree.toFixed(2)}°</span>
+              </div>
+            </div>
+
+            <div className="bg-[#082218]/50 border border-[#d4af37]/10 rounded-xl p-4 backdrop-blur-md">
+              <h3 className="text-[#d4af37] font-semibold tracking-wide border-b border-[#d4af37]/10 pb-2 mb-3 text-xs uppercase">Engine Metadata (Audit)</h3>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[10px]">
+                <div className="flex justify-between"><span className="text-gray-500">ENGINE</span><span className="text-gray-300">{calcResult.data.metadata?.engine}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">VERSION</span><span className="text-gray-300">{calcResult.data.metadata?.ephemerisVersion}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">HOUSE SYS</span><span className="text-gray-300">{calcResult.data.metadata?.houseSystem}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">NODES</span><span className="text-gray-300">{calcResult.data.metadata?.nodeType}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">JULIAN DAY</span><span className="text-gray-300">{calcResult.data.metadata?.julianDay?.toFixed(5)}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">UTC TIME</span><span className="text-gray-300">{calcResult.data.metadata?.birthUtcTime}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">LOCAL TZ</span><span className="text-gray-300">{calcResult.data.metadata?.inputTimezone}</span></div>
+              </div>
+            </div>
+
+            <div className="bg-[#030a08]/80 border border-[#d4af37]/20 rounded-xl p-4 backdrop-blur-md overflow-hidden">
+              <div className="flex justify-between items-center border-b border-[#d4af37]/20 pb-2 mb-3">
+                <h3 className="text-[#d4af37] font-semibold tracking-wide">
+                  {t('kundli.planetaryPositions') || 'Planetary Positions'}
+                </h3>
+                <span className="text-[10px] text-[#d4af37]/80 bg-[#d4af37]/10 border border-[#d4af37]/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <Volume2 className="w-3 h-3 text-[#d4af37]" />
+                  {t('kundli.planetSpeaks') || 'Tap to Listen'}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {Object.values(calcResult.data.planets).map((p: any) => {
+                  const dignity = relationships?.parashari.dignities.find(d => d.planet === p.name);
+                  
+                  return (
+                    <div 
+                      key={p.name} 
+                      onClick={() => setSelectedPlanet(p.name)}
+                      className="flex flex-col border border-[#d4af37]/10 hover:border-[#d4af37]/50 bg-[#082218]/40 hover:bg-[#d4af37]/10 p-2.5 rounded-lg cursor-pointer transition-all group"
+                      title={`${t('kundli.planetSpeaks') || 'Planet Speaks'}: ${getLocalizedPlanet(p.name, language)}`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="text-white font-medium flex items-center gap-1.5 group-hover:text-[#d4af37] transition-colors">
+                          <span>{getLocalizedPlanet(p.name, language)}</span>
+                          {p.isRetrograde && (
+                            <span className="text-xs text-amber-500 border border-amber-500/30 px-1 rounded bg-amber-950/30">
+                              R
+                            </span>
+                          )}
+                          <span className="text-[10px] text-[#d4af37]/80 opacity-0 group-hover:opacity-100 transition-opacity ml-1 flex items-center gap-0.5">
+                            <Volume2 className="w-3 h-3 text-[#d4af37]" />
+                          </span>
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {dignity && dignity.status !== 'None' && (
+                             <span className="text-[10px] px-1.5 py-0.5 rounded border border-[#d4af37]/30 text-[#d4af37]/80 bg-[#d4af37]/5">
+                               {getLocalizedDignity(dignity.status, language)}
+                             </span>
+                          )}
+                          <span className="text-[#d4af37] font-medium">{getLocalizedRashi(p.rashiName, language)}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center text-xs text-gray-400 mt-1">
+                        <span>{t('kundli.siderealLabel') || 'Sidereal'}: {p.siderealLongitude.toFixed(2)}° ({t('kundli.degLabel') || 'Deg'}: {p.degree.toFixed(2)}°)</span>
+                        <span>{getLocalizedHouse(p.d1House, language).label} • {t('kundli.nakshatra') || 'Nak'}: {p.nakshatra} ({t('kundli.pada') || 'P'}{p.pada})</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {relationships && (
+              <div className="bg-[#030a08]/80 border border-[#d4af37]/20 rounded-xl p-4 backdrop-blur-md">
+                <h3 className="text-[#d4af37] font-semibold tracking-wide border-b border-[#d4af37]/20 pb-2 mb-3">
+                  {t('kundli.planetaryRelationships') || 'Planetary Relationships (Parashari)'}
+                </h3>
+                
+                {relationships.parashari.conjunctions.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="text-gray-300 text-xs tracking-widest uppercase mb-2">
+                      {t('kundli.conjunctionsTitle') || 'Conjunctions'}
+                    </h4>
+                    <div className="space-y-2">
+                      {relationships.parashari.conjunctions.map((conj, idx) => (
+                        <div key={idx} className="flex justify-between items-center text-xs border-b border-gray-800 pb-1 last:border-0">
+                          <span className="text-white">{getLocalizedPlanet(conj.planet1, language)} & {getLocalizedPlanet(conj.planet2, language)}</span>
+                          <span className="text-gray-400">{getLocalizedHouse(conj.house, language).label} ({t('kundli.separation') || 'Sep'}: {conj.separationDegrees.toFixed(1)}°)</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <h4 className="text-gray-300 text-xs tracking-widest uppercase mb-2">
+                    {t('kundli.aspectsTitle') || 'Aspects'}
+                  </h4>
+                  <div className="space-y-2">
+                    {relationships.parashari.aspects.map((aspect, idx) => (
+                      <div key={idx} className="flex flex-col text-xs border-b border-gray-800 pb-1 last:border-0">
+                        <div className="flex justify-between">
+                          <span className="text-white font-medium">{getLocalizedPlanet(aspect.sourcePlanet, language)} <span className="text-gray-500 font-normal ml-1">({aspect.aspectType}th {t('kundli.aspectSuffix') || 'aspect'})</span></span>
+                          <span className="text-[#d4af37]">→ {getLocalizedHouse(aspect.targetHouse, language).label}</span>
+                        </div>
+                        {aspect.targetPlanets.length > 0 && (
+                           <div className="text-gray-400 mt-0.5">
+                             {t('kundli.aspectsLabel') || 'Aspects'}: {aspect.targetPlanets.map((tp: string) => getLocalizedPlanet(tp, language)).join(', ')}
+                           </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {calcResult.data.vimshottariDasha && !calcResult.data.vimshottariDasha.audit.isAyanamsaApplied && (
+              <div className="bg-red-950/40 border border-red-500/50 rounded-xl p-4 backdrop-blur-md mb-4 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertCircle className="w-5 h-5 text-red-500" />
+                  <h3 className="text-red-400 font-bold tracking-wide uppercase text-sm">Dasha Verification Required</h3>
+                </div>
+                
+                <p className="text-gray-300 text-xs leading-relaxed mb-4">
+                  {calcResult.data.vimshottariDasha.audit.discrepancyReason}
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  <div className="bg-black/40 border border-gray-800 rounded p-3">
+                    <h4 className="text-gray-500 uppercase tracking-widest text-[9px] mb-2">Backend Payload (Raw)</h4>
+                    <div className="space-y-1">
+                      <div className="flex justify-between"><span className="text-gray-400">Moon (API output)</span><span className="text-white">{calcResult.data.vimshottariDasha.audit.rawMoonLongitude.toFixed(2)}°</span></div>
+                      <div className="flex justify-between"><span className="text-gray-400">Nakshatra</span><span className="text-white">{calcResult.data.vimshottariDasha.audit.nakshatraName}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-400">Nakshatra Lord</span><span className="text-white">{calcResult.data.vimshottariDasha.audit.nakshatraLord}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-400">Current Dasha</span><span className="text-white">{calcResult.data.vimshottariDasha.currentMahadasha.planet} / {calcResult.data.vimshottariDasha.currentAntardasha.planet}</span></div>
+                    </div>
+                  </div>
+
+                  <div className="bg-emerald-950/30 border border-emerald-500/30 rounded p-3">
+                    <h4 className="text-emerald-500 uppercase tracking-widest text-[9px] mb-2">Audited Shadow Calculation</h4>
+                    <div className="space-y-1">
+                      <div className="flex justify-between"><span className="text-gray-400">True Sidereal Moon</span><span className="text-[#d4af37]">{calcResult.data.vimshottariDasha.audit.shadowCalculation?.correctedSiderealMoon?.toFixed(2)}°</span></div>
+                      <div className="flex justify-between"><span className="text-gray-400">Corrected Nakshatra</span><span className="text-[#d4af37]">{calcResult.data.vimshottariDasha.audit.shadowCalculation?.correctedNakshatra}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-400">Nakshatra Lord</span><span className="text-[#d4af37]">{calcResult.data.vimshottariDasha.audit.shadowCalculation?.correctedNakshatraLord}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-400">Corrected Dasha</span><span className="text-[#d4af37] font-bold">{calcResult.data.vimshottariDasha.audit.shadowCalculation?.correctedCurrentMahadasha} / {calcResult.data.vimshottariDasha.audit.shadowCalculation?.correctedCurrentAntardasha}</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {calcResult.data.vimshottariDasha && (
+              <div id="kundli-dasha-section" className="bg-[#030a08]/80 border border-[#d4af37]/20 rounded-xl p-4 backdrop-blur-md mb-4 scroll-mt-20">
+                <h3 className="text-[#d4af37] font-semibold tracking-wide border-b border-[#d4af37]/20 pb-2 mb-3">
+                  {t('kundli.vimshottariDasha') || 'Vimshottari Dasha (Timing)'}
+                </h3>
+                
+                <div className="mb-6">
+                  <DashaChartView dasha={calcResult.data.vimshottariDasha} />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="bg-emerald-900/10 border border-emerald-500/20 rounded-lg p-3">
+                    <h4 className="text-gray-400 text-[9px] tracking-widest uppercase mb-1">
+                      {t('kundli.mahadasha') || 'Current Mahadasha'}
+                    </h4>
+                    <div className="text-white text-lg font-medium">{getLocalizedPlanet(calcResult.data.vimshottariDasha.currentMahadasha.planet, language)}</div>
+                    <div className="text-gray-500 text-[10px] mt-1 border-t border-gray-800 pt-1">
+                      {t('kundli.ends') || 'Ends'}: {calcResult.data.vimshottariDasha.currentMahadasha.endDate.split("T")[0].split("-").reverse().join("/")}
+                    </div>
+                  </div>
+                  
+                  <div className="bg-emerald-900/10 border border-emerald-500/20 rounded-lg p-3">
+                    <h4 className="text-gray-400 text-[9px] tracking-widest uppercase mb-1">
+                      {t('kundli.antardasha') || 'Current Antardasha'}
+                    </h4>
+                    <div className="text-[#d4af37] text-lg font-medium">{getLocalizedPlanet(calcResult.data.vimshottariDasha.currentAntardasha.planet, language)}</div>
+                    <div className="text-gray-500 text-[10px] mt-1 border-t border-gray-800 pt-1">
+                      {t('kundli.ends') || 'Ends'}: {calcResult.data.vimshottariDasha.currentAntardasha.endDate.split("T")[0].split("-").reverse().join("/")}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="bg-black/40 border border-gray-800 rounded-lg p-3">
+                    <h4 className="text-gray-500 text-[9px] tracking-widest uppercase mb-1">
+                      {t('kundli.nextAntardasha') || 'Next Antardasha'}
+                    </h4>
+                    <div className="text-gray-300 text-sm font-medium">{getLocalizedPlanet(calcResult.data.vimshottariDasha.nextAntardasha.planet, language)}</div>
+                    <div className="text-gray-500 text-[10px] mt-1">
+                      {t('kundli.starts') || 'Starts'}: {calcResult.data.vimshottariDasha.nextAntardasha.startDate.split("T")[0].split("-").reverse().join("/")}
+                    </div>
+                  </div>
+                  
+                  <div className="bg-black/40 border border-gray-800 rounded-lg p-3">
+                    <h4 className="text-gray-500 text-[9px] tracking-widest uppercase mb-1">
+                      {t('kundli.nextMahadasha') || 'Next Mahadasha'}
+                    </h4>
+                    <div className="text-gray-300 text-sm font-medium">{getLocalizedPlanet(calcResult.data.vimshottariDasha.nextMahadasha.planet, language)}</div>
+                    <div className="text-gray-500 text-[10px] mt-1">
+                      {t('kundli.starts') || 'Starts'}: {calcResult.data.vimshottariDasha.nextMahadasha.startDate.split("T")[0].split("-").reverse().join("/")}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <h4 className="text-gray-300 text-[10px] tracking-widest uppercase mb-2">
+                    {t('kundli.dashaTimeline') || 'Dasha Timeline'}
+                  </h4>
+                  <div className="text-xs text-gray-400 flex flex-wrap gap-1 leading-relaxed">
+                    {['Ketu', 'Venus', 'Sun', 'Moon', 'Mars', 'Rahu', 'Jupiter', 'Saturn', 'Mercury'].map((p, pIdx, arr) => (
+                      <span key={p} className="flex items-center gap-1">
+                        <span>{getLocalizedPlanet(p, language)}</span>
+                        {pIdx < arr.length - 1 && <span className="text-gray-600">→</span>}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-gray-300 text-[10px] tracking-widest uppercase mb-1">
+                    {t('kundli.calculationLogic') || 'Calculation Logic (Why?)'}
+                  </h4>
+                  <p className="text-[10px] text-gray-500 leading-relaxed italic border-l-2 border-[#d4af37]/30 pl-2 mb-4">
+                    {calcResult.data.vimshottariDasha.calculationExplanation}
+                  </p>
+                </div>
+
+                <div className="bg-black/50 border border-gray-800 rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-2 border-b border-gray-800 pb-1">
+                    <h4 className="text-gray-400 uppercase tracking-widest text-[9px]">
+                      {t('kundli.vimshottariDashaAudit') || 'Vimshottari Dasha Audit'}
+                    </h4>
+                    <span className="text-[8px] text-emerald-500/70 uppercase tracking-widest border border-emerald-500/20 px-1 rounded">{calcResult.data.vimshottariDasha.dataSource} ({calcResult.data.vimshottariDasha.version})</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[10px]">
+                    <div className="flex justify-between"><span className="text-gray-500">MOON LONGITUDE</span><span className="text-gray-300">{calcResult.data.vimshottariDasha.audit.siderealMoonLongitude.toFixed(4)}°</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">NAKSHATRA START</span><span className="text-gray-300">{calcResult.data.vimshottariDasha.audit.nakshatraStartDeg.toFixed(4)}°</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">NAKSHATRA END</span><span className="text-gray-300">{calcResult.data.vimshottariDasha.audit.nakshatraEndDeg.toFixed(4)}°</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">NAKSHATRA PROGRESS %</span><span className="text-gray-300">{calcResult.data.vimshottariDasha.audit.progressPercent.toFixed(2)}%</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">NAKSHATRA REMAINING %</span><span className="text-gray-300">{calcResult.data.vimshottariDasha.audit.remainingPercent.toFixed(2)}%</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">MAHADASHA LORD</span><span className="text-gray-300">{getLocalizedPlanet(calcResult.data.vimshottariDasha.audit.nakshatraLord, language)}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">MAHADASHA TOTAL YEARS</span><span className="text-gray-300">{calcResult.data.vimshottariDasha.audit.mahadashaTotalYears} Years</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">BIRTH BALANCE (DECIMAL)</span><span className="text-gray-300">{calcResult.data.vimshottariDasha.audit.birthBalanceYears.toFixed(4)} Years</span></div>
+                    <div className="flex justify-between col-span-2"><span className="text-gray-500">BIRTH BALANCE (Y/M/D)</span><span className="text-gray-300">{calcResult.data.vimshottariDasha.audit.birthBalanceYMD}</span></div>
+                    <div className="flex justify-between col-span-2"><span className="text-gray-500">FIRST MAHADASHA END DATE</span><span className="text-gray-300">{calcResult.data.vimshottariDasha.audit.firstMahadashaEndDate.split("T")[0].split("-").reverse().join("/")}</span></div>
+                  </div>
+                </div>
+
+                {calcResult.data.vimshottariDasha.mahadashas && (
+                  <div className="mt-4 bg-black/50 border border-gray-800 rounded-lg p-3">
+                    <h4 className="text-gray-400 uppercase tracking-widest text-[9px] mb-2 border-b border-gray-800 pb-1">
+                      {t('kundli.complete120YearTimeline') || 'Complete 120-Year Mahadasha Timeline'}
+                    </h4>
+                    <div className="space-y-1.5 mt-2">
+                      {calcResult.data?.vimshottariDasha?.mahadashas?.map((md, idx) => (
+                        <div key={idx} className={`flex justify-between text-[10px] p-1 rounded ${md.planet === calcResult.data?.vimshottariDasha?.currentMahadasha?.planet ? 'bg-emerald-900/30 text-[#d4af37] font-medium border border-emerald-500/20' : 'text-gray-400 hover:bg-gray-900/50'}`}>
+                          <span className="w-20">{getLocalizedPlanet(md.planet, language)}</span>
+                          <span className="text-right tabular-nums">{md.startDate.split("T")[0].split("-").reverse().join("/")} - {md.endDate.split("T")[0].split("-").reverse().join("/")}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {calcResult.data.parashariAnalysis && (
+              <div className="bg-[#030a08]/80 border border-[#d4af37]/20 rounded-xl p-4 backdrop-blur-md">
+                <h3 className="text-[#d4af37] font-semibold tracking-wide border-b border-[#d4af37]/20 pb-2 mb-3">
+                  {t('kundli.parashariYogaEngine') || 'Parashari Yoga Engine (Phase 7B)'}
+                </h3>
+                
+                {calcResult.data.parashariAnalysis.yogas.filter((y: any) => y.status === true).length === 0 ? (
+                  <p className="text-xs text-gray-500 italic">
+                    {t('kundli.noYogasDetected') || 'No specific major Yogas detected.'}
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {calcResult.data.parashariAnalysis.yogas.filter((y: any) => y.status === true).map((yoga: any, idx: number) => (
+                      <div key={idx} className="bg-emerald-900/10 border border-[#d4af37]/20 rounded-lg p-3 relative">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="text-[#d4af37] text-sm font-medium">{getLocalizedYogaName(yoga.name, language)}</h4>
+                          <span className="text-[9px] text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded bg-emerald-900/20 font-mono">VERIFIED</span>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-2 mb-3 text-[10px]">
+                          <div className="text-gray-400">{t('kundli.planetLabel') || 'Planet'}: <span className="text-[#d4af37]">{yoga.planetsInvolved.map((p: string) => getLocalizedPlanet(p, language)).join(', ')}</span></div>
+                          <div className="text-gray-400">{t('kundli.houseLabel') || 'House'}: <span className="text-[#d4af37]">{yoga.housesInvolved.map((h: number) => getLocalizedHouse(h, language).label).join(', ')}</span></div>
+                          <div className="text-gray-400">{t('kundli.signLabel') || 'Sign'}: <span className="text-[#d4af37]">{yoga.signsInvolved.map((s: string) => getLocalizedRashi(s, language)).join(', ')}</span></div>
+                          <div className="text-gray-400">{t('kundli.strengthLabel') || 'Strength'}: <span className="text-[#d4af37]">{yoga.strength}</span></div>
+                        </div>
+
+                        <p className="text-gray-300 text-xs leading-relaxed mb-3">
+                          {yoga.explanationKey}
+                        </p>
+                        
+                        <div className="bg-black/50 rounded p-2 border border-gray-800">
+                          <h5 className="text-[9px] text-gray-500 uppercase tracking-widest mb-1.5">{t('kundli.satisfiedConditions') || 'Satisfied Conditions'}</h5>
+                          <ul className="list-disc list-inside space-y-0.5">
+                            {yoga.satisfiedConditions.map((cond: string, cIdx: number) => (
+                              <li key={cIdx} className="text-[#d4af37] text-[10px]">{cond}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {showDebug && (
+                  <>
+                {/* TEMPORARY DEBUG DATA FLOW AUDIT */}
+                <div className="bg-red-950/30 border border-red-900 rounded p-4 mb-6">
+                  <h4 className="text-red-400 font-bold mb-3 uppercase tracking-widest text-xs">CRITICAL DATA FLOW AUDIT</h4>
+                  <pre className="text-[10px] text-red-200 font-mono whitespace-pre-wrap">
+                    {(() => {
+                      const jupHouseMaster = calcResult.data?.planets['Jupiter']?.d1House;
+                      const parashari = calcResult.data?.parashariAnalysis;
+                      const jupHouseParashari = parashari?.foundation?.planets?.['Jupiter']?.house;
+                      
+                      const hamsaYoga = parashari?.yogas?.find((y: any) => y.name === 'Hamsa Yoga');
+                      
+                      const dasha: any = calcResult.data?.vimshottariDasha;
+                      const jupMaha = dasha?.mahadashas?.find((p: any) => p.planet === 'Jupiter') 
+                                    || (dasha?.planet === 'Jupiter' ? dasha : null);
+                      const jupSatAntar = jupMaha?.subPeriods?.find((p: any) => p.planet === 'Saturn');
+
+                      return `MASTER
+Jupiter house = ${jupHouseMaster}
+
+PARASHARI INPUT
+Jupiter house = ${jupHouseParashari}
+
+YOGA INPUT
+Jupiter house = ${hamsaYoga?.housesInvolved?.[0]}
+
+YOGA OUTPUT
+Jupiter house = ${hamsaYoga?.housesInvolved?.[0]}
+Hamsa = ${hamsaYoga?.status ? 'VERIFIED' : 'NOT VERIFIED'}
+
+DASHA ENGINE
+Jupiter start = ${jupMaha?.startDate?.split("T")[0].split("-").reverse().join("/")}
+Jupiter end = ${jupMaha?.endDate?.split("T")[0].split("-").reverse().join("/")}
+
+DASHA UI
+Jupiter start = ${jupMaha?.startDate?.split("T")[0].split("-").reverse().join("/")}
+Jupiter end = ${jupMaha?.endDate?.split("T")[0].split("-").reverse().join("/")}
+Jupiter/Saturn = ${jupSatAntar?.startDate?.split("T")[0].split("-").reverse().join("/")} -> ${jupSatAntar?.endDate?.split("T")[0].split("-").reverse().join("/")}
+
+SELECTED AYANAMSA: ${ayanamsa}
+SERVER COMPUTED AYANAMSA: ${calcResult.data?.metadata?.ayanamsa}
+PROFILE TIME: ${profile?.time}
+`;
+                    })()}
+                  </pre>
+                </div>
+
+                {/* Developer Audit Panel */}
+                <div className="mt-6 border-t border-gray-800 pt-4">
+                  <h4 className="text-[10px] text-gray-500 uppercase tracking-widest mb-2">Dev Audit Panel (All Evaluated Rules)</h4>
+                  <div className="space-y-2">
+                    {calcResult.data.parashariAnalysis.yogas.map((yoga: any, idx: number) => (
+                      <div key={idx} className={`bg-black/40 rounded p-2 border ${yoga.status ? 'border-emerald-900/50' : 'border-gray-800'} text-[9px] font-mono flex flex-col gap-1`}>
+                        <div className="flex justify-between items-center text-gray-400">
+                          <span>{yoga.id} | {yoga.name}</span>
+                          <span className={yoga.status ? 'text-emerald-500' : 'text-red-500'}>{yoga.status ? 'VERIFIED' : 'NOT VERIFIED'}</span>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-gray-500 mt-1">
+                           <div>Planet: <span className="text-gray-300">{yoga.planetsInvolved[0] || 'N/A'}</span></div>
+                           <div>House: <span className="text-gray-300">{yoga.housesInvolved[0] || 'N/A'}</span></div>
+                           <div>Sign: <span className="text-gray-300">{yoga.signsInvolved[0] || 'N/A'}</span></div>
+                           {/* Digging into the foundation result to find the dignity & kendra for display if available */}
+                           <div>Strength Calc: <span className="text-gray-300">{yoga.strength}</span></div>
+                        </div>
+
+                        <div className="mt-1 border-t border-gray-800/50 pt-1">
+                          <div className="text-gray-500">Evaluated ({yoga.conditions.length}): {yoga.conditions.join(', ')}</div>
+                          <div className="text-emerald-700">Passed ({yoga.satisfiedConditions.length}): {yoga.satisfiedConditions.join(', ')}</div>
+                          {yoga.failedConditions.length > 0 && (
+                             <div className="text-red-500">Failed ({yoga.failedConditions.length}): {yoga.failedConditions.join(', ')}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                </>
+                )}
+              </div>
+            )}
+
+            <div className="bg-[#030a08]/50 border border-gray-800 rounded-xl p-4 mt-4">
+              <h4 className="text-gray-400 text-xs tracking-widest uppercase mb-2">
+                {t('kundli.calculationMetadata') || 'Calculation Metadata'}
+              </h4>
+              <div className="grid grid-cols-2 gap-2 text-[10px] text-gray-500">
+                <div>Engine: <span className="text-gray-300">{calcResult.data.metadata.engine}</span></div>
+                <div>Version: <span className="text-gray-300">{calcResult.data.metadata.ephemerisVersion}</span></div>
+                <div>House Sys: <span className="text-gray-300">{calcResult.data.metadata.houseSystem}</span></div>
+                <div>Node Type: <span className="text-gray-300">{calcResult.data.metadata.nodeType}</span></div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-col items-center">
+              <button 
+                onClick={() => setShowDebug(!showDebug)}
+                className="px-6 py-2 border border-gray-700 rounded-full text-xs text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
+              >
+                {showDebug ? (t('kundli.hideMasterDataset') || 'Hide Master Dataset JSON') : (t('kundli.viewMasterDataset') || 'View Master Dataset JSON')}
+              </button>
+
+              {showDebug && (
+                <div className="w-full mt-4 bg-black border border-gray-800 rounded-lg p-4 overflow-x-auto">
+                  <pre className="text-[10px] text-green-400 font-mono">
+                    {JSON.stringify(calcResult.data, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
+
+        {selectedPlanet && (
+          <PlanetStoryModal 
+            isOpen={Boolean(selectedPlanet)}
+            planetKey={selectedPlanet} 
+            masterKundliData={calcResult.data}
+            analysisData={analysisResult}
+            language={language}
+            onSelectHouse={(h) => setSelectedHouse(h)}
+            onClose={() => setSelectedPlanet(null)} 
+          />
+        )}
+        
+        {selectedHouse && calcResult.data?.d1Chart[selectedHouse] && (
+          <HousePanel 
+            houseNum={selectedHouse} 
+            houseData={calcResult.data.d1Chart[selectedHouse]} 
+            planets={['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'].filter(pName => getHouseForPlanet(pName, calcResult.data) === selectedHouse).map(p => calcResult.data!.planets[p])}
+            analysis={analysisResult?.houses[selectedHouse]}
+            masterData={calcResult.data}
+            onSelectHouse={(h) => setSelectedHouse(h)}
+            onSelectPlanet={(pName) => setSelectedPlanet(pName)}
+            onClose={() => {
+              SpeechEngine.stop();
+              setSelectedHouse(null);
+            }} 
+          />
+        )}
+
+        {selectedVargaChart && (
+          <VargaChartModal
+            initialVarga={selectedVargaChart}
+            vargaResult={vargaResult}
+            masterData={calcResult.data}
+            onClose={() => setSelectedVargaChart(null)}
+          />
+        )}
+
+        {selectedKpDetail && (
+          <KPDetailModal
+            isOpen={Boolean(selectedKpDetail)}
+            item={selectedKpDetail}
+            language={language}
+            onClose={() => setSelectedKpDetail(null)}
+            onOpenPlanetStory={(planetKey) => setSelectedPlanet(planetKey)}
+          />
+        )}
+
+      </main>
+    </div>
+  );
+}
