@@ -15,7 +15,7 @@ export const UpagrahaView: React.FC<UpagrahaViewProps> = ({ data }) => {
   const timeBased = upagrahas.filter(u => u.type === 'Time-Based');
 
   const formatDegree = (deg: number) => {
-    if (isNaN(deg)) return "0° 0' 0\"";
+    if (isNaN(deg)) return "N/A";
     const d = Math.floor(deg);
     const m = Math.floor((deg - d) * 60);
     const s = Math.floor(((deg - d) * 60 - m) * 60);

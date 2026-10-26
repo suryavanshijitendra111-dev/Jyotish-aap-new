@@ -79,6 +79,31 @@ export class UpagrahaEngine {
     }));
   }
 
+  private static parseBirthTime(timeStr: string): { minutes: number; isValid: boolean } {
+    if (!timeStr || typeof timeStr !== 'string') {
+      return { minutes: 720, isValid: false };
+    }
+    const cleanStr = timeStr.trim().toUpperCase();
+    const isPM = cleanStr.includes('PM');
+    const isAM = cleanStr.includes('AM');
+    const timeOnly = cleanStr.replace(/(AM|PM)/g, '').trim();
+    const parts = timeOnly.split(':').map(Number);
+    
+    if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) {
+      return { minutes: 720, isValid: false };
+    }
+    
+    let [h, m] = parts;
+    if (h < 0 || h > 23 || m < 0 || m > 59) {
+      return { minutes: 720, isValid: false };
+    }
+    
+    if (isPM && h < 12) h += 12;
+    if (isAM && h === 12) h = 0;
+    
+    return { minutes: h * 60 + m, isValid: true };
+  }
+
   private static calculateTimeBased(data: MasterKundliData): UpagrahaInfo[] {
     const lagnaLong = data.lagna.siderealLongitude;
     const dob = new Date(data.birthProfile.dob);
@@ -89,13 +114,10 @@ export class UpagrahaEngine {
     let sunrise = 6 * 60; // 6:00 AM
     let sunset = 18 * 60; // 6:00 PM
     
-    let birthTimeMinutes = 720;
-    try {
-      const [h, m] = data.birthProfile.time.split(':').map(Number);
-      birthTimeMinutes = h * 60 + m;
-    } catch (e) {}
+    const parsedTime = this.parseBirthTime(data.birthProfile?.time);
+    const birthTimeMinutes = parsedTime.isValid ? parsedTime.minutes : NaN;
 
-    const isDay = birthTimeMinutes >= sunrise && birthTimeMinutes < sunset;
+    const isDay = !isNaN(birthTimeMinutes) && birthTimeMinutes >= sunrise && birthTimeMinutes < sunset;
     const duration = isDay ? (sunset - sunrise) : (1440 - sunset + sunrise);
     const partDuration = duration / 8;
     const baseTime = isDay ? sunrise : sunset;
@@ -103,6 +125,7 @@ export class UpagrahaEngine {
     // Helper to calculate rising degree at a given time
     // Roughly 1 degree per 4 minutes from Birth Lagna
     const getRisingDegree = (timeMinutes: number) => {
+      if (isNaN(birthTimeMinutes)) return NaN;
       const diff = timeMinutes - birthTimeMinutes;
       return this.normalize(lagnaLong + (diff / 4));
     };
@@ -133,6 +156,20 @@ export class UpagrahaEngine {
     ];
 
     return timeUpagrahas.map(u => {
+      if (isNaN(birthTimeMinutes)) {
+        return {
+          name: u.name,
+          hindiName: u.hindiName,
+          longitude: NaN,
+          rashi: NaN,
+          rashiName: 'Invalid Birth Time',
+          degree: NaN,
+          house: NaN,
+          type: 'Time-Based',
+          description: u.desc + ' (Invalid or missing birth time)'
+        };
+      }
+
       const part = getLordPart(u.lord);
       let upaTime = getPartStartTime(part);
       if (u.isMandi) upaTime += (partDuration / 2); // Mandi is often midpoint or end; let's use midpoint for distinction
@@ -143,7 +180,7 @@ export class UpagrahaEngine {
         hindiName: u.hindiName,
         longitude: long,
         rashi: Math.floor(long / 30) + 1,
-        rashiName: this.RASHI_NAMES[Math.floor(long / 30)],
+        rashiName: this.RASHI_NAMES[Math.floor(long / 30)] || 'Unknown',
         degree: long % 30,
         house: this.getHouse(long, lagnaLong),
         type: 'Time-Based',
