@@ -20,7 +20,6 @@ import {
   createServerBackup,
   getOwnerPinStatus,
   setServerOwnerPin,
-  GuardianActor
 } from './src/services/guardian/guardianAuthorizationService';
 
 async function startServer() {
