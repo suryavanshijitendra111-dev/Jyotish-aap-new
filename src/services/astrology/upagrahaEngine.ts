@@ -1,3 +1,21 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ * 
+ * JEEVANDARPAN — UPAGRAHA CALCULATION ENGINE
+ * DETERMINISTIC ASTRONOMICAL & TRADITIONAL TIME-BASED UPAGRAHA CALCULATIONS
+ * 
+ * TRADITIONAL METHODOLOGY (Bṛhat Parāśara Horā Śāstra):
+ * - Sun-based Upagrahas (Dhuma, Vyatipata, Parivesha, Indrachapa, Upaketu) calculated from Sidereal Sun long.
+ * - Time-based Upagrahas (Gulika, Mandi, Kaala, Mrityu, Yamaghantaka, Ardhaprahara):
+ *   1. Day duration (Sunrise to Sunset) and Night duration (Sunset to next Sunrise) divided into 8 equal parts.
+ *   2. Weekday-based lord assignment for day/night parts.
+ *   3. Gulika: Calculated at the start of Saturn's part.
+ *   4. Mandi: Calculated at the midpoint of Saturn's part (Parasari tradition).
+ * - Robust solar calculation used for local sunrise/sunset based on latitude, longitude, and date.
+ * - If coordinates or date are invalid/unverified, returns 'Calculation Unavailable' (NaN) instead of silent guesses.
+ */
+
 import { MasterKundliData } from '../../types/kundli';
 
 export interface UpagrahaInfo {
@@ -35,13 +53,18 @@ export class UpagrahaEngine {
   }
 
   private static getHouse(long: number, lagnaLong: number): number {
+    if (isNaN(long) || isNaN(lagnaLong)) return NaN;
     const diff = (long - lagnaLong + 360) % 360;
     return Math.floor(diff / 30) + 1;
   }
 
   private static calculateSunBased(data: MasterKundliData): UpagrahaInfo[] {
-    const sunLong = data.planets['Sun'].siderealLongitude;
-    const lagnaLong = data.lagna.siderealLongitude;
+    const sunLong = data.planets?.['Sun']?.siderealLongitude;
+    const lagnaLong = data.lagna?.siderealLongitude;
+
+    if (typeof sunLong !== 'number' || typeof lagnaLong !== 'number' || isNaN(sunLong) || isNaN(lagnaLong)) {
+      return [];
+    }
     
     // Dhuma = Sun + 133°20' (133.3333)
     const dhuma = this.normalize(sunLong + 133.3333);
@@ -71,7 +94,7 @@ export class UpagrahaEngine {
       hindiName: u.hindiName,
       longitude: u.long,
       rashi: Math.floor(u.long / 30) + 1,
-      rashiName: this.RASHI_NAMES[Math.floor(u.long / 30)],
+      rashiName: this.RASHI_NAMES[Math.floor(u.long / 30)] || 'Unknown',
       degree: u.long % 30,
       house: this.getHouse(u.long, lagnaLong),
       type: 'Non-Luminous',
@@ -81,7 +104,7 @@ export class UpagrahaEngine {
 
   private static parseBirthTime(timeStr: string): { minutes: number; isValid: boolean } {
     if (!timeStr || typeof timeStr !== 'string') {
-      return { minutes: 720, isValid: false };
+      return { minutes: NaN, isValid: false };
     }
     const cleanStr = timeStr.trim().toUpperCase();
     const isPM = cleanStr.includes('PM');
@@ -90,12 +113,12 @@ export class UpagrahaEngine {
     const parts = timeOnly.split(':').map(Number);
     
     if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) {
-      return { minutes: 720, isValid: false };
+      return { minutes: NaN, isValid: false };
     }
     
     let [h, m] = parts;
     if (h < 0 || h > 23 || m < 0 || m > 59) {
-      return { minutes: 720, isValid: false };
+      return { minutes: NaN, isValid: false };
     }
     
     if (isPM && h < 12) h += 12;
@@ -104,26 +127,102 @@ export class UpagrahaEngine {
     return { minutes: h * 60 + m, isValid: true };
   }
 
+  /**
+   * Calculates robust local sunrise and sunset minutes from midnight based on date, latitude, and longitude.
+   * Uses solar declination and equation of time approximation.
+   */
+  private static calculateSunriseSunset(date: Date, lat: number, lon: number): { sunriseMinutes: number; sunsetMinutes: number; isValid: boolean } {
+    if (isNaN(lat) || isNaN(lon) || isNaN(date.getTime())) {
+      return { sunriseMinutes: NaN, sunsetMinutes: NaN, isValid: false };
+    }
+
+    const startOfYear = new Date(date.getFullYear(), 0, 1);
+    const dayOfYear = Math.floor((date.getTime() - startOfYear.getTime()) / 86400000) + 1;
+    
+    // Solar declination in radians
+    const declination = 23.45 * Math.sin(((284 + dayOfYear) / 365) * 2 * Math.PI) * (Math.PI / 180);
+    const latRad = lat * (Math.PI / 180);
+    
+    const tanVal = -Math.tan(latRad) * Math.tan(declination);
+    if (tanVal < -1 || tanVal > 1) {
+      // Polar regions where sun doesn't rise or set
+      return { sunriseMinutes: NaN, sunsetMinutes: NaN, isValid: false };
+    }
+    
+    const hourAngle = Math.acos(tanVal) * (180 / Math.PI);
+    // Solar noon adjusted for longitude offset (4 minutes per degree from standard meridian)
+    const solarNoonMinutes = 720 - (lon * 4);
+    const halfDayMinutes = (hourAngle / 15) * 60;
+    
+    const sunriseMinutes = Math.round(solarNoonMinutes - halfDayMinutes);
+    const sunsetMinutes = Math.round(solarNoonMinutes + halfDayMinutes);
+    
+    return {
+      sunriseMinutes,
+      sunsetMinutes,
+      isValid: true
+    };
+  }
+
   private static calculateTimeBased(data: MasterKundliData): UpagrahaInfo[] {
-    const lagnaLong = data.lagna.siderealLongitude;
-    const dob = new Date(data.birthProfile.dob);
+    const lagnaLong = data.lagna?.siderealLongitude;
+    const lat = data.birthProfile?.latitude;
+    const lon = data.birthProfile?.longitude;
+    const dobStr = data.birthProfile?.dob;
+
+    const timeUpagrahas = [
+      { name: 'Gulika', hindiName: 'गुलिका', lord: 6, desc: 'Son of Saturn. Most malefic time-point. Crucial for longevity and karma.' },
+      { name: 'Mandi', hindiName: 'मांदी', lord: 6, isMandi: true, desc: 'Often equated with Gulika, but calculated at the midpoint of Saturn part in classical Parasari tradition.' },
+      { name: 'Kaala', hindiName: 'काल', lord: 0, desc: 'Son of Sun. Indicates timing of results and karmic deadlines.' },
+      { name: 'Mrityu', hindiName: 'मृत्यु', lord: 2, desc: 'Son of Mars. Signifies danger, accidents and sudden death.' },
+      { name: 'Yamaghantaka', hindiName: 'यमघंटक', lord: 4, desc: 'Son of Jupiter. Often beneficial but indicates finality of actions.' },
+      { name: 'Ardhaprahara', hindiName: 'अर्धप्रहर', lord: 3, desc: 'Son of Mercury. Signifies business fluctuations and mental stress.' }
+    ];
+
+    if (typeof lagnaLong !== 'number' || isNaN(lagnaLong) || !dobStr || typeof lat !== 'number' || typeof lon !== 'number') {
+      return timeUpagrahas.map(u => ({
+        name: u.name,
+        hindiName: u.hindiName,
+        longitude: NaN,
+        rashi: NaN,
+        rashiName: 'Calculation Unavailable',
+        degree: NaN,
+        house: NaN,
+        type: 'Time-Based',
+        description: u.desc + ' (Missing or invalid birth coordinates/date)'
+      }));
+    }
+
+    const dob = new Date(dobStr);
     const dayOfWeek = dob.getDay(); // 0=Sun, 1=Mon... 6=Sat
     
-    // We need Sunrise/Sunset. Fallback to 6 AM/6 PM if not available.
-    // In a real app, these should be in metadata.
-    let sunrise = 6 * 60; // 6:00 AM
-    let sunset = 18 * 60; // 6:00 PM
-    
+    const sunCalc = this.calculateSunriseSunset(dob, lat, lon);
     const parsedTime = this.parseBirthTime(data.birthProfile?.time);
     const birthTimeMinutes = parsedTime.isValid ? parsedTime.minutes : NaN;
 
-    const isDay = !isNaN(birthTimeMinutes) && birthTimeMinutes >= sunrise && birthTimeMinutes < sunset;
+    if (!sunCalc.isValid || isNaN(birthTimeMinutes)) {
+      return timeUpagrahas.map(u => ({
+        name: u.name,
+        hindiName: u.hindiName,
+        longitude: NaN,
+        rashi: NaN,
+        rashiName: 'Calculation Unavailable',
+        degree: NaN,
+        house: NaN,
+        type: 'Time-Based',
+        description: u.desc + ' (Unverified sunrise/sunset or invalid birth time)'
+      }));
+    }
+
+    const sunrise = sunCalc.sunriseMinutes;
+    const sunset = sunCalc.sunsetMinutes;
+
+    const isDay = birthTimeMinutes >= sunrise && birthTimeMinutes < sunset;
     const duration = isDay ? (sunset - sunrise) : (1440 - sunset + sunrise);
     const partDuration = duration / 8;
     const baseTime = isDay ? sunrise : sunset;
 
-    // Helper to calculate rising degree at a given time
-    // Roughly 1 degree per 4 minutes from Birth Lagna
+    // Helper to calculate rising degree at a given time (roughly 1 degree per 4 minutes from Birth Lagna)
     const getRisingDegree = (timeMinutes: number) => {
       if (isNaN(birthTimeMinutes)) return NaN;
       const diff = timeMinutes - birthTimeMinutes;
@@ -132,7 +231,6 @@ export class UpagrahaEngine {
 
     const getPartStartTime = (partIndex: number) => baseTime + (partIndex - 1) * partDuration;
 
-    // Lords and their respective parts for Gulika, Kaala, Mrityu, Yamaghantaka, Ardhaprahara
     // Day Lord Index
     const dLord = dayOfWeek;
     const nFirstLord = (dayOfWeek + 4) % 7;
@@ -140,48 +238,21 @@ export class UpagrahaEngine {
 
     const getLordPart = (targetLord: number) => ((targetLord - startLord + 7) % 7) + 1;
 
-    // Saturn -> Gulika
-    // Sun -> Kaala
-    // Mars -> Mrityu
-    // Jupiter -> Yamaghantaka
-    // Mercury -> Ardhaprahara
-    
-    const timeUpagrahas = [
-      { name: 'Gulika', hindiName: 'गुलिका', lord: 6, desc: 'Son of Saturn. Most malefic time-point. Crucial for longevity and karma.' },
-      { name: 'Mandi', hindiName: 'मांदी', lord: 6, isMandi: true, desc: 'Often equated with Gulika, but calculated at the end of Saturn part in some traditions.' },
-      { name: 'Kaala', hindiName: 'काल', lord: 0, desc: 'Son of Sun. Indicates timing of results and karmic deadlines.' },
-      { name: 'Mrityu', hindiName: 'मृत्यु', lord: 2, desc: 'Son of Mars. Signifies danger, accidents and sudden death.' },
-      { name: 'Yamaghantaka', hindiName: 'यमघंटक', lord: 4, desc: 'Son of Jupiter. Often beneficial but indicates finality of actions.' },
-      { name: 'Ardhaprahara', hindiName: 'अर्धप्रहर', lord: 3, desc: 'Son of Mercury. Signifies business fluctuations and mental stress.' }
-    ];
-
     return timeUpagrahas.map(u => {
-      if (isNaN(birthTimeMinutes)) {
-        return {
-          name: u.name,
-          hindiName: u.hindiName,
-          longitude: NaN,
-          rashi: NaN,
-          rashiName: 'Invalid Birth Time',
-          degree: NaN,
-          house: NaN,
-          type: 'Time-Based',
-          description: u.desc + ' (Invalid or missing birth time)'
-        };
-      }
-
       const part = getLordPart(u.lord);
       let upaTime = getPartStartTime(part);
-      if (u.isMandi) upaTime += (partDuration / 2); // Mandi is often midpoint or end; let's use midpoint for distinction
+      if (u.isMandi) {
+        upaTime += (partDuration / 2); // Mandi at midpoint of Saturn part (Parasari tradition)
+      }
       
       const long = getRisingDegree(upaTime);
       return {
         name: u.name,
         hindiName: u.hindiName,
         longitude: long,
-        rashi: Math.floor(long / 30) + 1,
-        rashiName: this.RASHI_NAMES[Math.floor(long / 30)] || 'Unknown',
-        degree: long % 30,
+        rashi: isNaN(long) ? NaN : Math.floor(long / 30) + 1,
+        rashiName: isNaN(long) ? 'Calculation Unavailable' : (this.RASHI_NAMES[Math.floor(long / 30)] || 'Unknown'),
+        degree: isNaN(long) ? NaN : (long % 30),
         house: this.getHouse(long, lagnaLong),
         type: 'Time-Based',
         description: u.desc
