@@ -514,6 +514,10 @@ export class JeevanPragyaTimelineService {
         status: 'VERIFIED'
       });
 
+      const isIndependentProof = sIdx === 0;
+      const assignedStatus = isIndependentProof ? 'VERIFIED' : 'PARTIAL (डोमेन प्रक्षेप)';
+      const bindingStatus = isIndependentProof ? 'VERIFIED' : 'QUALIFIED';
+
       const transitBinding: TransitEvidenceBinding = {
         evidenceId: evidenceRec.evidenceId,
         source: 'Phase 3C.4 Transit Evidence Ledger • Swiss Ephemeris Standard',
@@ -522,9 +526,9 @@ export class JeevanPragyaTimelineService {
         transit: `${evidenceRec.hindiSign} राशि में गोचर`,
         dashaRelation: `${spec.window} महादशा-अंतर्दशा सामंजस्य`,
         kpRelation: `भाव ${spec.targetHouses.join(', ')} कस्प उप-स्वामी संयोग`,
-        status: 'VERIFIED',
+        status: bindingStatus,
         fingerprint: evidenceRec.evidenceFingerprint,
-        ruleLineageSummary: evidenceRec.ruleLineage.explanation.hi,
+        ruleLineageSummary: isIndependentProof ? evidenceRec.ruleLineage.explanation.hi : 'समान महादशा-अंतर्दशा अवधि से व्युत्पन्न डोमेन प्रक्षेप (स्वतंत्र गोचर पुष्टि लंबित)',
         targetHouses: spec.targetHouses,
         adverseHouses: [8, 12],
         swissResolution: '≤30 min',
@@ -537,7 +541,7 @@ export class JeevanPragyaTimelineService {
         window: spec.window,
         expectedStart: spec.expectedStart,
         expectedEnd: spec.expectedEnd,
-        verified: true,
+        verified: isIndependentProof,
         evidenceId: evidenceRec.evidenceId
       });
 
@@ -562,7 +566,7 @@ export class JeevanPragyaTimelineService {
         lockReasonHindi: isWindowFree ? undefined : '🔒 विस्तृत खगोलीय प्रमाण (विस्तृत संस्करण में उपलब्ध)',
         evidenceId: evidenceRec.evidenceId,
         evidenceSource: 'Phase 3C.4 Transit Evidence Ledger',
-        verificationStatus: 'VERIFIED',
+        verificationStatus: assignedStatus,
         transitEvidence: transitBinding,
         rulingHouseNumbers: spec.targetHouses,
         adverseHouseNumbers: [8, 12],

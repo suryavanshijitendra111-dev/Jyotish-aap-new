@@ -40,6 +40,7 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
   const [guidanceData, setGuidanceData] = useState<JeevanPragyaData | null>(null);
   const [activeTab, setActiveTab] = useState<'yatra' | 'past' | 'present' | 'future'>('yatra');
   const [feedbackMap, setFeedbackMap] = useState<Record<string, ValidationSelection>>({});
+  const [selectedPastCategory, setSelectedPastCategory] = useState<string>('ALL');
 
   const profileId = PastValidationService.getProfileId(profile || null);
 
@@ -244,50 +245,112 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
                   <p className="text-[11px] text-blue-300 italic">{guidanceData.pastEra.disclaimerHindi}</p>
                 </div>
 
-                <div className="space-y-4">
-                  {guidanceData.pastAnalysisCards && guidanceData.pastAnalysisCards.map((card) => {
-                    const currentSelection = feedbackMap[card.id];
-                    return (
-                      <div key={card.id} className="bg-black/50 border border-[#d4af37]/30 rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-bold text-[#d4af37] px-2.5 py-0.5 bg-[#d4af37]/15 rounded-full border border-[#d4af37]/30">
-                            {card.planetHindi} ({card.associatedDasha})
-                          </span>
-                          <span className="text-[11px] text-gray-400">{card.periodRange}</span>
-                        </div>
-                        <h3 className="text-sm font-bold text-white mb-1">{card.calculatedFactDetail || card.traditionalInterpretation}</h3>
-                        <p className="text-xs text-gray-300 mb-3 leading-relaxed">{card.pragyaGuidance || card.historicalDisclaimerHi}</p>
+                {/* Dynamic Category Filter Chips */}
+                {(() => {
+                  const availableCats = (() => {
+                    if (!guidanceData?.pastAnalysisCards) return [];
+                    const map = new Map<string, string>();
+                    guidanceData.pastAnalysisCards.forEach(c => {
+                      if (c.category) {
+                        map.set(c.category, c.categoryHindi || c.category);
+                      }
+                    });
+                    return Array.from(map.entries()).map(([key, label]) => ({ key, label }));
+                  })();
 
-                        {/* Validation Feedback Controls */}
-                        <div className="pt-3 border-t border-[#d4af37]/25 flex items-center justify-between flex-wrap gap-2">
-                          <span className="text-[11px] text-gray-400">क्या यह आपके अतीत से मेल खाता है?</span>
-                          <div className="flex items-center gap-1.5">
+                  const filteredCards = (() => {
+                    if (!guidanceData?.pastAnalysisCards) return [];
+                    if (selectedPastCategory === 'ALL') return guidanceData.pastAnalysisCards;
+                    return guidanceData.pastAnalysisCards.filter(c => c.category === selectedPastCategory);
+                  })();
+
+                  return (
+                    <>
+                      {availableCats.length > 0 && (
+                        <div className="flex items-center gap-1.5 overflow-x-auto pb-3 mb-4 no-scrollbar">
+                          <button
+                            onClick={() => setSelectedPastCategory('ALL')}
+                            className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                              selectedPastCategory === 'ALL'
+                                ? 'bg-[#d4af37] text-black shadow-md'
+                                : 'bg-black/40 border border-[#d4af37]/30 text-gray-300 hover:bg-[#d4af37]/20'
+                            }`}
+                          >
+                            सभी (All)
+                          </button>
+                          {availableCats.map(cat => (
                             <button
-                              onClick={() => handleFeedback(card.id, 'MATCH')}
-                              className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                                currentSelection === 'MATCH'
-                                  ? 'bg-emerald-600 text-white shadow-md'
-                                  : 'bg-black/50 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-950/30'
+                              key={cat.key}
+                              onClick={() => setSelectedPastCategory(cat.key)}
+                              className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                                selectedPastCategory === cat.key
+                                  ? 'bg-[#d4af37] text-black shadow-md'
+                                  : 'bg-black/40 border border-[#d4af37]/30 text-gray-300 hover:bg-[#d4af37]/20'
                               }`}
                             >
-                              मेल खाता है
+                              {cat.label}
                             </button>
-                            <button
-                              onClick={() => handleFeedback(card.id, 'PARTIAL')}
-                              className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                                currentSelection === 'PARTIAL'
-                                  ? 'bg-amber-600 text-white shadow-md'
-                                  : 'bg-black/50 border border-amber-500/40 text-amber-400 hover:bg-amber-950/30'
-                              }`}
-                            >
-                              आंशिक
-                            </button>
-                          </div>
+                          ))}
                         </div>
+                      )}
+
+                      <div className="space-y-4">
+                        {filteredCards.map((card) => {
+                          const currentSelection = feedbackMap[card.id];
+                          return (
+                            <div key={card.id} className="bg-black/50 border border-[#d4af37]/30 rounded-xl p-4">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-bold text-[#d4af37] px-2.5 py-0.5 bg-[#d4af37]/15 rounded-full border border-[#d4af37]/30">
+                                  {card.planetHindi} ({card.associatedDasha})
+                                </span>
+                                <span className="text-[11px] text-gray-400">{card.periodRange}</span>
+                              </div>
+                              <h3 className="text-sm font-bold text-white mb-1">{card.calculatedFactDetail || card.traditionalInterpretation}</h3>
+                              <p className="text-xs text-gray-300 mb-3 leading-relaxed">{card.pragyaGuidance || card.historicalDisclaimerHi}</p>
+
+                              {/* Validation Feedback Controls */}
+                              <div className="pt-3 border-t border-[#d4af37]/25 flex items-center justify-between flex-wrap gap-2">
+                                <span className="text-[11px] text-gray-400">क्या यह आपके अतीत से मेल खाता है?</span>
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    onClick={() => handleFeedback(card.id, 'MATCH')}
+                                    className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                                      currentSelection === 'MATCH'
+                                        ? 'bg-emerald-600 text-white shadow-md'
+                                        : 'bg-black/50 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-950/30'
+                                    }`}
+                                  >
+                                    मेल खाता है
+                                  </button>
+                                  <button
+                                    onClick={() => handleFeedback(card.id, 'PARTIAL')}
+                                    className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                                      currentSelection === 'PARTIAL'
+                                        ? 'bg-amber-600 text-white shadow-md'
+                                        : 'bg-black/50 border border-amber-500/40 text-amber-400 hover:bg-amber-950/30'
+                                    }`}
+                                  >
+                                    आंशिक
+                                  </button>
+                                  <button
+                                    onClick={() => handleFeedback(card.id, 'NO_MATCH')}
+                                    className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                                      currentSelection === 'NO_MATCH'
+                                        ? 'bg-rose-600 text-white shadow-md'
+                                        : 'bg-black/50 border border-rose-500/40 text-rose-400 hover:bg-rose-950/30'
+                                    }`}
+                                  >
+                                    मेल नहीं खाता
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
-                </div>
+                    </>
+                  );
+                })()}
               </CarvedCard>
             </div>
           )}
@@ -366,8 +429,13 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
                       <h3 className="text-sm font-bold text-white mb-1">{item.karmicThemeHindi || item.coreWisdomHindi}</h3>
                       <p className="text-xs text-gray-300 mb-2 leading-relaxed">{item.coreWisdom}</p>
                       {item.transitEvidence && (
-                        <div className="text-[11px] text-emerald-400 bg-emerald-950/30 border border-emerald-500/30 px-2.5 py-1 rounded-lg">
-                          ✓ प्रमाण बही आईडी: {item.transitEvidence.evidenceId.slice(0, 16)}... ({item.transitEvidence.status})
+                        <div className={`text-[11px] px-2.5 py-1 rounded-lg border flex items-center justify-between ${
+                          item.verificationStatus?.includes('VERIFIED')
+                            ? 'text-emerald-400 bg-emerald-950/30 border-emerald-500/30'
+                            : 'text-amber-400 bg-amber-950/30 border-amber-500/30'
+                        }`}>
+                          <span>{item.verificationStatus?.includes('VERIFIED') ? '✓' : '⚠️'} प्रमाण स्थिति: {item.verificationStatus}</span>
+                          <span className="font-mono text-[10px] text-gray-400">ID: {item.transitEvidence.evidenceId.slice(0, 12)}...</span>
                         </div>
                       )}
                     </div>
