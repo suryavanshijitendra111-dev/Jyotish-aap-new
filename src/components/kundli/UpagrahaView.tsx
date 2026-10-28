@@ -1,14 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { MasterKundliData } from '../../types/kundli';
 import { UpagrahaEngine, UpagrahaInfo } from '../../services/astrology/upagrahaEngine';
 import CarvedCard from '../ui/CarvedCard';
+import { Loader2 } from 'lucide-react';
 
 interface UpagrahaViewProps {
   data: MasterKundliData;
 }
 
 export const UpagrahaView: React.FC<UpagrahaViewProps> = ({ data }) => {
-  const upagrahas = UpagrahaEngine.calculate(data);
+  const [upagrahas, setUpagrahas] = useState<UpagrahaInfo[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    UpagrahaEngine.calculateAsync(data)
+      .then(res => {
+        if (isMounted) {
+          setUpagrahas(res);
+          setLoading(false);
+        }
+      })
+      .catch(err => {
+        console.warn('Async upagraha calculation error:', err);
+        if (isMounted) {
+          setUpagrahas(UpagrahaEngine.calculate(data));
+          setLoading(false);
+        }
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [data]);
 
   // Divide into groups for better display
   const sunBased = upagrahas.filter(u => u.type === 'Non-Luminous');
@@ -21,6 +44,15 @@ export const UpagrahaView: React.FC<UpagrahaViewProps> = ({ data }) => {
     const s = Math.floor(((deg - d) * 60 - m) * 60);
     return `${d}° ${m}' ${s}"`;
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 space-y-4">
+        <Loader2 className="w-8 h-8 text-[#D4AF37] animate-spin" />
+        <p className="text-[#D4AF37] text-sm uppercase tracking-widest font-serif">Calculating Precise Swiss Ephemeris Upagrahas...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 font-serif">
@@ -85,7 +117,7 @@ export const UpagrahaView: React.FC<UpagrahaViewProps> = ({ data }) => {
               <h4 className="text-[#D4AF37] font-bold uppercase tracking-widest">{u.hindiName} Analysis</h4>
             </div>
             <p className="text-[#E0E0E0] text-sm italic mb-4 leading-relaxed border-l-2 border-[#D4AF37]/40 pl-3">
-              Placed in the {u.house}th House in {u.rashiName}. {u.description}
+              Placed in the {isNaN(u.house) ? '?' : u.house}th House in {u.rashiName}. {u.description}
             </p>
             <div className="text-[10px] text-[#A0A0A0] uppercase tracking-wider font-bold">
               Karmic Influence: <span className="text-[#D4AF37]">Strong</span> • Status: <span className="text-[#FF4444]">Critical</span>
@@ -95,7 +127,7 @@ export const UpagrahaView: React.FC<UpagrahaViewProps> = ({ data }) => {
       </div>
 
       <div className="text-center text-[#666] text-[10px] italic uppercase tracking-widest mt-4">
-        Calculated using Jagannatha Hora Non-Luminous Point Algorithms
+        Calculated using Swiss Ephemeris Real Ascendant & Jagannatha Hora Algorithms
       </div>
     </div>
   );

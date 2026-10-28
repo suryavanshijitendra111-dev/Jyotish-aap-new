@@ -290,7 +290,80 @@ export const FamilyMemberFormModal: React.FC<FamilyMemberFormModalProps> = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isCustomPlace, setIsCustomPlace] = useState(false);
   const [gpsStatus, setGpsStatus] = useState<string | null>(null);
+  const [nominatimResults, setNominatimResults] = useState<any[]>([]);
+  const [isSearchingNominatim, setIsSearchingNominatim] = useState(false);
   const suggestionRef = useRef<HTMLDivElement>(null);
+
+  // Dynamic Nominatim search effect for worldwide cities
+  useEffect(() => {
+    if (!place || place.length < 2 || place.startsWith('GPS Location')) {
+      setNominatimResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setIsSearchingNominatim(true);
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(place)}&addressdetails=1&limit=5`, {
+          headers: { 'Accept-Language': 'hi,en' }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setNominatimResults(data);
+        }
+      } catch (e) {
+        console.warn('Nominatim search error:', e);
+      } finally {
+        setIsSearchingNominatim(false);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [place]);
+
+  const handleNominatimSelect = (item: any) => {
+    const lat = parseFloat(item.lat);
+    const lon = parseFloat(item.lon);
+    const addr = item.address || {};
+    const cityName = addr.city || addr.town || addr.village || addr.county || item.display_name.split(',')[0];
+    const stateName = addr.state || '';
+    const countryName = addr.country || '';
+
+    setPlace(cityName);
+    setLatitude(lat);
+    setLongitude(lon);
+    if (stateName) setSelectedState(stateName);
+    if (countryName) {
+      const matchedC = COUNTRIES_LIST.find(c => c.name.toLowerCase() === countryName.toLowerCase());
+      if (matchedC) setSelectedCountry(matchedC.code);
+    }
+    setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Kolkata');
+    setShowSuggestions(false);
+    setNominatimResults([]);
+    setIsCustomPlace(false);
+    setErrors(prev => ({ ...prev, place: '', latitude: '', longitude: '' }));
+  };
+
+  const reverseGeocode = async (lat: number, lon: number) => {
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`, {
+        headers: { 'Accept-Language': 'hi,en' }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const addr = data.address || {};
+        const cityName = addr.city || addr.town || addr.village || addr.county;
+        const stateName = addr.state || '';
+        const countryName = addr.country || '';
+        if (cityName) setPlace(cityName);
+        if (stateName) setSelectedState(stateName);
+        if (countryName) {
+          const matchedC = COUNTRIES_LIST.find(c => c.name.toLowerCase() === countryName.toLowerCase());
+          if (matchedC) setSelectedCountry(matchedC.code);
+        }
+      }
+    } catch (e) {
+      console.warn('Reverse geocode error:', e);
+    }
+  };
 
   useEffect(() => {
     if (initialProfile) {
@@ -398,10 +471,53 @@ export const FamilyMemberFormModal: React.FC<FamilyMemberFormModalProps> = ({
     return true;
   };
 
+  const fetchIpGeolocation = async () => {
+    try {
+      setGpsStatus('IP आधारित स्थान (IP Geolocation) प्राप्त किया जा रहा है...');
+      const res = await fetch('https://ipapi.co/json/');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.latitude && data.longitude) {
+          const lat = parseFloat(data.latitude);
+          const lon = parseFloat(data.longitude);
+          const cityName = data.city || '';
+          const regionName = data.region || '';
+          const countryName = data.country_name || '';
+          const tz = data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Kolkata';
+
+          setLatitude(parseFloat(lat.toFixed(4)));
+          setLongitude(parseFloat(lon.toFixed(4)));
+          setTimezone(tz);
+          if (cityName) {
+            setPlace(`${cityName}${regionName ? `, ${regionName}` : ''}`);
+          } else {
+            setPlace(`IP Location (${lat.toFixed(2)}°, ${lon.toFixed(2)}°)`);
+          }
+          if (regionName) setSelectedState(regionName);
+          if (countryName) {
+            const matchedC = COUNTRIES_LIST.find(c => c.name.toLowerCase().includes(countryName.toLowerCase()) || c.code.toLowerCase() === countryName.toLowerCase());
+            if (matchedC) setSelectedCountry(matchedC.code);
+          }
+          setIsCustomPlace(false);
+          setGpsStatus('IP स्थान सफलतापूर्वक मिल गया!');
+          setErrors(prev => ({ ...prev, place: '', latitude: '', longitude: '' }));
+          setTimeout(() => setGpsStatus(null), 3000);
+          return true;
+        }
+      }
+      throw new Error('IP API invalid response');
+    } catch (ipErr) {
+      console.warn('IP geolocation fallback failed:', ipErr);
+      setGpsStatus('GPS एवं IP स्थान दोनों अनुपलब्ध हैं। कृपया सूची से अपना शहर चुनें।');
+      return false;
+    }
+  };
+
   const handleDetectLocation = async () => {
     await diagnoseGeolocationSupport();
     if (!navigator.geolocation) {
-      setGpsStatus('जियोलोकेशन समर्थित नहीं है।');
+      console.warn('navigator.geolocation not available, falling back to IP geolocation...');
+      await fetchIpGeolocation();
       return;
     }
     setGpsStatus('स्थान (GPS) खोजा जा रहा है...');
@@ -416,6 +532,7 @@ export const FamilyMemberFormModal: React.FC<FamilyMemberFormModalProps> = ({
         setLongitude(parseFloat(lon.toFixed(4)));
         setTimezone(tz);
         setPlace(`GPS Location (${lat.toFixed(2)}°, ${lon.toFixed(2)}°)`);
+        reverseGeocode(lat, lon);
         setIsCustomPlace(false);
         setGpsStatus('स्थान सफलतापूर्वक मिल गया!');
         setErrors(prev => ({ ...prev, place: '', latitude: '', longitude: '' }));
@@ -433,14 +550,15 @@ export const FamilyMemberFormModal: React.FC<FamilyMemberFormModalProps> = ({
             setLongitude(parseFloat(lon.toFixed(4)));
             setTimezone(tz);
             setPlace(`GPS Location (${lat.toFixed(2)}°, ${lon.toFixed(2)}°)`);
+            reverseGeocode(lat, lon);
             setIsCustomPlace(false);
             setGpsStatus('स्थान सफलतापूर्वक मिल गया!');
             setErrors(prev => ({ ...prev, place: '', latitude: '', longitude: '' }));
             setTimeout(() => setGpsStatus(null), 3000);
           },
-          (err2) => {
-            console.error('GPS fallback error:', err2);
-            setGpsStatus('GPS अनुमति अस्वीकृत या ब्लॉक है। कृपया सूची से अपना शहर चुनें।');
+          async (err2) => {
+            console.warn('GPS fallback error, switching to IP Geolocation:', err2);
+            await fetchIpGeolocation();
           },
           { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
         );
@@ -740,17 +858,34 @@ export const FamilyMemberFormModal: React.FC<FamilyMemberFormModalProps> = ({
                 />
                 
                 {/* Autocomplete Suggestions Dropdown */}
-                {showSuggestions && filteredCities.length > 0 && (
+                {showSuggestions && (filteredCities.length > 0 || nominatimResults.length > 0 || isSearchingNominatim) && (
                   <div className="absolute z-30 left-0 right-0 mt-1 max-h-56 overflow-y-auto bg-[#04120c] border border-[#d4af37]/50 rounded-xl shadow-2xl divide-y divide-white/5">
+                    {isSearchingNominatim && (
+                      <div className="px-4 py-2.5 text-xs text-[#d4af37] animate-pulse flex items-center gap-2">
+                        <span>🌍 वैश्विक स्थानों की खोज की जा रही है...</span>
+                      </div>
+                    )}
                     {filteredCities.map(city => (
                       <div
-                        key={city.name}
+                        key={`local-${city.name}`}
                         onClick={() => handleCitySelect(city)}
                         className="px-4 py-2.5 text-sm text-gray-200 hover:bg-[#d4af37]/20 hover:text-white cursor-pointer flex items-center justify-between transition-colors"
                       >
-                        <span className="font-medium">{city.name}</span>
+                        <span className="font-medium">{city.name} {city.state ? `(${city.state})` : ''}</span>
                         <span className="text-[11px] text-[#d4af37]/70 font-mono">
                           {city.lat.toFixed(2)}°, {city.lon.toFixed(2)}°
+                        </span>
+                      </div>
+                    ))}
+                    {nominatimResults.map(item => (
+                      <div
+                        key={`nom-${item.place_id}`}
+                        onClick={() => handleNominatimSelect(item)}
+                        className="px-4 py-2.5 text-sm text-gray-200 hover:bg-[#d4af37]/20 hover:text-white cursor-pointer flex items-center justify-between transition-colors"
+                      >
+                        <span className="font-medium truncate pr-2">{item.display_name}</span>
+                        <span className="text-[11px] text-[#d4af37]/70 font-mono shrink-0">
+                          {parseFloat(item.lat).toFixed(2)}°, {parseFloat(item.lon).toFixed(2)}°
                         </span>
                       </div>
                     ))}
