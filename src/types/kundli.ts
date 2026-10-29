@@ -15,6 +15,8 @@ export interface BirthProfile {
   mobile?: string;
   mobileNumber?: string;
   mobileNumbers?: string[];
+  pinCode?: string;
+  detailedAddress?: string;
   gender?: string;
   relationship?: string;
   isMaster?: boolean;

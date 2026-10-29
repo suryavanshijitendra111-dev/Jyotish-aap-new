@@ -286,6 +286,9 @@ export const FamilyMemberFormModal: React.FC<FamilyMemberFormModalProps> = ({
   const [longitude, setLongitude] = useState(75.8577);
   const [timezone, setTimezone] = useState('Asia/Kolkata');
   const [mobileNumber, setMobileNumber] = useState('');
+  const [pinCode, setPinCode] = useState('');
+  const [detailedAddress, setDetailedAddress] = useState('');
+  const [addressFetchStatus, setAddressFetchStatus] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isCustomPlace, setIsCustomPlace] = useState(false);
@@ -293,6 +296,77 @@ export const FamilyMemberFormModal: React.FC<FamilyMemberFormModalProps> = ({
   const [nominatimResults, setNominatimResults] = useState<any[]>([]);
   const [isSearchingNominatim, setIsSearchingNominatim] = useState(false);
   const suggestionRef = useRef<HTMLDivElement>(null);
+
+  // Effect to automatically fetch lat/lon using Nominatim API when pinCode or detailedAddress changes with fallback to pinCode only and default to Indore
+  useEffect(() => {
+    const qParts = [detailedAddress.trim(), pinCode.trim()].filter(Boolean);
+    if (qParts.length === 0) return;
+    const query = qParts.join(', ');
+    if (query.length < 3) return;
+
+    const timer = setTimeout(async () => {
+      setAddressFetchStatus('पिन कोड / पते से सटीक स्थान (Latitude/Longitude) खोजा जा रहा है...');
+      try {
+        let foundLat: number | null = null;
+        let foundLon: number | null = null;
+
+        // Attempt 1: Combined Query (Detailed Address + PIN Code)
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=1`, {
+          headers: { 'Accept-Language': 'hi,en' }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.length > 0) {
+            const item = data[0];
+            const lat = parseFloat(item.lat);
+            const lon = parseFloat(item.lon);
+            if (!isNaN(lat) && !isNaN(lon)) {
+              foundLat = lat;
+              foundLon = lon;
+            }
+          }
+        }
+
+        // Attempt 2: Fallback to PIN Code only if combined query failed and pinCode is valid
+        if ((foundLat === null || foundLon === null) && pinCode.trim().length >= 3) {
+          setAddressFetchStatus('पते से सटीक स्थान नहीं मिला, केवल पिन कोड से खोजा जा रहा है...');
+          const pinRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(pinCode.trim())}&addressdetails=1&limit=1`, {
+            headers: { 'Accept-Language': 'hi,en' }
+          });
+          if (pinRes.ok) {
+            const pinData = await pinRes.json();
+            if (pinData && pinData.length > 0) {
+              const item = pinData[0];
+              const lat = parseFloat(item.lat);
+              const lon = parseFloat(item.lon);
+              if (!isNaN(lat) && !isNaN(lon)) {
+                foundLat = lat;
+                foundLon = lon;
+              }
+            }
+          }
+        }
+
+        if (foundLat !== null && foundLon !== null) {
+          setLatitude(parseFloat(foundLat.toFixed(4)));
+          setLongitude(parseFloat(foundLon.toFixed(4)));
+          setAddressFetchStatus('सटीक अक्षांश और देशांतर स्वतः भर दिए गए!');
+          setTimeout(() => setAddressFetchStatus(null), 3500);
+        } else {
+          // Attempt 3: If all search attempts fail, do not show wrong coordinates; default to Indore and inform user
+          setLatitude(22.7196);
+          setLongitude(75.8577);
+          setAddressFetchStatus('इस पते/पिन कोड से स्थान नहीं मिला। डिफ़ॉल्ट रूप से इंदौर (Lat 22.7196, Long 75.8577) के निर्देशांक सेट किए गए हैं।');
+        }
+      } catch (err) {
+        console.warn('Nominatim PIN/Address fetch error:', err);
+        setLatitude(22.7196);
+        setLongitude(75.8577);
+        setAddressFetchStatus('स्थान फेच करने में नेटवर्क त्रुटि। डिफ़ॉल्ट रूप से इंदौर (Lat 22.7196, Long 75.8577) सेट है।');
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [pinCode, detailedAddress]);
 
   // Dynamic Nominatim search effect for worldwide cities
   useEffect(() => {
@@ -377,6 +451,8 @@ export const FamilyMemberFormModal: React.FC<FamilyMemberFormModalProps> = ({
       setLongitude(typeof initialProfile.longitude === 'number' ? initialProfile.longitude : 75.8577);
       setTimezone(initialProfile.timezone || 'Asia/Kolkata');
       setMobileNumber(initialProfile.mobileNumber || (initialProfile.mobileNumbers && initialProfile.mobileNumbers.length > 0 ? initialProfile.mobileNumbers[0] : ''));
+      setPinCode((initialProfile as any).pinCode || '');
+      setDetailedAddress((initialProfile as any).detailedAddress || '');
       setIsTimeUnknown(initialProfile.time === '12:00 PM' && (initialProfile as any).timeUnknown === true);
       setIsCustomPlace(false);
     } else {
@@ -394,10 +470,13 @@ export const FamilyMemberFormModal: React.FC<FamilyMemberFormModalProps> = ({
       setLongitude(75.8577);
       setTimezone('Asia/Kolkata');
       setMobileNumber('');
+      setPinCode('');
+      setDetailedAddress('');
       setIsCustomPlace(false);
     }
     setErrors({});
     setGpsStatus(null);
+    setAddressFetchStatus(null);
   }, [initialProfile, isMaster, isOpen]);
 
   // Handle outside click to close city autocomplete suggestions
@@ -623,6 +702,8 @@ export const FamilyMemberFormModal: React.FC<FamilyMemberFormModalProps> = ({
       timezone: timezone.trim() || 'Asia/Kolkata',
       mobileNumber: mobileNumber.trim(),
       mobileNumbers: mobileNumber.trim() ? [mobileNumber.trim()] : [],
+      pinCode: pinCode.trim(),
+      detailedAddress: detailedAddress.trim(),
       isMaster
     };
 
@@ -902,6 +983,42 @@ export const FamilyMemberFormModal: React.FC<FamilyMemberFormModalProps> = ({
               )}
             </div>
           </div>
+
+          {/* PIN Code & Detailed Address/Area */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1">
+                पिन कोड (PIN Code)
+              </label>
+              <input 
+                type="text"
+                value={pinCode}
+                onChange={e => setPinCode(e.target.value)}
+                placeholder="उदा. 452001"
+                className="w-full px-4 py-2.5 rounded-xl bg-black/50 border border-[#d4af37]/40 text-white placeholder-gray-500 focus:outline-none focus:border-[#d4af37] text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1">
+                जन्म स्थान का पूरा पता/इलाका (Detailed Address/Area)
+              </label>
+              <input 
+                type="text"
+                value={detailedAddress}
+                onChange={e => setDetailedAddress(e.target.value)}
+                placeholder="उदा. विजय नगर, इंदौर"
+                className="w-full px-4 py-2.5 rounded-xl bg-black/50 border border-[#d4af37]/40 text-white placeholder-gray-500 focus:outline-none focus:border-[#d4af37] text-sm"
+              />
+            </div>
+          </div>
+
+          {addressFetchStatus && (
+            <div className="p-2 bg-emerald-950/40 border border-emerald-600/40 rounded-lg text-xs text-emerald-300 flex items-center gap-1.5 animate-pulse">
+              <Info className="w-3.5 h-3.5 shrink-0" />
+              <span>{addressFetchStatus}</span>
+            </div>
+          )}
 
           {/* Latitude & Longitude */}
           <div className="grid grid-cols-2 gap-3">
