@@ -19,7 +19,9 @@ import {
   Printer,
   TrendingUp,
   Send,
-  MessageSquare
+  MessageSquare,
+  Mic,
+  MicOff
 } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import CarvedCard from '../ui/CarvedCard';
@@ -60,6 +62,33 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
     }
   });
 
+  const [isListening, setIsListening] = useState<boolean>(false);
+  const [streakCount, setStreakCount] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem(`jeevan_pragya_streak_${profileId}`);
+      return saved ? parseInt(saved, 10) : 1;
+    } catch {
+      return 1;
+    }
+  });
+
+  const completedRemediesCount = ['daan', 'snan', 'mantra', 'contemplation'].filter(k => remedyChecks[k]).length;
+  const completionPercentage = Math.round((completedRemediesCount / 4) * 100);
+
+  useEffect(() => {
+    if (completedRemediesCount === 4) {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const lastCompletedDate = localStorage.getItem(`jeevan_pragya_last_date_${profileId}`);
+      if (lastCompletedDate !== todayStr) {
+        const newStreak = streakCount + 1;
+        setStreakCount(newStreak);
+        localStorage.setItem(`jeevan_pragya_streak_${profileId}`, newStreak.toString());
+        localStorage.setItem(`jeevan_pragya_last_date_${profileId}`, todayStr);
+        showToast?.(`🔥 बधाई हो! आपकी साधना स्ट्रीक बढ़कर ${newStreak} दिन हो गई है!`);
+      }
+    }
+  }, [completedRemediesCount]);
+
   const handleRemedyCheck = (key: string, checked: boolean) => {
     const updated = { ...remedyChecks, [key]: checked };
     setRemedyChecks(updated);
@@ -71,40 +100,128 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
     }
   };
 
-  const handleAskPragyaAi = async () => {
-    if (!aiQuery.trim()) return;
+  const aiQueryInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleVoiceInput = async () => {
+    // 1. Try getUserMedia first as requested to trigger browser audio permission prompt safely
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => {
+          // Silently catch in iframe sandboxes
+        });
+      }
+    } catch {
+      // Silently catch
+    }
+
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionAPI) {
+      aiQueryInputRef.current?.focus();
+      showToast?.('कृपया कीबोर्ड माइक से बोलें');
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognitionAPI();
+      recognition.lang = 'hi-IN';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      setIsListening(true);
+      showToast?.('सुन रहा हूँ... बोलिए (Listening...)');
+
+      recognition.onresult = (event: any) => {
+        const speechText = event.results[0][0].transcript;
+        if (speechText) {
+          setAiQuery(speechText);
+        }
+        setIsListening(false);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.warn('Speech recognition suppressed error:', event?.error);
+        setIsListening(false);
+        aiQueryInputRef.current?.focus();
+        showToast?.('कृपया कीबोर्ड माइक से बोलें');
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } catch (err) {
+      console.warn('Speech recognition failed to start:', err);
+      setIsListening(false);
+      aiQueryInputRef.current?.focus();
+      showToast?.('कृपया कीबोर्ड माइक से बोलें');
+    }
+  };
+
+  const handleAskPragyaAi = async (queryText?: string) => {
+    const queryToUse = queryText !== undefined ? queryText : aiQuery;
+    if (!queryToUse.trim()) return;
     try {
       setAiLoading(true);
       setAiResponse(null);
 
+      const promptText = `आप 'जीवन प्रज्ञा' के दिव्य वैदिक मार्गदर्शक हैं। 
+जातक: Jitendra Suryavanshi
+लग्न: मिथुन (Gemini)
+चंद्र राशि: मकर (Capricorn)
+नक्षत्र: उत्तराषाढ़ा
+दशा: गुरु महादशा में शनि अंतर्दशा
+यूज़र का प्रश्न: "${queryToUse}"
+
+निर्देश:
+1. जातक के इस विशिष्ट प्रश्न ("${queryToUse}") का बिल्कुल सटीक, ठोस और प्रासंगिक वैदिक ज्योतिषीय उत्तर व सटीक उपाय दें।
+2. कोई भी डमी, सामान्य या स्टैटिक उत्तर न दें।
+3. उत्तर स्पष्ट रूप से 3 से 4 पंक्तियों (sentences/lines) में अत्यंत आदरणीय, सकारात्मक और प्रामाणिक हिंदी (देवनागरी) में हो।`;
+
+      let text = '';
       const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY || '';
-      if (!apiKey) {
-        setAiResponse(`नमस्कार ${profile?.name || 'जातक'} जी। आपके प्रश्न "${aiQuery}" के संदर्भ में सप्तऋषि प्रज्ञा का मार्गदर्शन: आपकी जन्मकुंडली और वर्तमान महादशा के अनुसार, धैर्य, सत्कर्म और नियमित मंत्र जाप से सभी बाधाएं दूर होती हैं। नियमित दान और सात्विक आचरण से जीवन में निरंतर उत्थान होगा।`);
-        return;
+
+      if (apiKey) {
+        const ai = new GoogleGenAI({ apiKey });
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: promptText,
+        });
+        text = response.text || '';
+      } else {
+        // Call backend API /api/ai-jyotish which invokes @google/genai SDK with server GEMINI_API_KEY
+        const res = await fetch('/api/ai-jyotish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            question: queryToUse,
+            prompt: promptText,
+            language: 'Hindi',
+            context: {
+              name: 'Jitendra Suryavanshi',
+              lagna: 'Mithuna (Gemini)',
+              moonSign: 'Makara (Capricorn)',
+              nakshatra: 'Uttara Ashadha',
+              dasha: 'Guru Mahadasha, Shani Antardasha'
+            }
+          })
+        });
+        const data = await res.json();
+        if (data.ok && (data.text || data.answer)) {
+          text = data.text || data.answer;
+        } else {
+          throw new Error(data.error || 'API से उत्तर प्राप्त करने में विफल।');
+        }
       }
 
-      const ai = new GoogleGenAI({ apiKey });
-      const promptText = `आप 'जीवन प्रज्ञा' के दिव्य वैदिक मार्गदर्शक हैं। 
-जातक का नाम: ${profile?.name || 'जातक'}
-जन्मतिथि: ${profile?.dob || 'उपलब्ध नहीं'}
-स्थान: ${profile?.place || 'उपलब्ध नहीं'}
-सक्रिय महादशा / मार्गदर्शन सारांश: ${guidanceData?.yatraSummary?.activeDashaSummary || 'उपलब्ध नहीं'}
-सुलभ मार्गदर्शक संदर्भ: ${guidanceData?.yatraSummary?.overallMottoHindi || ''}
+      if (!text) {
+        throw new Error('प्रज्ञा से रिक्त प्रतिक्रिया प्राप्त हुई।');
+      }
 
-जातक का प्रश्न: "${aiQuery}"
-
-कृपया वेदों, ज्योतिषीय सिद्धांतों और महर्षियों की परंपरा के अनुकूल अत्यंत आदरणीय, सकारात्मक, प्रेरणादायक और सटीक हिंदी में उत्तर दें। घातक या नकारात्मक भविष्यवाणी न करें।`;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: promptText,
-      });
-
-      const text = response.text || 'प्रज्ञा से उत्तर प्राप्त करने में असमर्थ। कृपया पुनः प्रयास करें।';
       setAiResponse(text);
     } catch (err: any) {
       console.error('AI Q&A Error:', err);
-      setAiResponse(`नमस्कार ${profile?.name || 'जातक'} जी। आपके प्रश्न "${aiQuery}" पर: वर्तमान खगोलीय संरेखण और महादशा के अनुसार, अपने इष्टदेव का स्मरण, नित्य ध्यान और सकारात्मक कर्म करने से सभी कार्य सिद्ध होंगे।`);
+      setAiResponse(`त्रुटि: ${err?.message || 'प्रज्ञा AI से संवाद करने में असमर्थ। कृपया पुनः प्रयास करें।'}`);
     } finally {
       setAiLoading(false);
     }
@@ -398,6 +515,33 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
                   </div>
                 </div>
               </div>
+
+              {/* Rahu-Ketu Karmic Axis (राहु-केतु कार्मिक अक्ष - Soul Mission Card) */}
+              <div className="mt-4 p-4 sm:p-5 rounded-xl bg-gradient-to-r from-purple-950/40 via-black to-purple-950/40 border border-purple-500/40 shadow-[0_0_20px_rgba(168,85,247,0.15)]">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-purple-400" />
+                    <h3 className="text-xs font-bold text-purple-300 uppercase">राहु-केतु कार्मिक अक्ष (Soul Mission & Karmic Axis)</h3>
+                  </div>
+                  <span className="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full border border-purple-500/40 font-mono">
+                    NODAL EVOLUTION
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 rounded-lg bg-black/50 border border-amber-500/30">
+                    <span className="font-bold text-amber-300 block mb-1">☋ केतु (अतीत - Past Comfort Zone):</span>
+                    <p className="text-gray-300 text-[11px] leading-relaxed">
+                      पूर्व जन्म से संचित स्वाभाविक गुण, सहज आध्यात्मिक प्रवृत्तियाँ, और वैराग्य। जातक इस क्षेत्र में बिना प्रयास के पारंगत है, किंतु यहाँ कम्फर्ट ज़ोन से बाहर निकलना आत्मा की प्रगति के लिए आवश्यक है।
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-black/50 border border-purple-500/30">
+                    <span className="font-bold text-purple-300 block mb-1">☊ राहु (भविष्य - Soul Purpose & Growth):</span>
+                    <p className="text-gray-300 text-[11px] leading-relaxed">
+                      इस जन्म का मुख्य आध्यात्मिक लक्ष्य, सांसारिक कर्मक्षेत्र, नई चुनौतियाँ और आत्मा का विकास मार्ग। राहु की दिशा में प्रयास करने से ही जातक अपने उच्च भाग्य और जीवन के वास्तविक उद्देश्य को प्राप्त करता है।
+                    </p>
+                  </div>
+                </div>
+              </div>
             </CarvedCard>
           )}
 
@@ -592,6 +736,28 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
                 {/* Present Deep Guidance */}
                 {guidanceData.presentDeepGuidance && (
                   <div className="space-y-4">
+                    {/* Double Transit Golden Window Card (दोहरा गोचर 'गोल्डन विंडो') */}
+                    <div className="p-4 bg-gradient-to-r from-amber-950/50 via-black to-amber-950/50 border border-[#d4af37]/60 rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.2)]">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-bold text-[#d4af37] flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-[#d4af37]" /> दोहरा गोचर 'गोल्डन विंडो' (Double Transit Yoga)
+                        </h3>
+                        <span className="text-[10px] bg-[#d4af37]/20 text-[#d4af37] px-2 py-0.5 rounded-full border border-[#d4af37]/40 font-mono">
+                          JUPITER & SATURN JOINT ASPECT
+                        </span>
+                      </div>
+                      <p className="text-xs text-white font-medium mb-2">
+                        • संयुक्त दृष्टि भाव: मिथुन लग्न एवं मकर राशि के जातकों के लिए पंचम भाव (बुद्धि, संतान व पूर्व पुण्य) तथा नवम भाव (भाग्य व उच्च शिक्षा) पर देवगुरु बृहस्पति तथा शनि की गोचरीय युति/दृष्टि।
+                      </p>
+                      <p className="text-xs text-gray-300 leading-relaxed mb-3">
+                        जब देवगुरु बृहस्पति और शनि दोनों का प्रभाव शुभ भावों पर एक साथ सक्रिय होता है, तब 'गोल्डन विंडो' का निर्माण होता है। यह काल दीर्घकालिक निवेश, करियर में महत्वपूर्ण छलांग, और आध्यात्मिक सिद्धि के लिए अत्यंत स्वर्णिम माना जाता है।
+                      </p>
+                      <div className="p-3 bg-black/50 border border-[#d4af37]/30 rounded-lg flex items-center justify-between text-xs">
+                        <span className="text-amber-300 font-bold">🌟 वर्तमान सक्रिय खिड़की:</span>
+                        <span className="text-white font-mono">गुरु महादशा एवं शनि गोचर काल (2025 - 2026)</span>
+                      </div>
+                    </div>
+
                     {/* Makar Rashi Sade Sati / Dhaiya & Current Transits */}
                     {guidanceData.presentDeepGuidance.sadeSatiDhaiyaInfo && (
                       <div className="p-4 bg-black/50 border border-[#d4af37]/30 rounded-xl">
@@ -626,10 +792,31 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
                       </p>
 
                       <div className="pt-3 border-t border-[#d4af37]/20 space-y-3">
-                        <h4 className="text-xs font-bold text-[#d4af37] mb-1 flex items-center justify-between">
+                        {/* Streak & Progress Bar */}
+                        <div className="p-3 rounded-xl bg-gradient-to-r from-amber-950/30 via-black to-amber-950/30 border border-[#d4af37]/40 space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-[#d4af37] flex items-center gap-1.5">
+                              <span>🔥 साधना स्ट्रीक:</span>
+                              <span className="text-white font-mono bg-[#d4af37]/20 px-2 py-0.5 rounded-full border border-[#d4af37]/40">
+                                {streakCount} दिन पूरा
+                              </span>
+                            </span>
+                            <span className="text-gray-300 font-mono">
+                              पूर्णता: {completionPercentage}% ({completedRemediesCount}/4)
+                            </span>
+                          </div>
+                          <div className="w-full bg-black/60 h-2.5 rounded-full overflow-hidden border border-[#d4af37]/30">
+                            <div 
+                              className="bg-gradient-to-r from-amber-600 to-[#d4af37] h-full transition-all duration-500 rounded-full"
+                              style={{ width: `${completionPercentage}%` }}
+                            ></div>
+                          </div>
+                        </div>
+
+                        <h4 className="text-xs font-bold text-[#d4af37] mb-1 flex items-center justify-between pt-1">
                           <span>दैनिक साधना व उपाय ट्रैकर (Checklist):</span>
                           <span className="text-[10px] text-gray-400 font-normal">
-                            पूर्ण: {['daan', 'snan', 'mantra', 'contemplation'].filter(k => remedyChecks[k]).length} / 4
+                            पूर्ण: {completedRemediesCount} / 4
                           </span>
                         </h4>
 
@@ -756,23 +943,44 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
 
             <div className="space-y-3">
               <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={aiQuery}
-                  onChange={(e) => setAiQuery(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleAskPragyaAi(); }}
-                  placeholder="जैसे: मेरी वर्तमान महादशा में करियर की उन्नति के लिए क्या विशेष उपाय करें?"
-                  className="flex-1 bg-black/60 border border-[#d4af37]/40 rounded-xl px-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#d4af37]"
-                />
+                <div className="relative flex-1 flex items-center">
+                  <input
+                    ref={aiQueryInputRef}
+                    type="text"
+                    value={aiQuery}
+                    onChange={(e) => setAiQuery(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleAskPragyaAi(); }}
+                    placeholder={isListening ? "सुन रहा हूँ... बोलिए" : "जैसे: मेरी वर्तमान महादशा में करियर की उन्नति के लिए क्या विशेष उपाय करें?"}
+                    className="w-full bg-black/60 border border-[#d4af37]/40 rounded-xl pl-4 pr-11 py-2.5 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-[#d4af37]"
+                  />
+                  <button
+                    onClick={handleVoiceInput}
+                    type="button"
+                    className={`absolute right-3 p-1.5 rounded-full transition-all cursor-pointer ${
+                      isListening ? 'bg-rose-600 text-white animate-pulse shadow-[0_0_12px_rgba(225,29,72,0.8)]' : 'text-[#d4af37] hover:bg-[#d4af37]/20'
+                    }`}
+                    title="बोलकर प्रश्न पूछें (Voice Input)"
+                  >
+                    {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                  </button>
+                </div>
                 <button
-                  onClick={handleAskPragyaAi}
+                  onClick={() => handleAskPragyaAi()}
                   disabled={aiLoading || !aiQuery.trim()}
                   className="px-5 py-2.5 bg-[#d4af37] text-black font-bold text-xs rounded-xl hover:bg-[#e6c250] transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shrink-0"
                 >
                   {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  <span>पूछें</span>
+                  <span>{aiLoading ? 'विश्लेषण...' : 'पूछें'}</span>
                 </button>
               </div>
+
+              {/* Loading Indicator */}
+              {aiLoading && (
+                <div className="p-3 rounded-xl bg-black/60 border border-[#d4af37]/40 text-xs text-[#d4af37] flex items-center gap-2 animate-pulse">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>प्रज्ञा विश्लेषण कर रही है...</span>
+                </div>
+              )}
 
               {/* Quick Suggestion Chips */}
               <div className="flex items-center gap-1.5 overflow-x-auto pb-2 no-scrollbar">
@@ -785,7 +993,10 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
                 ].map((q, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setAiQuery(q)}
+                    onClick={() => {
+                      setAiQuery(q);
+                      handleAskPragyaAi(q);
+                    }}
                     className="px-2.5 py-1 rounded-full bg-black/40 border border-[#d4af37]/30 text-[10px] text-[#d4af37] hover:bg-[#d4af37]/20 whitespace-nowrap cursor-pointer transition-all"
                   >
                     {q}

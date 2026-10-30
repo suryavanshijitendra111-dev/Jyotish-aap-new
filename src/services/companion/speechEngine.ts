@@ -67,7 +67,7 @@ export const TTS_BCP47_MAP: Record<string, string> = {
 };
 
 const SPEED_PRESET_RATES: Record<SpeechSpeedPreset, number> = {
-  slow: 0.76,    // धीमी (गंभीर, स्पष्ट, स्थिर - Default for Hindi spiritual narrator)
+  slow: 0.80,    // धीमी व स्पष्ट आध्यात्मिक गति (0.80)
   normal: 0.92,  // सामान्य
   fast: 1.05     // तेज़
 };
@@ -515,8 +515,8 @@ export class SpeechEngine {
 
     const profile = this.currentOptions.profile || 'default';
 
-    // Voice Selection (respecting profile and preferred gender)
-    const targetGender = this.currentOptions.preferredGender || (profile === 'planet' ? 'male' : 'male');
+    // Voice Selection (defaulting to female soothing voice for spiritual modules)
+    const targetGender = this.currentOptions.preferredGender || 'female';
     const selectedVoice = this.selectBestVoice(
       this.currentLanguage, 
       targetGender,
@@ -559,8 +559,8 @@ export class SpeechEngine {
     let defaultPitch: number;
     if (this.currentOptions.preferredGender === 'female') {
       const meta = this.resolveVoiceWithMetadata(this.currentLanguage, 'female', profile);
-      // If authentic female voice is present, use clear female pitch (1.08 for Hindi); otherwise keep natural male pitch (0.90)
-      defaultPitch = meta.hasGenuineFemaleVoice ? (isHindi ? 1.08 : 1.10) : 0.90;
+      defaultRate = 0.80;
+      defaultPitch = meta.hasGenuineFemaleVoice ? (isHindi ? 1.08 : 1.10) : 1.25;
     } else if (profile === 'bhava') {
       defaultPitch = isHindi ? 0.94 : 0.95;
     } else if (profile === 'planet') {

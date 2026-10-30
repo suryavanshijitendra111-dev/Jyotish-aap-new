@@ -179,13 +179,22 @@ export default function Dashboard({ profile, navigate, showToast }: DashboardPro
               </button>
             </div>
 
-            <button
-              onClick={() => navigate('jeevan_pragya')}
-              className="w-full min-h-[46px] px-5 py-2.5 bg-gradient-to-r from-[#d4af37] via-[#fef08a] to-[#b89528] text-[#030a08] font-bold rounded-xl text-base hover:scale-[1.01] active:scale-[0.99] transition-all shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <span>प्रज्ञा मार्गदर्शन खोलें</span>
-              <span className="text-lg">→</span>
-            </button>
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => navigate('jeevan_pragya')}
+                className="flex-1 min-h-[46px] px-4 py-2.5 bg-gradient-to-r from-[#d4af37] via-[#fef08a] to-[#b89528] text-[#030a08] font-bold rounded-xl text-sm hover:scale-[1.01] active:scale-[0.99] transition-all shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>प्रज्ञा मार्गदर्शन खोलें</span>
+                <span>→</span>
+              </button>
+              <button
+                onClick={() => navigate('daily_report_card')}
+                className="flex-1 min-h-[46px] px-4 py-2.5 bg-black/50 border border-[#d4af37]/60 text-[#d4af37] font-bold rounded-xl text-sm hover:bg-[#d4af37]/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>दैनिक रिपोर्ट कार्ड</span>
+                <span>📋</span>
+              </button>
+            </div>
           </div>
         </div>
 
