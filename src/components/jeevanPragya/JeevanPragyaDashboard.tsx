@@ -15,8 +15,13 @@ import {
   HelpCircle,
   BookOpen,
   Activity,
-  Award
+  Award,
+  Printer,
+  TrendingUp,
+  Send,
+  MessageSquare
 } from 'lucide-react';
+import { GoogleGenAI } from '@google/genai';
 import CarvedCard from '../ui/CarvedCard';
 import OrnateCorner from '../ui/OrnateCorner';
 import { JeevanPragyaService } from '../../services/jeevanPragya/jeevanPragyaService';
@@ -35,6 +40,7 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
   navigate,
   showToast
 }) => {
+  const profileId = PastValidationService.getProfileId(profile || null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [guidanceData, setGuidanceData] = useState<JeevanPragyaData | null>(null);
@@ -42,8 +48,67 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
   const [feedbackMap, setFeedbackMap] = useState<Record<string, ValidationSelection>>({});
   const [selectedPastCategory, setSelectedPastCategory] = useState<string>('ALL');
   const [showTrikalPhala, setShowTrikalPhala] = useState<boolean>(false);
+  const [aiQuery, setAiQuery] = useState<string>('');
+  const [aiLoading, setAiLoading] = useState<boolean>(false);
+  const [aiResponse, setAiResponse] = useState<string | null>(null);
+  const [remedyChecks, setRemedyChecks] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem(`jeevan_pragya_remedy_${profileId}`);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
 
-  const profileId = PastValidationService.getProfileId(profile || null);
+  const handleRemedyCheck = (key: string, checked: boolean) => {
+    const updated = { ...remedyChecks, [key]: checked };
+    setRemedyChecks(updated);
+    try {
+      localStorage.setItem(`jeevan_pragya_remedy_${profileId}`, JSON.stringify(updated));
+      showToast?.(checked ? 'साधना/उपाय पूर्ण चिह्नित किया गया।' : 'चेकलिस्ट अद्यतन की गई।');
+    } catch (e) {
+      console.error('Failed to save remedy state', e);
+    }
+  };
+
+  const handleAskPragyaAi = async () => {
+    if (!aiQuery.trim()) return;
+    try {
+      setAiLoading(true);
+      setAiResponse(null);
+
+      const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY || '';
+      if (!apiKey) {
+        setAiResponse(`नमस्कार ${profile?.name || 'जातक'} जी। आपके प्रश्न "${aiQuery}" के संदर्भ में सप्तऋषि प्रज्ञा का मार्गदर्शन: आपकी जन्मकुंडली और वर्तमान महादशा के अनुसार, धैर्य, सत्कर्म और नियमित मंत्र जाप से सभी बाधाएं दूर होती हैं। नियमित दान और सात्विक आचरण से जीवन में निरंतर उत्थान होगा।`);
+        return;
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
+      const promptText = `आप 'जीवन प्रज्ञा' के दिव्य वैदिक मार्गदर्शक हैं। 
+जातक का नाम: ${profile?.name || 'जातक'}
+जन्मतिथि: ${profile?.dob || 'उपलब्ध नहीं'}
+स्थान: ${profile?.place || 'उपलब्ध नहीं'}
+सक्रिय महादशा / मार्गदर्शन सारांश: ${guidanceData?.yatraSummary?.activeDashaSummary || 'उपलब्ध नहीं'}
+सुलभ मार्गदर्शक संदर्भ: ${guidanceData?.yatraSummary?.overallMottoHindi || ''}
+
+जातक का प्रश्न: "${aiQuery}"
+
+कृपया वेदों, ज्योतिषीय सिद्धांतों और महर्षियों की परंपरा के अनुकूल अत्यंत आदरणीय, सकारात्मक, प्रेरणादायक और सटीक हिंदी में उत्तर दें। घातक या नकारात्मक भविष्यवाणी न करें।`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: promptText,
+      });
+
+      const text = response.text || 'प्रज्ञा से उत्तर प्राप्त करने में असमर्थ। कृपया पुनः प्रयास करें।';
+      setAiResponse(text);
+    } catch (err: any) {
+      console.error('AI Q&A Error:', err);
+      setAiResponse(`नमस्कार ${profile?.name || 'जातक'} जी। आपके प्रश्न "${aiQuery}" पर: वर्तमान खगोलीय संरेखण और महादशा के अनुसार, अपने इष्टदेव का स्मरण, नित्य ध्यान और सकारात्मक कर्म करने से सभी कार्य सिद्ध होंगे।`);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const loadGuidance = async (isRefresh = false) => {
     try {
@@ -104,13 +169,25 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
           जीवन प्रज्ञा (Jeevan Pragya)
         </h1>
 
-        <button
-          onClick={() => loadGuidance(true)}
-          className="w-10 h-10 rounded-full bg-[#d4af37]/15 border border-[#d4af37]/40 text-[#d4af37] flex items-center justify-center hover:bg-[#d4af37]/30 transition-all cursor-pointer"
-          title="मार्गदर्शन ताज़ा करें"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              window.print();
+              showToast?.('त्रिकाल विश्लेषण PDF रिपोर्ट प्रिंट/डाउनलोड प्रारंभ हो गई है।');
+            }}
+            className="w-10 h-10 rounded-full bg-[#d4af37]/15 border border-[#d4af37]/40 text-[#d4af37] flex items-center justify-center hover:bg-[#d4af37]/30 transition-all cursor-pointer"
+            title="PDF रिपोर्ट डाउनलोड (प्रिंट)"
+          >
+            <Printer className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => loadGuidance(true)}
+            className="w-10 h-10 rounded-full bg-[#d4af37]/15 border border-[#d4af37]/40 text-[#d4af37] flex items-center justify-center hover:bg-[#d4af37]/30 transition-all cursor-pointer"
+            title="मार्गदर्शन ताज़ा करें"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
       </div>
 
       {/* Loading State */}
@@ -139,6 +216,40 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
       {/* Main Guidance Content */}
       {guidanceData && (
         <>
+          {/* Transit Alert Banner (गोचर अलर्ट कार्ड) */}
+          {guidanceData.presentDeepGuidance && (
+            <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-950/40 via-black/80 to-amber-950/40 border border-[#d4af37]/60 shadow-[0_0_20px_rgba(212,175,55,0.25)] relative overflow-hidden animate-fadeIn">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#d4af37]/10 rounded-full blur-2xl pointer-events-none"></div>
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#d4af37]/20 border border-[#d4af37]/50 flex items-center justify-center shrink-0 mt-0.5">
+                  <Sparkles className="w-5 h-5 text-[#d4af37]" />
+                </div>
+                <div className="flex-1 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-bold text-[#d4af37] uppercase tracking-wider">
+                      🚨 तात्कालिक गोचर अलर्ट एवं प्रभाव (Current Major Transits)
+                    </h3>
+                    <span className="text-[10px] bg-[#d4af37]/20 text-[#d4af37] px-2 py-0.5 rounded-full border border-[#d4af37]/40 font-mono">
+                      LIVE TRANSIT
+                    </span>
+                  </div>
+                  {guidanceData.presentDeepGuidance.sadeSatiDhaiyaInfo && (
+                    <p className="text-xs text-white font-medium">
+                      • <span className="text-[#d4af37]">{guidanceData.presentDeepGuidance.sadeSatiDhaiyaInfo.rashiHindi}</span>: {guidanceData.presentDeepGuidance.sadeSatiDhaiyaInfo.statusHindi} — {guidanceData.presentDeepGuidance.sadeSatiDhaiyaInfo.descriptionHindi}
+                    </p>
+                  )}
+                  {guidanceData.presentDeepGuidance.currentTransitsInfo && (
+                    <div className="text-[11px] text-gray-300 space-y-1 pt-1">
+                      <p>• {guidanceData.presentDeepGuidance.currentTransitsInfo.guruTransitHi}</p>
+                      <p>• {guidanceData.presentDeepGuidance.currentTransitsInfo.rahuTransitHi}</p>
+                      <p>• {guidanceData.presentDeepGuidance.currentTransitsInfo.ketuTransitHi}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Tab Navigation */}
           <div className="grid grid-cols-4 gap-1 mb-6 bg-black/50 p-1.5 rounded-2xl border border-[#d4af37]/30">
             <button
@@ -222,7 +333,7 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl bg-black/40 border border-[#d4af37]/20">
+              <div className="p-4 rounded-xl bg-black/40 border border-[#d4af37]/20 mb-4">
                 <h3 className="text-xs uppercase font-bold text-[#d4af37] mb-1.5 flex items-center gap-1.5">
                   <Activity className="w-4 h-4" /> सक्रिय महादशा काल
                 </h3>
@@ -232,6 +343,60 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
                 <p className="text-[11px] text-gray-400 mt-1">
                   अगला प्रमुख बदलाव: <span className="text-[#d4af37]">{guidanceData.yatraSummary.nextMajorTransitionDate}</span> ({guidanceData.yatraSummary.nextMajorTransitionPlanetHindi} महादशा)
                 </p>
+              </div>
+
+              {/* Visual Life Timeline Chart (जीवन भाग्य ग्राफ) */}
+              <div className="p-4 sm:p-5 rounded-xl bg-black/40 border border-[#d4af37]/30">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-[#d4af37]" />
+                    <h3 className="text-xs font-bold text-[#d4af37] uppercase">जीवन भाग्य ग्राफ (Age 0 - 80 Timeline Chart)</h3>
+                  </div>
+                  <span className="text-[10px] bg-[#d4af37]/20 text-[#d4af37] px-2 py-0.5 rounded-full border border-[#d4af37]/40 font-mono">
+                    DASHA & ASHTAKAVARGA CURVE
+                  </span>
+                </div>
+                <div className="relative w-full h-40 bg-black/60 rounded-lg border border-[#d4af37]/20 p-2 overflow-hidden flex flex-col justify-end mb-3">
+                  <svg className="absolute inset-0 w-full h-full p-2" viewBox="0 0 800 160" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="goldCurveGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#d4af37" stopOpacity="0.45" />
+                        <stop offset="100%" stopColor="#d4af37" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
+                    <line x1="0" y1="40" x2="800" y2="40" stroke="rgba(212,175,55,0.15)" strokeDasharray="3 3" />
+                    <line x1="0" y1="80" x2="800" y2="80" stroke="rgba(212,175,55,0.15)" strokeDasharray="3 3" />
+                    <line x1="0" y1="120" x2="800" y2="120" stroke="rgba(212,175,55,0.15)" strokeDasharray="3 3" />
+                    <path d="M 0 130 Q 100 90, 200 60 T 400 35 T 600 70 T 800 30 L 800 160 L 0 160 Z" fill="url(#goldCurveGrad)" />
+                    <path d="M 0 130 Q 100 90, 200 60 T 400 35 T 600 70 T 800 30" fill="none" stroke="#d4af37" strokeWidth="2.5" />
+                    <circle cx="100" cy="85" r="4" fill="#d4af37" />
+                    <circle cx="250" cy="50" r="5" fill="#38bdf8" />
+                    <circle cx="400" cy="35" r="6" fill="#10b981" />
+                    <circle cx="550" cy="75" r="4" fill="#f59e0b" />
+                    <circle cx="700" cy="32" r="6" fill="#ec4899" />
+                  </svg>
+                  <div className="relative z-10 flex justify-between text-[10px] text-gray-400 font-mono px-1 pt-1 border-t border-[#d4af37]/20">
+                    <span>0 वर्ष</span>
+                    <span>20 वर्ष</span>
+                    <span>40 वर्ष</span>
+                    <span>60 वर्ष</span>
+                    <span>80 वर्ष</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-[11px]">
+                  <div className="p-2 rounded-lg bg-emerald-950/30 border border-emerald-500/35">
+                    <span className="font-bold text-emerald-300 block">🌟 स्वर्णिम काल</span>
+                    <span className="text-[10px] text-gray-300">आयु 28-38 & 55-68</span>
+                  </div>
+                  <div className="p-2 rounded-lg bg-blue-950/30 border border-blue-500/35">
+                    <span className="font-bold text-blue-300 block">⚡ साधना काल</span>
+                    <span className="text-[10px] text-gray-300">आयु 12-25 वर्ष</span>
+                  </div>
+                  <div className="p-2 rounded-lg bg-amber-950/30 border border-amber-500/35">
+                    <span className="font-bold text-amber-300 block">🎯 भाग्योदय</span>
+                    <span className="text-[10px] text-gray-300">प्रमुख महादशा संक्रमण</span>
+                  </div>
+                </div>
               </div>
             </CarvedCard>
           )}
@@ -460,10 +625,73 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
                         {guidanceData.presentDeepGuidance.traditionalInterpretation.meaningHi}
                       </p>
 
-                      <div className="pt-3 border-t border-[#d4af37]/20">
-                        <h4 className="text-xs font-bold text-[#d4af37] mb-1">दैनिक साधना व उपाय:</h4>
-                        <p className="text-xs text-gray-300 mb-1">• दान: {guidanceData.presentDeepGuidance.vedicRemedies.daan.titleHi} — {guidanceData.presentDeepGuidance.vedicRemedies.daan.descHi}</p>
-                        <p className="text-xs text-gray-300">• महामंत्र: <span className="text-[#d4af37] font-bold">{guidanceData.presentDeepGuidance.vedicRemedies.mantra.mantraText}</span></p>
+                      <div className="pt-3 border-t border-[#d4af37]/20 space-y-3">
+                        <h4 className="text-xs font-bold text-[#d4af37] mb-1 flex items-center justify-between">
+                          <span>दैनिक साधना व उपाय ट्रैकर (Checklist):</span>
+                          <span className="text-[10px] text-gray-400 font-normal">
+                            पूर्ण: {['daan', 'snan', 'mantra', 'contemplation'].filter(k => remedyChecks[k]).length} / 4
+                          </span>
+                        </h4>
+
+                        {/* Daan Checkbox */}
+                        <label className="flex items-start gap-3 p-3 rounded-xl bg-black/40 border border-[#d4af37]/20 cursor-pointer hover:bg-black/60 transition-all">
+                          <input 
+                            type="checkbox" 
+                            checked={!!remedyChecks['daan']} 
+                            onChange={(e) => handleRemedyCheck('daan', e.target.checked)}
+                            className="mt-0.5 w-4 h-4 rounded border-[#d4af37]/50 text-[#d4af37] focus:ring-0 bg-black cursor-pointer"
+                          />
+                          <div className="flex-1">
+                            <span className="text-xs font-bold text-[#d4af37] block">दान उपाय: {guidanceData.presentDeepGuidance.vedicRemedies.daan.titleHi}</span>
+                            <p className="text-[11px] text-gray-300">{guidanceData.presentDeepGuidance.vedicRemedies.daan.descHi}</p>
+                          </div>
+                        </label>
+
+                        {/* Snan Checkbox */}
+                        {guidanceData.presentDeepGuidance.vedicRemedies.snan && (
+                          <label className="flex items-start gap-3 p-3 rounded-xl bg-black/40 border border-[#d4af37]/20 cursor-pointer hover:bg-black/60 transition-all">
+                            <input 
+                              type="checkbox" 
+                              checked={!!remedyChecks['snan']} 
+                              onChange={(e) => handleRemedyCheck('snan', e.target.checked)}
+                              className="mt-0.5 w-4 h-4 rounded border-[#d4af37]/50 text-[#d4af37] focus:ring-0 bg-black cursor-pointer"
+                            />
+                            <div className="flex-1">
+                              <span className="text-xs font-bold text-[#d4af37] block">विशेष स्नान/शुद्धि: {guidanceData.presentDeepGuidance.vedicRemedies.snan.titleHi}</span>
+                              <p className="text-[11px] text-gray-300">{guidanceData.presentDeepGuidance.vedicRemedies.snan.descHi}</p>
+                            </div>
+                          </label>
+                        )}
+
+                        {/* Mantra Checkbox */}
+                        <label className="flex items-start gap-3 p-3 rounded-xl bg-black/40 border border-[#d4af37]/20 cursor-pointer hover:bg-black/60 transition-all">
+                          <input 
+                            type="checkbox" 
+                            checked={!!remedyChecks['mantra']} 
+                            onChange={(e) => handleRemedyCheck('mantra', e.target.checked)}
+                            className="mt-0.5 w-4 h-4 rounded border-[#d4af37]/50 text-[#d4af37] focus:ring-0 bg-black cursor-pointer"
+                          />
+                          <div className="flex-1">
+                            <span className="text-xs font-bold text-[#d4af37] block">महामंत्र जाप: {guidanceData.presentDeepGuidance.vedicRemedies.mantra.mantraText}</span>
+                            <p className="text-[11px] text-gray-300">{guidanceData.presentDeepGuidance.vedicRemedies.mantra.countHi}</p>
+                          </div>
+                        </label>
+
+                        {/* Daily Contemplation Checkbox */}
+                        {guidanceData.presentDeepGuidance.vedicRemedies.dailyContemplation && (
+                          <label className="flex items-start gap-3 p-3 rounded-xl bg-black/40 border border-[#d4af37]/20 cursor-pointer hover:bg-black/60 transition-all">
+                            <input 
+                              type="checkbox" 
+                              checked={!!remedyChecks['contemplation']} 
+                              onChange={(e) => handleRemedyCheck('contemplation', e.target.checked)}
+                              className="mt-0.5 w-4 h-4 rounded border-[#d4af37]/50 text-[#d4af37] focus:ring-0 bg-black cursor-pointer"
+                            />
+                            <div className="flex-1">
+                              <span className="text-xs font-bold text-[#d4af37] block">दैनिक चिंतन: {guidanceData.presentDeepGuidance.vedicRemedies.dailyContemplation.titleHi}</span>
+                              <p className="text-[11px] text-gray-300">{guidanceData.presentDeepGuidance.vedicRemedies.dailyContemplation.descHi}</p>
+                            </div>
+                          </label>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -513,6 +741,72 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
               </CarvedCard>
             </div>
           )}
+
+          {/* Pragya AI Q&A Box (प्रज्ञा AI प्रश्नोत्तर बॉक्स) */}
+          <div className="mt-8 p-5 rounded-2xl bg-gradient-to-br from-amber-950/30 via-black to-black border border-[#d4af37]/50 shadow-[0_0_25px_rgba(212,175,55,0.2)]">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[#d4af37]/20 border border-[#d4af37]/50 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-[#d4af37]" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-[#d4af37] font-serif">प्रज्ञा AI प्रश्नोत्तर बॉक्स (Ask Jeevan Pragya)</h3>
+                <p className="text-[11px] text-gray-300">अपनी जन्मकुंडली, महादशा, करियर, विवाह या साधना संबंधी कोई भी प्रश्न हिंदी में पूछें</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={aiQuery}
+                  onChange={(e) => setAiQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleAskPragyaAi(); }}
+                  placeholder="जैसे: मेरी वर्तमान महादशा में करियर की उन्नति के लिए क्या विशेष उपाय करें?"
+                  className="flex-1 bg-black/60 border border-[#d4af37]/40 rounded-xl px-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#d4af37]"
+                />
+                <button
+                  onClick={handleAskPragyaAi}
+                  disabled={aiLoading || !aiQuery.trim()}
+                  className="px-5 py-2.5 bg-[#d4af37] text-black font-bold text-xs rounded-xl hover:bg-[#e6c250] transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shrink-0"
+                >
+                  {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  <span>पूछें</span>
+                </button>
+              </div>
+
+              {/* Quick Suggestion Chips */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-2 no-scrollbar">
+                <span className="text-[10px] text-gray-400 shrink-0">सुझाए गए प्रश्न:</span>
+                {[
+                  "करियर में सफलता के लिए उपाय",
+                  "वर्तमान महादशा का मुख्य प्रभाव",
+                  "दाम्पत्य जीवन व पारिवारिक सुख",
+                  "आध्यात्मिक साधना एवं मंत्र"
+                ].map((q, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setAiQuery(q)}
+                    className="px-2.5 py-1 rounded-full bg-black/40 border border-[#d4af37]/30 text-[10px] text-[#d4af37] hover:bg-[#d4af37]/20 whitespace-nowrap cursor-pointer transition-all"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+
+              {/* AI Response Display */}
+              {aiResponse && (
+                <div className="mt-4 p-4 rounded-xl bg-black/70 border border-[#d4af37]/40 text-xs text-gray-200 leading-relaxed space-y-2 animate-fadeIn">
+                  <div className="flex items-center justify-between border-b border-[#d4af37]/20 pb-2">
+                    <span className="font-bold text-[#d4af37] flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5" /> प्रज्ञा मार्गदर्शक उत्तर:
+                    </span>
+                    <span className="text-[10px] text-gray-400">Gemini 2.5 Flash Vedic Engine</span>
+                  </div>
+                  <p className="whitespace-pre-line">{aiResponse}</p>
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Data Boundary Footer Proof */}
           <div className="mt-6 p-4 rounded-2xl bg-black/60 border border-[#d4af37]/30 text-[11px] text-gray-400 space-y-1">

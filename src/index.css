@@ -113,3 +113,24 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  button, .no-print {
+    display: none !important;
+  }
+  .max-w-2xl {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+  *, div, p, span, h1, h2, h3, h4 {
+    color: #111 !important;
+    text-shadow: none !important;
+    background: transparent !important;
+    border-color: #ccc !important;
+  }
+}
+
