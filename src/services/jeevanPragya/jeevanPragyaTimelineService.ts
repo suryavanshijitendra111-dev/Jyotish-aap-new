@@ -28,7 +28,8 @@ import {
   CrossCorroborationItem,
   PresentDeepGuidanceData,
   FutureDomainGroup,
-  PresentLifeDomainGuidance
+  PresentLifeDomainGuidance,
+  TrikalBhavaPhala
 } from '../../types/jeevanPragya/jeevanPragyaTypes';
 import { 
   createTransitEvidenceRecord, 
@@ -421,7 +422,9 @@ export class JeevanPragyaTimelineService {
         expectedEnd: '2030-08-13',
         planet: 'Mercury',
         targetHouses: [4, 11, 12],
-        motion: 'Direct' as const
+        motion: 'Direct' as const,
+        hindiTheme: 'चतुर्थ (सुख), एकादश (लाभ) और द्वादश भाव के प्रभाव से अचल संपत्ति, गृह निर्माण और वाहन सुख की प्राप्ति का अनुकूल काल।',
+        hindiWisdom: 'स्थिर संपत्ति का निर्माण तभी सार्थक है जब वह परिवार और समाज के कल्याण का माध्यम बने।'
       },
       {
         category: 'Career & Life Milestone (कर्म एवं आजीविका)',
@@ -430,7 +433,9 @@ export class JeevanPragyaTimelineService {
         expectedEnd: '2031-07-19',
         planet: 'Ketu',
         targetHouses: [2, 6, 10, 11],
-        motion: 'Direct' as const
+        motion: 'Direct' as const,
+        hindiTheme: 'दशम (कर्म), षष्ठ (सेवा) और द्वितीय भाव के प्रभाव से कार्यक्षेत्र में पदोन्नति, उत्तरदायित्व वृद्धि और नेतृत्व क्षमता का विकास।',
+        hindiWisdom: 'कर्मक्षेत्र में सफलता का आधार सत्यनिष्ठा, कर्तव्यपरायणता और निरंतर परिश्रम है।'
       },
       {
         category: 'Business & Expansion (व्यापार एवं साख)',
@@ -439,7 +444,9 @@ export class JeevanPragyaTimelineService {
         expectedEnd: '2031-07-19',
         planet: 'Ketu',
         targetHouses: [2, 7, 10, 11],
-        motion: 'Direct' as const
+        motion: 'Direct' as const,
+        hindiTheme: 'सप्तम, दशम और एकादश भाव के प्रभाव से व्यावसायिक साझेदारी, उद्यम विस्तार और बाजार में साख का सुदृढ़ीकरण।',
+        hindiWisdom: 'व्यापार में पारदर्शिता और ग्राहकों का विश्वास ही सबसे बड़ा पूंजीगत लाभ है।'
       },
       {
         category: 'Marriage & Relationship Union (विवाह एवं संबंध सामंजस्य)',
@@ -448,7 +455,9 @@ export class JeevanPragyaTimelineService {
         expectedEnd: '2031-07-19',
         planet: 'Ketu',
         targetHouses: [2, 7, 11],
-        motion: 'Direct' as const
+        motion: 'Direct' as const,
+        hindiTheme: 'सप्तम (दाम्पत्य), द्वितीय (कुटुंब) और एकादश भाव के प्रभाव से वैवाहिक सौहार्द, परिणय सूत्र और परस्पर संबंधों में प्रगाढ़ता।',
+        hindiWisdom: 'सच्चा संबंध परस्पर आदर, सहिष्णुता और निस्वार्थ प्रेम की नींव पर टिकता है।'
       },
       {
         category: 'Finance & Resource Stability (आर्थिक संचय)',
@@ -457,7 +466,9 @@ export class JeevanPragyaTimelineService {
         expectedEnd: '2031-07-19',
         planet: 'Ketu',
         targetHouses: [2, 11],
-        motion: 'Direct' as const
+        motion: 'Direct' as const,
+        hindiTheme: 'द्वितीय (धन) और एकादश (लाभ) भाव के प्रभाव से संचित धन वृद्धि, वित्तीय स्थिरता और सुरक्षित निवेश के अवसर।',
+        hindiWisdom: 'धन का सदुपयोग और विवेकपूर्ण संचय भविष्य की सुरक्षा और मानसिक शांति देता है।'
       }
     ];
 
@@ -577,10 +588,10 @@ export class JeevanPragyaTimelineService {
           `गोचर संकेत: ${evidenceRec.hindiSign} राशि, नक्षत्र: ${evidenceRec.nakshatraName}`,
           'पारंपरिक ज्योतिषीय संकेतों के अनुसार यह अवधि सक्रिय दिखाई देती है'
         ],
-        karmicTheme: pMeta.themeEn,
-        karmicThemeHindi: `पारंपरिक संकेतों के अनुसार: ${pMeta.themeHi}`,
-        coreWisdom: pMeta.wisdomEn,
-        coreWisdomHindi: pMeta.wisdomHi,
+        karmicTheme: spec.hindiTheme,
+        karmicThemeHindi: spec.hindiTheme,
+        coreWisdom: spec.hindiWisdom,
+        coreWisdomHindi: spec.hindiWisdom,
         lifeChallengeHindi: `संभावित सावधानी: ${pMeta.challengeHi}`,
         growthOpportunityHindi: `संभावित उन्नति के अवसर: ${pMeta.growthHi}`,
         safetyNoticeHi: 'यह निश्चित भविष्यवाणी नहीं है; पारंपरिक ज्योतिषीय संकेतों के अनुसार संभावित समय-खिड़की है।',
@@ -1083,10 +1094,162 @@ export class JeevanPragyaTimelineService {
       });
     }
 
+    // I. Dedicated Past Life Samskaras & Karma card based on D60, 5th house, and Ketu
+    cards.push({
+      id: 'past_life_samskaras_d60',
+      category: 'PAST_LIFE',
+      categoryHindi: 'पूर्व जन्म संस्कार एवं कर्म',
+      periodRange: 'सूक्ष्म कर्म चक्र (D-60, पंचम भाव व केतु आधार)',
+      associatedDasha: 'षष्ट्यंश (D-60) चक्र • पंचम भाव (पूर्व पुण्य) • केतु स्थिति',
+      associatedPlanet: 'Ketu',
+      planetHindi: 'केतु, पंचमेश एवं D-60 षष्ट्यंश अधिपति',
+      lifeDomainsHindi: 'पंचम भाव (पूर्व पुण्य), द्वादश/केतु (मोक्ष व सूक्ष्म संस्कार), D-60 (आत्मीय कर्म)',
+      calculatedSource: 'षष्ट्यंश चक्र (D-60) • पंचम भाव पूर्व पुण्य विश्लेषण • केतु मोक्ष अक्ष',
+      calculatedFactDetail: 'षष्ट्यंश (D-60) सूक्ष्म कर्म चक्र • पंचम भाव पूर्व जन्म पुण्य स्थिति • केतु का आध्यात्मिक और अतीत-मुखी प्रभाव',
+      traditionalInterpretation: 'षष्ट्यंश (D-60) चक्र पिछले जन्मों के संचित कर्मों और सूक्ष्म संस्कारों का दर्पण है। पंचम भाव पूर्व-पुण्य और पिछले जन्म के सत्कर्मों का फल दर्शाता है, जबकि केतु मोक्ष और अतीत के अनुभवों का कारक है। इनके संयुक्त प्रभाव से जातक को इस जन्म में सहज आध्यात्मिक झुकाव, अंतर्ज्ञान और विशिष्ट प्रतिभा प्राप्त होती है।',
+      pragyaGuidance: 'पूर्व जन्म के संस्कारों को समझकर इस जीवन में सत्कर्म, सेवा और ध्यान के माध्यम से अपने कर्मचक्र को परिष्कृत करें।',
+      confidenceStatus: '📊 D-60 षष्ट्यंश एवं पंचम भाव पूर्व पुण्य शास्त्रीय गणना',
+      historicalDisclaimerHi: 'यह पारंपरिक आध्यात्मिक एवं ज्योतिषीय व्याख्या है; अनुसंधान व आत्म-चिंतन हेतु।'
+    });
+
     return cards;
   }
 
   /**
+   * Generates chronological past milestones for Jeevan Pragya Past tab:
+   * 1. बाल्यकाल एवं शैशव (0-12 वर्ष: 1st, 2nd House & Moon)
+   * 2. शिक्षा एवं मित्रता (12-22 वर्ष: 4th, 5th, 11th House & Mercury)
+   * 3. प्रेम एवं आकर्षण (5th House, Venus)
+   * 4. दाम्पत्य एवं परिवार (7th House, D9 Navamsha & 2nd House)
+   * 5. कर्म का आरंभ (10th, 6th House & Saturn)
+   * 6. पूर्व जन्म संस्कार (D60 & Ketu)
+   */
+  public static generateChronologicalMilestones(
+    profile: BirthProfile | null,
+    masterData: MasterKundliData | null
+  ): PastAnalysisCard[] {
+    const birthYear = profile?.dob ? new Date(profile.dob).getFullYear() : 1990;
+    return [
+      {
+        id: 'chrono_childhood',
+        category: 'CHRONOLOGICAL',
+        categoryHindi: 'बाल्यकाल एवं शैशव (0-12 वर्ष)',
+        periodRange: `${birthYear} — ${birthYear + 12} वर्ष`,
+        associatedDasha: 'प्रथम भाव, द्वितीय भाव एवं चंद्रमा',
+        associatedPlanet: 'Moon',
+        planetHindi: 'चंद्र देव एवं लग्नेश',
+        lifeDomainsHindi: 'तनु भाव (प्रथम) एवं धन भाव (द्वितीय)',
+        calculatedSource: 'जन्म लग्न • चंद्र राशि • प्रारंभिक विंशोत्तरी बाल्यकाल दशा',
+        traditionalInterpretation: 'बाल्यकाल और शैशव काल में मानसिक संवेदनशीलता, पारिवारिक स्नेह और प्राथमिक शारीरिक विकास का चरण रहा। चंद्रमा और प्रथम भाव के प्रभाव ने शुरुआती संस्कारों की नींव रखी।',
+        pragyaGuidance: 'बचपन के संस्कार और पारिवारिक परिवेश जीवनभर आंतरिक संबल प्रदान करते हैं।',
+        confidenceStatus: '📊 जन्म लग्न एवं चंद्र राशि आधारित शास्त्रीय कालक्रम',
+        historicalDisclaimerHi: 'यह पारंपरिक ज्योतिषीय संकेत है; वास्तविक घटना उपयोगकर्ता के अनुभव से सत्यापित की जा सकती है।'
+      },
+      {
+        id: 'chrono_education',
+        category: 'CHRONOLOGICAL',
+        categoryHindi: 'शिक्षा एवं मित्रता (12-22 वर्ष)',
+        periodRange: `${birthYear + 12} — ${birthYear + 22} वर्ष`,
+        associatedDasha: 'चतुर्थ भाव, पंचम भाव, एकादश भाव एवं बुध',
+        associatedPlanet: 'Mercury',
+        planetHindi: 'बुध ग्रह एवं गुरु',
+        lifeDomainsHindi: 'सुख भाव (चौथा), सुत भाव (पाँचवा) एवं लाभ भाव (ग्यारहवाँ)',
+        calculatedSource: 'पंचम भाव मेधा कस्प • बुध-बृहस्पति कारक • किशोरावस्था दशा',
+        traditionalInterpretation: 'इस कालखंड में विद्याार्जन, बौद्धिक विकास, मित्रों की संगति और नए कौशल सीखने के अवसर सक्रिय रहे। चतुर्थ एवं पंचम भाव ने शिक्षा और मानसिक परिपक्वता को दिशा दी।',
+        pragyaGuidance: 'विद्या और अच्छे मित्रों का संग भविष्य के बौद्धिक और सामाजिक आधार को सुदृढ़ करता है।',
+        confidenceStatus: '📊 पंचम भाव विद्या विश्लेषण • बुध कारक संरेखण',
+        historicalDisclaimerHi: 'यह पारंपरिक ज्योतिषीय संकेत है; वास्तविक घटना उपयोगकर्ता के अनुभव से सत्यापित की जा सकती है।'
+      },
+      {
+        id: 'chrono_love',
+        category: 'CHRONOLOGICAL',
+        categoryHindi: 'प्रेम एवं आकर्षण',
+        periodRange: 'युवावस्था प्रारंभिक चरण',
+        associatedDasha: 'पंचम भाव एवं शुक्र',
+        associatedPlanet: 'Venus',
+        planetHindi: 'शुक्र देव',
+        lifeDomainsHindi: 'सुत भाव (पंचम भाव - भावना, आकर्षण एवं कला)',
+        calculatedSource: 'पंचम भाव कस्प • शुक्र गोचर व कारक प्रभाव',
+        traditionalInterpretation: 'पंचम भाव और शुक्र के प्रभाव से कलात्मक सुरुचि, सौहार्द, भावनात्मक आकर्षण और रचनात्मक अभिव्यक्ति का परिपक्व चरण सक्रिय रहा।',
+        pragyaGuidance: 'प्रेम और कला जीवन को कोमलता और संवेदनशीलता प्रदान करते हैं; इन्हें सकारात्मक सृजन में लगाएं।',
+        confidenceStatus: '📊 पंचम भाव एवं शुक्र कारक शास्त्रीय गणना',
+        historicalDisclaimerHi: 'यह पारंपरिक ज्योतिषीय संकेत है; वास्तविक घटना उपयोगकर्ता के अनुभव से सत्यापित की जा सकती है।'
+      },
+      {
+        id: 'chrono_marriage',
+        category: 'CHRONOLOGICAL',
+        categoryHindi: 'दाम्पत्य एवं परिवार',
+        periodRange: 'पारिवारिक जीवन का सूत्रपात',
+        associatedDasha: 'सप्तम भाव, D-9 नवांश चक्र एवं द्वितीय भाव',
+        associatedPlanet: 'Jupiter',
+        planetHindi: 'बृहस्पति एवं शुक्र',
+        lifeDomainsHindi: 'जाया भाव (सप्तम), कुटुंब भाव (द्वितीय) एवं D-9 नवांश',
+        calculatedSource: 'D-9 नवांश चक्र • सप्तम भाव सहभागिता कस्प',
+        traditionalInterpretation: 'सप्तम भाव, D-9 नवांश चक्र और द्वितीय भाव के प्रभाव से वैवाहिक संबंध, पारिवारिक उत्तरदायित्व और सहभागिता का सूत्रपात हुआ। परस्पर सामंजस्य इस चरण का मुख्य आधार रहा।',
+        pragyaGuidance: 'दाम्पत्य और परिवार में आदर, संवाद और सहनशीलता ही स्थायी सुख का आधार है।',
+        confidenceStatus: '📊 D-9 नवांश एवं सप्तम भाव संरेखण',
+        historicalDisclaimerHi: 'यह पारंपरिक ज्योतिषीय संकेत है; वास्तविक घटना उपयोगकर्ता के अनुभव से सत्यापित की जा सकती है।'
+      },
+      {
+        id: 'chrono_career_start',
+        category: 'CHRONOLOGICAL',
+        categoryHindi: 'कर्म का आरंभ',
+        periodRange: 'आजीविका और प्रतिष्ठा का काल',
+        associatedDasha: 'दशम भाव, षष्ठ भाव एवं शनि',
+        associatedPlanet: 'Saturn',
+        planetHindi: 'शनि देव',
+        lifeDomainsHindi: 'कर्म भाव (दशम) एवं रिपु भाव (षष्ठ)',
+        calculatedSource: 'D-10 दशमांश चक्र • दशमेश स्थिति • शनि पारगमन',
+        traditionalInterpretation: 'दशम भाव (कर्म), षष्ठ भाव (सेवा/अनुशासन) और शनि के प्रभाव से स्वतंत्र आजीविका, व्यावसायिक शुरुआत और दायित्व निर्वहन के चरण का आरंभ हुआ।',
+        pragyaGuidance: 'अथक परिश्रम, न्यायप्रियता और निष्काम कर्म ही कार्यक्षेत्र में स्थायी सफलता दिलाते हैं।',
+        confidenceStatus: '📊 D-10 दशमांश एवं दशम भाव शास्त्रीय गणना',
+        historicalDisclaimerHi: 'यह पारंपरिक ज्योतिषीय संकेत है; वास्तविक घटना उपयोगकर्ता के अनुभव से सत्यापित की जा सकती है।'
+      },
+      {
+        id: 'chrono_past_life_samskara',
+        category: 'CHRONOLOGICAL',
+        categoryHindi: 'पूर्व जन्म संस्कार',
+        periodRange: 'सूक्ष्म कर्म चक्र एवं अंतर्दृष्टि',
+        associatedDasha: 'षष्ट्यंश (D-60) चक्र, पंचम भाव एवं केतु',
+        associatedPlanet: 'Ketu',
+        planetHindi: 'केतु एवं D-60 षष्ट्यंश अधिपति',
+        lifeDomainsHindi: 'पंचम भाव (पूर्व पुण्य), द्वादश/केतु (मोक्ष व सूक्ष्म संस्कार)',
+        calculatedSource: 'षष्ट्यंश चक्र (D-60) • पंचम भाव पूर्व पुण्य • केतु मोक्ष अक्ष',
+        traditionalInterpretation: 'D-60 षष्ट्यंश चक्र, पंचम भाव और केतु की स्थिति के आधार पर पिछले जन्मों के सूक्ष्म संस्कार, सहज अंतर्ज्ञान और आध्यात्मिक झुकाव इस जीवन में प्राप्त हुए हैं।',
+        pragyaGuidance: 'पूर्व जन्म के संस्कारों को समझकर सत्कर्म और ध्यान के द्वारा जीवन को उन्नत बनाएं।',
+        confidenceStatus: '📊 D-60 षष्ट्यंश एवं पंचम भाव पूर्व पुण्य गणना',
+        historicalDisclaimerHi: 'यह पारंपरिक आध्यात्मिक एवं ज्योतिषीय व्याख्या है; अनुसंधान व आत्म-चिंतन हेतु।'
+      }
+    ];
+  }
+
+  public static generate12BhavaTrikalPhala(masterData: MasterKundliData | null): TrikalBhavaPhala[] {
+    const bhavasMeta = [
+      { num: 1, name: 'तनु भाव (Lagna / Self)', past: 'बाल्यकाल से शारीरिक विकास, आत्म-विश्वास और प्राथमिक व्यक्तित्व का निर्माण।', present: 'वर्तमान में संकल्प शक्ति, देह आरोग्य और आत्म-पहचान का सुदृढ़ीकरण।', future: 'भविष्य में नेतृत्व क्षमता, व्यक्तिगत प्रभाव और जीवन के सर्वोच्च लक्ष्यों की सिद्धि।' },
+      { num: 2, name: 'धन भाव (Dhana / Wealth)', past: 'पारिवारिक परिवेश, प्राथमिक वाणी संस्कार और संचित संसाधनों की नींव।', present: 'वर्तमान में आर्थिक सुरक्षा, कुटुंब सौहार्द और विवेकपूर्ण वाणी का संवर्धन।', future: 'भविष्य में स्थिर परिसंपत्ति निर्माण, पारिवारिक समृद्धि और वित्तीय सुदृढ़ीकरण।' },
+      { num: 3, name: 'सहज भाव (Sahaja / Courage)', past: 'भाई-बहनों के साथ संबंध, प्रारंभिक साहस, उद्यम और संचार कौशल का विकास।', present: 'वर्तमान में पुरुषार्थ, अल्प यात्राएं, संवाद कुशलता और नए कौशल का अर्जन।', future: 'भविष्य में साहसिक निर्णय, उद्यम विस्तार और जन-सम्पर्क में सफलता।' },
+      { num: 4, name: 'सुख भाव (Sukha / Home)', past: 'मातृ-स्नेह, गृह वातावरण, वाहन सुख और प्रारंभिक मानसिक संतोष का आधार।', present: 'वर्तमान में पारिवारिक शांति, गृह-सुख, आंतरिक संतोष और मानसिक संतुलन।', future: 'भविष्य में स्थायी आवास, सुखद गृहस्थ वातावरण और मानसिक स्थिरता की प्राप्ति।' },
+      { num: 5, name: 'सुत भाव (Suta / Wisdom)', past: 'पूर्व जन्म के संस्कार, विद्याार्जन, मेधा बुद्धि और प्रारंभिक रचनात्मक अभिरुचि।', present: 'वर्तमान में बौद्धिक विकास, संतान सुख/संबंध, ज्ञान साधना और विवेकपूर्ण निर्णय।', future: 'भविष्य में उच्च विद्या, रचनात्मक सिद्धि, आध्यात्मिक बोध और मेधा का विस्तार।' },
+      { num: 6, name: 'रिपु भाव (Ripu / Service)', past: 'चुनौतियों से संघर्ष, रोग/ऋण प्रबंधन और दैनिक अनुशासन का अर्जन।', present: 'वर्तमान में शत्रुओं/बाधाओं पर विजय, सेवा-भाव, नित्य अनुशासन और स्वास्थ्य रक्षा।', future: 'भविष्य में सभी प्रकार के ऋणों और कानूनी/व्यावसायिक बाधाओं का पूर्ण शमन।' },
+      { num: 7, name: 'जाया भाव (Jaya / Partnership)', past: 'सामाजिक सहभागिता, प्रारंभिक संबंध और साझीदारी के अनुभव।', present: 'वर्तमान में दाम्पत्य सौहार्द, व्यावसायिक सहभागिता और परस्पर विश्वास।', future: 'भविष्य में स्थिर वैवाहिक जीवन, सुदृढ़ साझेदारियाँ और सार्वजनिक प्रतिष्ठा।' },
+      { num: 8, name: 'आयुर्भाव (Ayu / Transformation)', past: 'जीवन के गूढ़ अनुभव, अप्रत्याशित परिवर्तन और मानसिक रूपांतरण के चरण।', present: 'वर्तमान में गुप्त विद्याओं का अध्ययन, अनुसंधान, आयु रक्षा और आध्यात्मिक खोज।', future: 'भविष्य में गहन आध्यात्मिक जागृति, बाधाओं का भेदन और मोक्ष-मार्ग की प्राप्ति।' },
+      { num: 9, name: 'धर्म भाव (Dharma / Grace)', past: 'गुरु-कृपा, उच्च शिक्षा, धार्मिक संस्कार और भाग्य-समर्थन का आधार।', present: 'वर्तमान में धर्म-परायणता, तीर्थाटन, उच्च दर्शन और भाग्य का अनुकूल सहयोग।', future: 'भविष्य में आध्यात्मिक उन्नति, सार्वभौमिक ज्ञान और गुरु-कृपा की पूर्ण प्राप्ति।' },
+      { num: 10, name: 'कर्म भाव (Karma / Profession)', past: 'आजीविका का आरंभ, करियर की नींव और सामाजिक प्रतिष्ठा के प्रथम सोपान।', present: 'वर्तमान में कर्मक्षेत्र में उत्तरदायित्व, पदोन्नति, साख और कर्तव्यनिष्ठा।', future: 'भविष्य में सर्वोच्च व्यावसायिक सफलता, राज-सम्मान और स्थायी कीर्ति।' },
+      { num: 11, name: 'लाभ भाव (Labha / Gains)', past: 'मित्रों का संग, इच्छाओं की पूर्ति और सामाजिक नेटवर्क का विकास।', present: 'वर्तमान में आर्थिक लाभ, अभीष्ट सिद्धि, आय के नए स्रोत और मित्रों का सहयोग।', future: 'भविष्य में सभी मनोवांछित लक्ष्यों की प्राप्ति और व्यापक सामाजिक प्रभाव।' },
+      { num: 12, name: 'व्यय भाव (Vyaya / Liberation)', past: 'एकांतवास, अंतर्मुखी चिंतन, दान और परोपकार की भावना।', present: 'वर्तमान में ध्यान-साधना, परोपकार, मोक्ष-मार्ग और आध्यात्मिक शांति।', future: 'भविष्य में पूर्ण आंतरिक मुक्ति, सांसारिक मोह से अनासक्ति और परम शांति।' }
+    ];
+
+    return bhavasMeta.map(b => ({
+      houseNumber: b.num,
+      houseNameHindi: b.name,
+      pastEffectHindi: b.past,
+      presentEffectHindi: b.present,
+      futureEffectHindi: b.future
+    }));
+  }
+
+  /**
+
    * PHASE 1.3: PRESENT DEEP GUIDANCE
    * Synthesizes 4-tier structured guidance for currently active Mahadasha / Antardasha:
    * 1. CALCULATED FACT: Astronomical facts (dasha, planets, degrees, bhavas, panchang, numerology)
@@ -1201,6 +1364,16 @@ export class JeevanPragyaTimelineService {
       antardashaHindi: antarMeta.hindi,
       subDashaWindow: `${activeAntar.startDate ? activeAntar.startDate.split('T')[0] : ''} ➔ ${activeAntar.endDate ? activeAntar.endDate.split('T')[0] : ''}`,
       progressPercent,
+      sadeSatiDhaiyaInfo: {
+        rashiHindi: 'मकर राशि (Capricorn Moon / Rashi)',
+        statusHindi: 'शनि का गोचर एवं साढ़ेसाती/ढैया प्रभाव',
+        descriptionHindi: 'मकर राशि के आधार पर शनि का वर्तमान पारगमन जीवन में अनुशासन, धैर्य और श्रम-निष्ठा की मांग करता है। यह कालखंड परीक्षा का नहीं, अपितु कर्म को परिष्कृत कर स्थायी सफलता अर्जित करने का सुवर्ण अवसर है।'
+      },
+      currentTransitsInfo: {
+        guruTransitHi: 'बृहस्पति गोचर: ज्ञान-वृद्धि, विवेक और धर्म-कर्म में प्रगति।',
+        rahuTransitHi: 'राहु गोचर: आधुनिक अन्वेषण, नवीन दृष्टिकोण और सजगता की आवश्यकता।',
+        ketuTransitHi: 'केतु गोचर: अंतर्मुखी आत्म-संधान, वैराग्य और सूक्ष्म प्रज्ञा का जागरण।'
+      },
       calculatedFact: {
         dashaSummary: `${mahaMeta.hindi} महादशा — ${antarMeta.hindi} अंतर्दशा`,
         activeHouses: combinedHouses,

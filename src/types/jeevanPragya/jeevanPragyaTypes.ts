@@ -222,6 +222,16 @@ export interface PresentDeepGuidanceData {
   antardashaHindi: string;
   subDashaWindow: string;
   progressPercent: number;
+  sadeSatiDhaiyaInfo?: {
+    rashiHindi: string;
+    statusHindi: string;
+    descriptionHindi: string;
+  };
+  currentTransitsInfo?: {
+    guruTransitHi: string;
+    rahuTransitHi: string;
+    ketuTransitHi: string;
+  };
   calculatedFact: {
     dashaSummary: string;
     activeHouses: number[];
@@ -261,7 +271,7 @@ export interface FutureDomainGroup {
 
 export interface PastAnalysisCard {
   id: string;
-  category: 'MAHADASHA' | 'ANTARDASHA' | 'TRANSIT' | 'VARGA' | 'KP' | 'NUMEROLOGY' | 'LOSHU' | 'JAIMINI';
+  category: 'MAHADASHA' | 'ANTARDASHA' | 'TRANSIT' | 'VARGA' | 'KP' | 'NUMEROLOGY' | 'LOSHU' | 'JAIMINI' | 'PAST_LIFE' | 'CHRONOLOGICAL';
   categoryHindi: string;
   periodRange: string;
   associatedDasha: string;
@@ -284,6 +294,14 @@ export interface PastAnalysisCard {
   prayer?: string;
 }
 
+export interface TrikalBhavaPhala {
+  houseNumber: number;
+  houseNameHindi: string;
+  pastEffectHindi: string;
+  presentEffectHindi: string;
+  futureEffectHindi: string;
+}
+
 export interface JeevanPragyaData {
   profile: BirthProfile;
   calculatedAt: string;
@@ -291,6 +309,7 @@ export interface JeevanPragyaData {
   yatraSummary: JeevanYatraSummary;
   lifeJourneyTimeline?: LifeJourneyPhase[];
   pastAnalysisCards?: PastAnalysisCard[];
+  trikalBhavas?: TrikalBhavaPhala[];
   presentDeepGuidance?: PresentDeepGuidanceData;
   futureDomainGroups?: FutureDomainGroup[];
   pastEra: {

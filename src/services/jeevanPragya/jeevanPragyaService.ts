@@ -67,9 +67,10 @@ export class JeevanPragyaService {
       futureItems
     );
 
-    // 5.1 PHASE 1.2 & 1.3: Generate dynamic 9-stage Life Journey Timeline, forensic Past Analysis Cards, Present Deep Guidance, and Grouped Future Windows
+    // 5.1 PHASE 1.2 & 1.3: Generate dynamic 9-stage Life Journey Timeline, chronological Past Milestones, 12 Bhava Trikal Phala, Present Deep Guidance, and Grouped Future Windows
     const lifeJourneyTimeline = JeevanPragyaTimelineService.generateLifeJourneyTimeline(profile, masterData);
-    const pastAnalysisCards = JeevanPragyaTimelineService.generatePastAnalysisCards(profile, masterData);
+    const pastAnalysisCards = JeevanPragyaTimelineService.generateChronologicalMilestones(profile, masterData);
+    const trikalBhavas = JeevanPragyaTimelineService.generate12BhavaTrikalPhala(masterData);
     const presentDeepGuidance = JeevanPragyaTimelineService.generatePresentDeepGuidance(profile, masterData);
     const futureDomainGroups = JeevanPragyaTimelineService.generateFutureDomainGroups(futureItems);
 
@@ -81,6 +82,7 @@ export class JeevanPragyaService {
       yatraSummary,
       lifeJourneyTimeline,
       pastAnalysisCards,
+      trikalBhavas,
       presentDeepGuidance,
       futureDomainGroups,
       pastEra: {

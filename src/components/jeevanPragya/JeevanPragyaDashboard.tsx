@@ -41,6 +41,7 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
   const [activeTab, setActiveTab] = useState<'yatra' | 'past' | 'present' | 'future'>('yatra');
   const [feedbackMap, setFeedbackMap] = useState<Record<string, ValidationSelection>>({});
   const [selectedPastCategory, setSelectedPastCategory] = useState<string>('ALL');
+  const [showTrikalPhala, setShowTrikalPhala] = useState<boolean>(false);
 
   const profileId = PastValidationService.getProfileId(profile || null);
 
@@ -245,6 +246,52 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
                   <p className="text-[11px] text-blue-300 italic">{guidanceData.pastEra.disclaimerHindi}</p>
                 </div>
 
+                {/* 12 Bhava Trikal Phala Toggle Section */}
+                <div className="mb-6">
+                  <button
+                    onClick={() => setShowTrikalPhala(!showTrikalPhala)}
+                    className="w-full py-3 px-4 rounded-xl bg-[#d4af37]/20 border border-[#d4af37]/50 text-[#d4af37] font-bold text-sm flex items-center justify-between hover:bg-[#d4af37]/30 transition-all cursor-pointer shadow-md"
+                  >
+                    <span className="flex items-center gap-2">
+                      <BookOpen className="w-4 h-4 text-[#d4af37]" />
+                      <span>12 भाव त्रिकाल फल (अतीत, वर्तमान एवं भविष्य प्रभाव)</span>
+                    </span>
+                    <span>{showTrikalPhala ? '▲ छिपाएं' : '▼ देखें'}</span>
+                  </button>
+
+                  {showTrikalPhala && guidanceData.trikalBhavas && (
+                    <div className="mt-3 space-y-3 bg-black/60 border border-[#d4af37]/40 rounded-2xl p-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                      <p className="text-xs text-gray-300 mb-3 italic">
+                        यहाँ सभी 12 भावों के अतीत (संस्कार एवं पृष्ठभूमि), वर्तमान (सक्रिय चेतना व कर्म) तथा भविष्य (संभावित विकास) के शास्त्रीय प्रभाव दिए गए हैं।
+                      </p>
+                      {guidanceData.trikalBhavas.map((tb) => (
+                        <div key={tb.houseNumber} className="bg-black/50 border border-[#d4af37]/30 rounded-xl p-3.5 space-y-2">
+                          <h4 className="text-sm font-bold text-[#d4af37] flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-[#d4af37]/20 border border-[#d4af37]/40 flex items-center justify-center text-xs">
+                              {tb.houseNumber}
+                            </span>
+                            <span>{tb.houseNameHindi}</span>
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs pt-1">
+                            <div className="p-2.5 rounded-lg bg-blue-950/30 border border-blue-500/30">
+                              <span className="font-bold text-blue-300 block mb-1">🔵 अतीत (Past Root):</span>
+                              <p className="text-gray-300 text-[11px] leading-relaxed">{tb.pastEffectHindi}</p>
+                            </div>
+                            <div className="p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-500/30">
+                              <span className="font-bold text-emerald-300 block mb-1">🟢 वर्तमान (Present):</span>
+                              <p className="text-gray-300 text-[11px] leading-relaxed">{tb.presentEffectHindi}</p>
+                            </div>
+                            <div className="p-2.5 rounded-lg bg-amber-950/30 border border-amber-500/30">
+                              <span className="font-bold text-amber-300 block mb-1">🟡 भविष्य (Future):</span>
+                              <p className="text-gray-300 text-[11px] leading-relaxed">{tb.futureEffectHindi}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 {/* Dynamic Category Filter Chips */}
                 {(() => {
                   const availableCats = (() => {
@@ -380,6 +427,28 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
                 {/* Present Deep Guidance */}
                 {guidanceData.presentDeepGuidance && (
                   <div className="space-y-4">
+                    {/* Makar Rashi Sade Sati / Dhaiya & Current Transits */}
+                    {guidanceData.presentDeepGuidance.sadeSatiDhaiyaInfo && (
+                      <div className="p-4 bg-black/50 border border-[#d4af37]/30 rounded-xl">
+                        <h3 className="text-sm font-bold text-[#d4af37] mb-2 flex items-center gap-2">
+                          <Shield className="w-4 h-4" /> मकर राशि आधारित शनि की साढ़ेसाती/ढैया एवं गोचर प्रभाव
+                        </h3>
+                        <p className="text-xs text-white font-semibold mb-1">
+                          {guidanceData.presentDeepGuidance.sadeSatiDhaiyaInfo.rashiHindi} • {guidanceData.presentDeepGuidance.sadeSatiDhaiyaInfo.statusHindi}
+                        </p>
+                        <p className="text-xs text-gray-300 leading-relaxed mb-3">
+                          {guidanceData.presentDeepGuidance.sadeSatiDhaiyaInfo.descriptionHindi}
+                        </p>
+                        {guidanceData.presentDeepGuidance.currentTransitsInfo && (
+                          <div className="pt-3 border-t border-[#d4af37]/20 space-y-1.5 text-xs text-gray-200">
+                            <p>• {guidanceData.presentDeepGuidance.currentTransitsInfo.guruTransitHi}</p>
+                            <p>• {guidanceData.presentDeepGuidance.currentTransitsInfo.rahuTransitHi}</p>
+                            <p>• {guidanceData.presentDeepGuidance.currentTransitsInfo.ketuTransitHi}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div className="p-4 bg-black/50 border border-[#d4af37]/30 rounded-xl">
                       <h3 className="text-sm font-bold text-[#d4af37] mb-2 flex items-center gap-2">
                         <Sparkles className="w-4 h-4" /> महादशा एवं अंतर्दशा विश्लेषण
