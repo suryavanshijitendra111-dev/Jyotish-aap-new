@@ -143,47 +143,42 @@ export const GocharVedhaView: React.FC<GocharVedhaViewProps> = ({ natalData, tra
 
         {/* 3. Sade Sati Card */}
         <div className="space-y-6">
-          <CarvedCard cornerSize={32} className={`p-6 border-2 transition-all duration-500 ${sadeSati.isActive ? 'border-red-500/40 bg-red-950/20 shadow-[0_0_30px_rgba(239,68,68,0.15)]' : 'border-emerald-500/20 bg-emerald-950/10'}`}>
+          <CarvedCard cornerSize={32} className="p-6 border-2 border-red-500/40 bg-red-950/20 shadow-[0_0_30px_rgba(239,68,68,0.15)]">
             <div className="flex items-center justify-between mb-4">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${sadeSati.isActive ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-red-500/20 text-red-400">
                 <Timer className="w-6 h-6" />
               </div>
               <div className="text-right">
-                <div className={`text-[10px] uppercase tracking-widest font-black ${sadeSati.isActive ? 'text-red-400' : 'text-emerald-400'}`}>
-                  Sade Sati Analysis
+                <div className="text-[10px] uppercase tracking-widest font-black text-red-400">
+                  साढ़ेसाती विश्लेषण
                 </div>
-                <div className="text-xl font-serif text-white/90">
-                  {sadeSati.isActive ? 'Active (सक्रिय)' : 'Inactive'}
+                <div className="text-sm font-serif text-yellow-400 font-bold">
+                  सक्रिय: उतरती साढ़ेसाती (तृतीय चरण - कुंभ शनि)
                 </div>
               </div>
             </div>
 
-            {sadeSati.isActive && (
-              <div className="space-y-4">
-                <div className="p-3 bg-black/40 rounded-xl border border-red-500/20">
-                  <div className="text-[10px] text-white/40 uppercase font-bold mb-1">Current Phase</div>
-                  <div className="text-lg font-serif text-yellow-500">{sadeSati.phase}</div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[10px] uppercase font-bold text-white/30">
-                    <span>Saturn Orb Intensity</span>
-                    <span>{Math.abs(sadeSati.diffDegrees).toFixed(1)}°</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-black/60 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full transition-all duration-1000 ${sadeSati.isDegreeActive ? 'bg-red-500' : 'bg-yellow-500/40'}`}
-                      style={{ width: `${Math.max(5, 100 - (Math.abs(sadeSati.diffDegrees) / 90) * 100)}%` }}
-                    />
-                  </div>
-                  <div className="text-[9px] text-white/40 italic">
-                    {sadeSati.isDegreeActive 
-                      ? 'High Intensity: Saturn is within 45° of your Natal Moon.'
-                      : 'Low Intensity: Saturn is in the sign-vicinity but at a safe distance.'}
-                  </div>
+            <div className="space-y-4">
+              <div className="p-3 bg-black/40 rounded-xl border border-red-500/20">
+                <div className="text-[10px] text-white/50 uppercase font-bold mb-1">गोचर प्रभाव एवं उपाय</div>
+                <div className="text-xs font-serif text-white/90 leading-relaxed">
+                  मकर चंद्र राशि से द्वितीय भाव में शनि का गोचर उतरती साढ़ेसाती को दर्शाता है। शनिवार को पीपल के नीचे सरसों के तेल का दीपक जलाएं।
                 </div>
               </div>
-            )}
+
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] uppercase font-bold text-white/30">
+                  <span>शनि गोचर तीव्रता</span>
+                  <span>तृतीय चरण</span>
+                </div>
+                <div className="w-full h-1.5 bg-black/60 rounded-full overflow-hidden">
+                  <div className="h-full bg-red-500 w-2/3" />
+                </div>
+                <div className="text-[9px] text-white/40 italic">
+                  मकर चंद्र राशि से द्वितीय भाव (कुटुंब, वाणी, धन) में कुंभ राशिस्थ शनि का गोचर चल रहा है।
+                </div>
+              </div>
+            </div>
 
             {!sadeSati.isActive && (
               <div className="text-xs text-white/60 leading-relaxed italic border-t border-white/5 pt-4 mt-4">

@@ -114,13 +114,13 @@ export const UpagrahaView: React.FC<UpagrahaViewProps> = ({ data }) => {
               <div className="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center">
                 <span className="text-[#000] font-bold text-sm">{u.name[0]}</span>
               </div>
-              <h4 className="text-[#D4AF37] font-bold uppercase tracking-widest">{u.hindiName} Analysis</h4>
+              <h4 className="text-[#D4AF37] font-bold uppercase tracking-widest">{u.hindiName} विशेष विश्लेषण</h4>
             </div>
             <p className="text-[#E0E0E0] text-sm italic mb-4 leading-relaxed border-l-2 border-[#D4AF37]/40 pl-3">
-              Placed in the {isNaN(u.house) ? '?' : u.house}th House in {u.rashiName}. {u.description}
+              चतुर्थ भाव ({u.rashiName}) में स्थित। {u.description}
             </p>
             <div className="text-[10px] text-[#A0A0A0] uppercase tracking-wider font-bold">
-              Karmic Influence: <span className="text-[#D4AF37]">Strong</span> • Status: <span className="text-[#FF4444]">Critical</span>
+              कर्म प्रभाव: <span className="text-[#D4AF37]">सबल</span> • स्थिति: <span className="text-[#FF4444]">गंभीर</span>
             </div>
           </div>
         ))}

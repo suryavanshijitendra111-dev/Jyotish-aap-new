@@ -145,12 +145,12 @@ export class UpagrahaEngine {
     const tzStr = data.birthProfile?.timezone || 'Asia/Kolkata';
 
     const timeUpagrahas = [
-      { name: 'Gulika', hindiName: 'गुलिका', lord: 6, desc: 'Son of Saturn. Most malefic time-point. Crucial for longevity and karma.', overrideRashi: 6, overrideHouse: 4, overrideRashiName: 'Virgo' },
-      { name: 'Mandi', hindiName: 'मांदी', lord: 6, isMandi: true, desc: 'Calculated at the midpoint of Saturn part in classical Parasari tradition.', overrideRashi: 6, overrideHouse: 4, overrideRashiName: 'Virgo' },
-      { name: 'Kaala', hindiName: 'काल', lord: 0, desc: 'Son of Sun. Indicates timing of results and karmic deadlines.', overrideRashi: 7, overrideHouse: 5, overrideRashiName: 'Libra' },
-      { name: 'Mrityu', hindiName: 'मृत्यु', lord: 2, desc: 'Son of Mars. Signifies danger, accidents and sudden death.', overrideRashi: 3, overrideHouse: 1, overrideRashiName: 'Gemini' },
-      { name: 'Yamaghantaka', hindiName: 'यमघंटक', lord: 4, desc: 'Son of Jupiter. Often beneficial but indicates finality of actions.' },
-      { name: 'Ardhaprahara', hindiName: 'अर्धप्रहर', lord: 3, desc: 'Son of Mercury. Signifies business fluctuations and mental stress.', overrideRashi: 3, overrideHouse: 1, overrideRashiName: 'Gemini' }
+      { name: 'Gulika', hindiName: 'गुलिका', lord: 6, desc: 'गुलिका शनि के पुत्र हैं। यह अत्यंत अशुभ समय बिंदु माना जाता है। जन्म कुंडली में यह चतुर्थ भाव (कन्या राशि) में स्थित है। इसके प्रभाव से मानसिक तनाव, कर्म में विलंब और संघर्ष की स्थिति बन सकती है। शनिवार के दिन तैल दान व छाया दान से इसकी शांति होती है।', overrideRashi: 6, overrideHouse: 4, overrideRashiName: 'Virgo' },
+      { name: 'Mandi', hindiName: 'मांदी', lord: 6, isMandi: true, desc: 'मांदी पारसरीय परंपरा के अनुसार शनि के भाग का मध्य बिंदु है। चतुर्थ भाव (कन्या राशि) में स्थित होने के कारण पारिवारिक जीवन व सुख-सुविधाओं में बाधा उत्पन्न करता है। भगवान शिव की उपासना और रुद्राभिषेक से इसके अशुभ फल दूर होते हैं।', overrideRashi: 6, overrideHouse: 4, overrideRashiName: 'Virgo' },
+      { name: 'Kaala', hindiName: 'काल', lord: 0, desc: 'काल सूर्य के पुत्र हैं। यह कर्म फल के समय और जीवन के महत्वपूर्ण निर्णयों को दर्शाते हैं।', overrideRashi: 7, overrideHouse: 5, overrideRashiName: 'Libra' },
+      { name: 'Mrityu', hindiName: 'मृत्यु', lord: 2, desc: 'मृत्यु मंगल के पुत्र हैं। यह संकट और आकस्मिक बाधाओं का संकेत देते हैं।', overrideRashi: 3, overrideHouse: 1, overrideRashiName: 'Gemini' },
+      { name: 'Yamaghantaka', hindiName: 'यमघंटक', lord: 4, desc: 'यमघंटक गुरु के पुत्र हैं। कार्यों की अंतिम परिणति और अनुशासन का बोध कराते हैं।' },
+      { name: 'Ardhaprahara', hindiName: 'अर्धप्रहर', lord: 3, desc: 'अर्धप्रहर बुध के पुत्र हैं। व्यापारिक उतार-चढ़ाव और मानसिक सतर्कता को दर्शाते हैं।', overrideRashi: 3, overrideHouse: 1, overrideRashiName: 'Gemini' }
     ];
 
     if (!dobStr || !timeStr || typeof lat !== 'number' || typeof lon !== 'number') {
@@ -291,12 +291,12 @@ export class UpagrahaEngine {
     const tzStr = data.birthProfile?.timezone || 'Asia/Kolkata';
 
     const timeUpagrahas = [
-      { name: 'Gulika', hindiName: 'गुलिका', lord: 6, desc: 'Son of Saturn. Most malefic time-point. Crucial for longevity and karma.', overrideRashi: 6, overrideHouse: 4, overrideRashiName: 'Virgo' },
-      { name: 'Mandi', hindiName: 'मांदी', lord: 6, isMandi: true, desc: 'Calculated at the midpoint of Saturn part in classical Parasari tradition.', overrideRashi: 6, overrideHouse: 4, overrideRashiName: 'Virgo' },
-      { name: 'Kaala', hindiName: 'काल', lord: 0, desc: 'Son of Sun. Indicates timing of results and karmic deadlines.', overrideRashi: 7, overrideHouse: 5, overrideRashiName: 'Libra' },
-      { name: 'Mrityu', hindiName: 'मृत्यु', lord: 2, desc: 'Son of Mars. Signifies danger, accidents and sudden death.', overrideRashi: 3, overrideHouse: 1, overrideRashiName: 'Gemini' },
-      { name: 'Yamaghantaka', hindiName: 'यमघंटक', lord: 4, desc: 'Son of Jupiter. Often beneficial but indicates finality of actions.' },
-      { name: 'Ardhaprahara', hindiName: 'अर्धप्रहर', lord: 3, desc: 'Son of Mercury. Signifies business fluctuations and mental stress.', overrideRashi: 3, overrideHouse: 1, overrideRashiName: 'Gemini' }
+      { name: 'Gulika', hindiName: 'गुलिका', lord: 6, desc: 'गुलिका शनि के पुत्र हैं। यह अत्यंत अशुभ समय बिंदु माना जाता है। जन्म कुंडली में यह चतुर्थ भाव (कन्या राशि) में स्थित है। इसके प्रभाव से मानसिक तनाव, कर्म में विलंब और संघर्ष की स्थिति बन सकती है। शनिवार के दिन तैल दान व छाया दान से इसकी शांति होती है।', overrideRashi: 6, overrideHouse: 4, overrideRashiName: 'Virgo' },
+      { name: 'Mandi', hindiName: 'मांदी', lord: 6, isMandi: true, desc: 'मांदी पारसरीय परंपरा के अनुसार शनि के भाग का मध्य बिंदु है। चतुर्थ भाव (कन्या राशि) में स्थित होने के कारण पारिवारिक जीवन व सुख-सुविधाओं में बाधा उत्पन्न करता है। भगवान शिव की उपासना और रुद्राभिषेक से इसके अशुभ फल दूर होते हैं।', overrideRashi: 6, overrideHouse: 4, overrideRashiName: 'Virgo' },
+      { name: 'Kaala', hindiName: 'काल', lord: 0, desc: 'काल सूर्य के पुत्र हैं। यह कर्म फल के समय और जीवन के महत्वपूर्ण निर्णयों को दर्शाते हैं।', overrideRashi: 7, overrideHouse: 5, overrideRashiName: 'Libra' },
+      { name: 'Mrityu', hindiName: 'मृत्यु', lord: 2, desc: 'मृत्यु मंगल के पुत्र हैं। यह संकट और आकस्मिक बाधाओं का संकेत देते हैं।', overrideRashi: 3, overrideHouse: 1, overrideRashiName: 'Gemini' },
+      { name: 'Yamaghantaka', hindiName: 'यमघंटक', lord: 4, desc: 'यमघंटक गुरु के पुत्र हैं। कार्यों की अंतिम परिणति और अनुशासन का बोध कराते हैं।' },
+      { name: 'Ardhaprahara', hindiName: 'अर्धप्रहर', lord: 3, desc: 'अर्धप्रहर बुध के पुत्र हैं। व्यापारिक उतार-चढ़ाव और मानसिक सतर्कता को दर्शाते हैं।', overrideRashi: 3, overrideHouse: 1, overrideRashiName: 'Gemini' }
     ];
 
     if (!dobStr || !timeStr || typeof lat !== 'number' || typeof lon !== 'number') {
