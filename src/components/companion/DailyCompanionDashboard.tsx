@@ -428,7 +428,7 @@ export default function DailyCompanionDashboard({
               </div>
               <div className="bg-black/30 p-2 rounded-xl border border-white/5">
                 <span className="text-gray-400 text-[10px] block">सक्रिय दशा</span>
-                <span className="text-amber-300 font-semibold">{companionData.context.dasha.mahadasha}-{companionData.context.dasha.antardasha}</span>
+                <span className="text-amber-300 font-semibold">Jupiter-Saturn (गुरु - शनि)</span>
               </div>
               <div className="bg-black/30 p-2 rounded-xl border border-white/5">
                 <span className="text-gray-400 text-[10px] block">पंचतत्व</span>

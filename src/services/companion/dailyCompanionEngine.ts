@@ -191,10 +191,10 @@ export class DailyCompanionEngine {
 
     // 2. Dasha Calculations from Kundli or fallback to Jitendra Suryavanshi's deterministic current period
     let mahadasha = 'Jupiter';
-    let antardasha = 'Mercury';
+    let antardasha = 'Saturn';
     let dashaStartDate = '2025-06-12';
     let dashaEndDate = '2027-09-18';
-    let dashaSignificance = 'गुरु-बुध अंतरदशा: ज्ञान (गुरु) और व्यावहारिक बुद्धि (बुध) का सुंदर संगम। बौद्धिक निर्णय, लेखन और परामर्श के लिए श्रेष्ठ समय।';
+    let dashaSignificance = 'गुरु-शनि अंतरदशा (बृहस्पति महादशा, शनि अंतर्दशा): ज्ञान, धर्म (गुरु) और कर्मठता, अनुशासन, धैर्य एवं न्याय (शनि) का सुंदर संगम। दीर्घकालिक सफलता, परिश्रम और आध्यात्मिक स्थिरता के लिए अत्यंत श्रेष्ठ समय।';
 
     if (kundliData?.vimshottariDasha?.currentMahadasha) {
       mahadasha = kundliData.vimshottariDasha.currentMahadasha.planet;
