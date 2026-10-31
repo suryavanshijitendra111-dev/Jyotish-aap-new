@@ -72,7 +72,7 @@ export const ShadbalaView: React.FC<ShadbalaViewProps> = ({ data }) => {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-white/90">
-                        {getLocalizedPlanet(pName, 'hi')}
+                        {getLocalizedPlanet(pName)}
                       </span>
                       <span className="text-[10px] text-white/40 font-mono">
                         {res.totalRupas.toFixed(2)} Rupas

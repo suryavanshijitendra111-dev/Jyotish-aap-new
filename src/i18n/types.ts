@@ -49,6 +49,35 @@ export const SUPPORTED_LANGUAGES: LanguageInfo[] = [
 ];
 
 export interface TranslationDictionary {
+  modules?: {
+    kundli: { title: string; subtitle: string; desc: string };
+    kp: { title: string; subtitle: string; desc: string };
+    pragya: { title: string; subtitle: string; desc: string };
+    dasha: { title: string; subtitle: string; desc: string };
+    gochar: { title: string; subtitle: string; desc: string };
+    varga: { title: string; subtitle: string; desc: string };
+    numerology: { title: string; subtitle: string; desc: string };
+    loshu: { title: string; subtitle: string; desc: string };
+    prashna: { title: string; subtitle: string; desc: string };
+    aiJyotish: { title: string; subtitle: string; desc: string };
+    lifeQuestions: { title: string; subtitle: string; desc: string };
+    dailyCompanion: { title: string; subtitle: string; desc: string };
+    pratahSanskar: { title: string; subtitle: string; desc: string };
+    muhurat: { title: string; subtitle: string; desc: string };
+    doshRemedies: { title: string; subtitle: string; desc: string };
+    lalKitab: { title: string; subtitle: string; desc: string };
+    reports: { title: string; subtitle: string; desc: string };
+    family: { title: string; subtitle: string; desc: string };
+    lifeJournal: { title: string; subtitle: string; desc: string };
+    meditation: { title: string; subtitle: string; desc: string };
+    yoga: { title: string; subtitle: string; desc: string };
+    mantraJaap: { title: string; subtitle: string; desc: string };
+    puja3d: { title: string; subtitle: string; desc: string };
+    templeExplorer: { title: string; subtitle: string; desc: string };
+    templeTravel: { title: string; subtitle: string; desc: string };
+    spiritualStore: { title: string; subtitle: string; desc: string };
+    settings: { title: string; subtitle: string; desc: string };
+  };
   common: {
     appName: string;
     appTagline: string;
@@ -157,6 +186,23 @@ export interface TranslationDictionary {
     pratahSanskarSub?: string;
     dailyCompanionSub?: string;
     prashnaKundliSub?: string;
+    jeevanPragyaBannerTitle?: string;
+    tristateBadge?: string;
+    jeevanPragyaBannerSub?: string;
+    pastLabel?: string;
+    pastSub?: string;
+    presentLabel?: string;
+    presentSub?: string;
+    futureLabel?: string;
+    futureSub?: string;
+    openPragyaBtn?: string;
+    dailyReportBtn?: string;
+    numerologyReportTitle?: string;
+    numerologyReportSub?: string;
+    viewReportBtn?: string;
+    ownerControlTitle?: string;
+    ownerControlSub?: string;
+    controlBtn?: string;
   };
   daily: {
     today: string;

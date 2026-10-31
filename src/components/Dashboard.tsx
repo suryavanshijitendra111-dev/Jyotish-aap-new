@@ -12,6 +12,7 @@ import { FamilyProfileSelector } from './profile/FamilyProfileSelector';
 import { FamilyMemberFormModal, RELATION_LABELS } from './profile/FamilyMemberFormModal';
 import { ProfileService } from '../services/profile/profileService';
 import NumerologyReportModal from './NumerologyReportModal';
+import { getModules } from '../data/modulesData';
 
 interface DashboardProps {
   profile: BirthProfile | null;
@@ -140,14 +141,14 @@ export default function Dashboard({ profile, navigate, showToast }: DashboardPro
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-xl sm:text-2xl font-bold text-white tracking-wide">
-                      जीवन प्रज्ञा मार्गदर्शन
+                      {t('dashboard.jeevanPragyaBannerTitle')}
                     </h3>
                     <span className="text-xs bg-[#d4af37]/25 text-[#fef08a] border border-[#d4af37]/50 px-2.5 py-0.5 rounded-full font-bold">
-                      त्रिकाल दृष्टि
+                      {t('dashboard.tristateBadge')}
                     </span>
                   </div>
                   <p className="text-xs sm:text-sm text-[#d4af37]/90 font-medium mt-0.5">
-                    अतीत • वर्तमान • भविष्य का सूक्ष्म आध्यात्मिक एवं ज्योतिषीय बोध
+                    {t('dashboard.jeevanPragyaBannerSub')}
                   </p>
                 </div>
               </div>
@@ -160,24 +161,24 @@ export default function Dashboard({ profile, navigate, showToast }: DashboardPro
                 className="py-2.5 px-2 rounded-xl bg-black/40 border border-[#d4af37]/35 hover:border-[#d4af37] transition-all text-center group cursor-pointer"
               >
                 <Clock className="w-4 h-4 mx-auto text-[#d4af37] mb-1" />
-                <span className="text-xs uppercase tracking-wider text-[#d4af37] block font-bold">अतीत</span>
-                <span className="text-[11px] text-gray-300 group-hover:text-white">पूर्व संस्कार</span>
+                <span className="text-xs uppercase tracking-wider text-[#d4af37] block font-bold">{t('dashboard.pastLabel')}</span>
+                <span className="text-[11px] text-gray-300 group-hover:text-white">{t('dashboard.pastSub')}</span>
               </button>
               <button
                 onClick={() => navigate('jeevan_pragya')}
                 className="py-2.5 px-2 rounded-xl bg-[#d4af37]/20 border border-[#d4af37]/60 hover:bg-[#d4af37]/30 transition-all text-center group cursor-pointer shadow-sm"
               >
                 <Sun className="w-4 h-4 mx-auto text-[#fef08a] mb-1" />
-                <span className="text-xs uppercase tracking-wider text-[#fef08a] block font-bold">वर्तमान</span>
-                <span className="text-[11px] text-white group-hover:text-[#fef08a] font-semibold">दशा गोचर</span>
+                <span className="text-xs uppercase tracking-wider text-[#fef08a] block font-bold">{t('dashboard.presentLabel')}</span>
+                <span className="text-[11px] text-white group-hover:text-[#fef08a] font-semibold">{t('dashboard.presentSub')}</span>
               </button>
               <button
                 onClick={() => navigate('jeevan_pragya')}
                 className="py-2.5 px-2 rounded-xl bg-black/40 border border-[#d4af37]/35 hover:border-[#d4af37] transition-all text-center group cursor-pointer"
               >
                 <Calendar className="w-4 h-4 mx-auto text-[#d4af37] mb-1" />
-                <span className="text-xs uppercase tracking-wider text-[#d4af37] block font-bold">भविष्य</span>
-                <span className="text-[11px] text-gray-300 group-hover:text-white">आगामी काल</span>
+                <span className="text-xs uppercase tracking-wider text-[#d4af37] block font-bold">{t('dashboard.futureLabel')}</span>
+                <span className="text-[11px] text-gray-300 group-hover:text-white">{t('dashboard.futureSub')}</span>
               </button>
             </div>
 
@@ -186,14 +187,14 @@ export default function Dashboard({ profile, navigate, showToast }: DashboardPro
                 onClick={() => navigate('jeevan_pragya')}
                 className="flex-1 min-h-[46px] px-4 py-2.5 bg-gradient-to-r from-[#d4af37] via-[#fef08a] to-[#b89528] text-[#030a08] font-bold rounded-xl text-sm hover:scale-[1.01] active:scale-[0.99] transition-all shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center justify-center gap-2 cursor-pointer"
               >
-                <span>प्रज्ञा मार्गदर्शन खोलें</span>
+                <span>{t('dashboard.openPragyaBtn')}</span>
                 <span>→</span>
               </button>
               <button
                 onClick={() => navigate('daily_report_card')}
                 className="flex-1 min-h-[46px] px-4 py-2.5 bg-black/50 border border-[#d4af37]/60 text-[#d4af37] font-bold rounded-xl text-sm hover:bg-[#d4af37]/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                <span>दैनिक रिपोर्ट कार्ड</span>
+                <span>{t('dashboard.dailyReportBtn')}</span>
                 <span>📋</span>
               </button>
             </div>
@@ -404,13 +405,13 @@ export default function Dashboard({ profile, navigate, showToast }: DashboardPro
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-lg sm:text-xl font-bold text-white tracking-wide">अंकशास्त्र साप्ताहिक प्रतिवेदन</h3>
+                  <h3 className="text-lg sm:text-xl font-bold text-white tracking-wide">{t('dashboard.numerologyReportTitle')}</h3>
                   <span className="text-sm bg-[#d4af37]/25 text-[#fef08a] border border-[#d4af37]/50 px-2.5 py-0.5 rounded-full font-bold">
                     Janmank & Bhagyank
                   </span>
                 </div>
                 <p className="text-base text-gray-200 mt-1.5 leading-[1.65] break-words">
-                  मूलांक एवं भाग्यांक विश्लेषण तथा ग्रह आधारित व्यक्तिगत साप्ताहिक मार्गदर्शन
+                  {t('dashboard.numerologyReportSub')}
                 </p>
               </div>
             </div>
@@ -419,7 +420,7 @@ export default function Dashboard({ profile, navigate, showToast }: DashboardPro
               onClick={() => setIsNumerologyModalOpen(true)}
               className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 bg-gradient-to-r from-[#d4af37] via-[#fef08a] to-[#b89528] text-[#030a08] font-bold rounded-xl text-base hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(212,175,55,0.5)] shrink-0 cursor-pointer text-center"
             >
-              प्रतिवेदन देखें
+              {t('dashboard.viewReportBtn')}
             </button>
           </div>
         </div>
@@ -437,13 +438,13 @@ export default function Dashboard({ profile, navigate, showToast }: DashboardPro
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-lg sm:text-xl font-bold text-white tracking-wide">Owner Control Center</h3>
+                  <h3 className="text-lg sm:text-xl font-bold text-white tracking-wide">{t('dashboard.ownerControlTitle')}</h3>
                   <span className="text-sm bg-[#d4af37]/25 text-[#fef08a] border border-[#d4af37]/50 px-2.5 py-0.5 rounded-full font-bold">
                     Guardian Core
                   </span>
                 </div>
                 <p className="text-base text-gray-200 mt-1.5 leading-[1.65] break-words">
-                  मॉड्यूल नियंत्रण, गार्जियन स्तर (1/2/3), अनुमोदन अनुरोध एवं बैकअप
+                  {t('dashboard.ownerControlSub')}
                 </p>
               </div>
             </div>
@@ -452,7 +453,7 @@ export default function Dashboard({ profile, navigate, showToast }: DashboardPro
               onClick={() => navigate('owner_control')}
               className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 bg-gradient-to-r from-[#d4af37] via-[#fef08a] to-[#b89528] text-[#030a08] font-bold rounded-xl text-base hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(212,175,55,0.4)] shrink-0 cursor-pointer text-center"
             >
-              नियंत्रण
+              {t('dashboard.controlBtn')}
             </button>
           </div>
         </div>
@@ -540,257 +541,13 @@ export default function Dashboard({ profile, navigate, showToast }: DashboardPro
           <div className="flex items-center justify-between mb-3 px-1">
             <h2 className="text-[#d4af37] font-bold text-sm sm:text-base tracking-widest uppercase flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-[#d4af37]" />
-              <span>वैदिक प्रभाग एवं साधन (Modules)</span>
+              <span>{t('dashboard.modulesTitle') || 'वैदिक प्रभाग एवं साधन (Modules)'}</span>
             </h2>
             <span className="text-xs text-[#d4af37]/70 font-mono">27 प्रभाग</span>
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            {[
-              {
-                id: 'kundli',
-                title: 'Kundli',
-                titleHindi: 'कुंडली जन्मांग',
-                desc: 'लग्न, 12 भाव एवं ग्रह स्थिति',
-                isLive: true,
-                action: () => navigate('kundli_intro')
-              },
-              {
-                id: 'kp',
-                title: 'KP Jyotish',
-                titleHindi: 'केपी ज्योतिष',
-                desc: 'नक्षत्र स्वामी, उप-स्वामी व कस्प',
-                isLive: true,
-                action: () => {
-                  try { sessionStorage.setItem('jeevandarpan_scroll_to', 'kp'); } catch {}
-                  navigate('kundli_shell');
-                }
-              },
-              {
-                id: 'pragya',
-                title: 'Jeevan Pragya',
-                titleHindi: 'जीवन प्रज्ञा मार्गदर्शन',
-                desc: 'अतीत • वर्तमान • भविष्य',
-                isLive: true,
-                action: () => navigate('jeevan_pragya')
-              },
-              {
-                id: 'dasha',
-                title: 'Dasha',
-                titleHindi: 'विंशोत्तरी दशा',
-                desc: 'महादशा, अंतर्दशा एवं कालक्रम',
-                isLive: true,
-                action: () => {
-                  try { sessionStorage.setItem('jeevandarpan_scroll_to', 'dasha'); } catch {}
-                  navigate('kundli_shell');
-                }
-              },
-              {
-                id: 'gochar',
-                title: 'Gochar',
-                titleHindi: 'गोचर (Transit)',
-                desc: 'तात्कालिक आकाशीय ग्रह चाल',
-                isLive: true,
-                action: () => {
-                  try { sessionStorage.setItem('jeevandarpan_scroll_to', 'transit'); } catch {}
-                  navigate('kundli_shell');
-                }
-              },
-              {
-                id: 'varga',
-                title: 'Varga',
-                titleHindi: 'वर्ग कुंडलियां',
-                desc: 'D1 से D60 षोडशवर्ग',
-                isLive: true,
-                action: () => {
-                  try { sessionStorage.setItem('jeevandarpan_scroll_to', 'varga'); } catch {}
-                  navigate('kundli_shell');
-                }
-              },
-              {
-                id: 'numerology',
-                title: 'Numerology',
-                titleHindi: 'अंकशास्त्र',
-                desc: 'मूलांक, भाग्यांक एवं नामांक',
-                isLive: true,
-                action: () => {
-                  try { sessionStorage.setItem('jeevandarpan_numerology_tab', 'CORE'); } catch {}
-                  navigate('numerology');
-                }
-              },
-              {
-                id: 'loshu',
-                title: 'Lo Shu',
-                titleHindi: 'लो शू ग्रिड',
-                desc: 'अंक चक्र एवं योग विश्लेषण',
-                isLive: true,
-                action: () => {
-                  try { sessionStorage.setItem('jeevandarpan_numerology_tab', 'LOSHU'); } catch {}
-                  navigate('numerology');
-                }
-              },
-              {
-                id: 'prashna',
-                title: 'Prashna Kundli',
-                titleHindi: 'प्रश्न कुंडली',
-                desc: 'वर्तमान क्षण का प्रश्न विचार',
-                isLive: true,
-                action: () => navigate('prashna_kundli')
-              },
-              {
-                id: 'ai_jyotish',
-                title: 'AI Jyotish',
-                titleHindi: 'ज्योतिष प्रज्ञा AI',
-                desc: 'प्रत्यक्ष प्रश्नोत्तर एवं विश्लेषण',
-                isLive: true,
-                action: () => {
-                  try { sessionStorage.setItem('jeevandarpan_intel_tab', 'AI'); } catch {}
-                  navigate('intelligence_dashboard');
-                }
-              },
-              {
-                id: 'life_questions',
-                title: 'Life Questions',
-                titleHindi: 'जीवन प्रश्न',
-                desc: 'करियर, वित्त, विवाह, स्वास्थ्य',
-                isLive: true,
-                action: () => {
-                  try { sessionStorage.setItem('jeevandarpan_intel_tab', 'QUESTIONS'); } catch {}
-                  navigate('intelligence_dashboard');
-                }
-              },
-              {
-                id: 'daily_companion',
-                title: 'Daily Companion',
-                titleHindi: 'दैनिक सहचर',
-                desc: 'प्रातः, दोपहर, संध्या, रात्रि',
-                isLive: true,
-                action: () => navigate('daily_companion')
-              },
-              {
-                id: 'pratah_sanskar',
-                title: 'Pratah Sanskar',
-                titleHindi: 'प्रातः संस्कार',
-                desc: 'गायत्री मंत्र, सूर्य अर्घ्य, संकल्प',
-                isLive: true,
-                action: () => navigate('pratah_sanskar')
-              },
-              {
-                id: 'muhurat',
-                title: 'Muhurat',
-                titleHindi: 'शुभ मुहूर्त',
-                desc: 'चौघड़िया, अभिजित व पंचांग',
-                isLive: true,
-                action: () => navigate('muhurat')
-              },
-              {
-                id: 'dosh_remedies',
-                title: 'Dosh & Remedies',
-                titleHindi: 'दोष एवं उपाय',
-                desc: 'कालसर्प, मांगलिक व वैदिक शांति',
-                isLive: true,
-                action: () => navigate('dosh_remedies')
-              },
-              {
-                id: 'lal_kitab',
-                title: 'Lal Kitab',
-                titleHindi: 'लाल किताब',
-                desc: 'ग्रह ऋण, दृष्टि एवं सरल उपाय',
-                isLive: true,
-                action: () => {
-                  try { sessionStorage.setItem('jeevandarpan_scroll_to', 'lalkitab'); } catch {}
-                  navigate('kundli_shell');
-                }
-              },
-              {
-                id: 'reports',
-                title: 'Reports',
-                titleHindi: 'विस्तृत रिपोर्ट',
-                desc: '21-सेक्शन विस्तृत PDF प्रतिवेदन',
-                isLive: true,
-                action: () => navigate('reports')
-              },
-              {
-                id: 'family',
-                title: 'Family',
-                titleHindi: 'पारिवारिक कुंडली',
-                desc: 'मास्टर प्रोफाइल एवं परिवार',
-                isLive: true,
-                action: () => navigate('profile')
-              },
-              {
-                id: 'life_journal',
-                title: 'Life Journal',
-                titleHindi: 'जीवन दैनंदिनी',
-                desc: 'आत्म-चिंतन व अनुभव संकलन',
-                isLive: true,
-                action: () => navigate('daily_report_card')
-              },
-              {
-                id: 'meditation',
-                title: 'Meditation',
-                titleHindi: 'ध्यान व साधना',
-                desc: 'आत्म-साधना एवं आंतरिक शांति',
-                isLive: true,
-                action: () => navigate('meditation')
-              },
-              {
-                id: 'yoga',
-                title: 'Yoga & Sadhana',
-                titleHindi: 'योग एवं साधना',
-                desc: 'प्राणायाम एवं नित्य साधना विधि',
-                isLive: true,
-                action: () => navigate('yoga')
-              },
-              {
-                id: 'mantra_jaap',
-                title: 'Mantra Jaap',
-                titleHindi: 'मंत्र जाप',
-                desc: 'डिजिटल माला एवं मंत्र सिद्धि',
-                isLive: false,
-                action: () => showToast('मंत्र जाप एवं माला गणना केंद्र शीघ्र उपलब्ध होगा।')
-              },
-              {
-                id: 'puja_3d',
-                title: '3D Puja',
-                titleHindi: '3D डिजिटल पूजा',
-                desc: 'देव अर्चन एवं आरती (स्वतंत्र)',
-                isLive: false,
-                action: () => showToast('3D डिजिटल पूजा स्वतंत्र मॉड्यूल के रूप में शीघ्र उपलब्ध होगी।')
-              },
-              {
-                id: 'temple_explorer',
-                title: 'Temple Explorer',
-                titleHindi: 'तीर्थ एवं मंदिर',
-                desc: 'पवित्र देवालय एवं महात्म्य',
-                isLive: false,
-                action: () => showToast('तीर्थ एवं मंदिर दर्शन मार्गदर्शिका शीघ्र उपलब्ध होगी।')
-              },
-              {
-                id: 'temple_travel',
-                title: 'Temple + Travel',
-                titleHindi: 'तीर्थ यात्रा',
-                desc: 'धार्मिक यात्रा एवं सुविधा केंद्र',
-                isLive: false,
-                action: () => showToast('तीर्थ यात्रा योजना एवं सुविधा केंद्र शीघ्र उपलब्ध होगा।')
-              },
-              {
-                id: 'spiritual_store',
-                title: 'Spiritual Store',
-                titleHindi: 'आध्यात्मिक केंद्र',
-                desc: 'प्रामाणिक रत्न, रुद्राक्ष एवं सामग्री',
-                isLive: false,
-                action: () => showToast('वैदिक आध्यात्मिक सामग्री एवं रत्न केंद्र शीघ्र उपलब्ध होगा।')
-              },
-              {
-                id: 'settings',
-                title: 'Settings',
-                titleHindi: 'सेटिंग्स एवं विन्यास',
-                desc: 'भाषा, गार्जियन व वरीयताएं',
-                isLive: true,
-                action: () => setShowLangModal(true)
-              }
-            ].map((mod, idx) => {
+            {getModules(t, navigate, showToast, setShowLangModal).map((mod, idx) => {
               return (
                 <button
                   key={idx}
@@ -806,10 +563,10 @@ export default function Dashboard({ profile, navigate, showToast }: DashboardPro
                   <div className="flex items-start justify-between gap-1 w-full">
                     <div>
                       <h4 className={`font-bold tracking-wide text-sm sm:text-base leading-snug ${mod.isLive ? 'text-[#d4af37] group-hover:text-[#fef08a]' : 'text-gray-300 group-hover:text-white'}`}>
-                        {mod.titleHindi}
+                        {mod.title}
                       </h4>
                       <p className="text-[11px] text-gray-400 font-medium">
-                        {mod.title}
+                        {mod.subtitle}
                       </p>
                     </div>
                     {mod.isLive && (
