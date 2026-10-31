@@ -11,6 +11,7 @@ import { GuardianIncident } from '../types/ownerControl';
 import { FamilyProfileSelector } from './profile/FamilyProfileSelector';
 import { FamilyMemberFormModal, RELATION_LABELS } from './profile/FamilyMemberFormModal';
 import { ProfileService } from '../services/profile/profileService';
+import NumerologyReportModal from './NumerologyReportModal';
 
 interface DashboardProps {
   profile: BirthProfile | null;
@@ -22,6 +23,7 @@ export default function Dashboard({ profile, navigate, showToast }: DashboardPro
   const { t, currentLanguageInfo } = useTranslation();
   const [showLangModal, setShowLangModal] = useState(false);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [isNumerologyModalOpen, setIsNumerologyModalOpen] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<GuardianIncident | null>(null);
   const [postFixResult, setPostFixResult] = useState<{
     success: boolean;
@@ -385,6 +387,39 @@ export default function Dashboard({ profile, navigate, showToast }: DashboardPro
               className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 bg-gradient-to-r from-[#d4af37] to-[#b89528] text-[#030a08] font-bold rounded-xl text-base hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md shrink-0 cursor-pointer text-center"
             >
               {t('common.start')}
+            </button>
+          </div>
+        </div>
+
+        {/* Numerology Report (Janmank & Bhagyank) Spotlight Card */}
+        <div className="bg-gradient-to-r from-[#0a2318] via-[#0d2f21] to-[#05160e] border border-[#d4af37]/70 backdrop-blur-md rounded-3xl p-5 sm:p-6 relative overflow-hidden shadow-[0_8px_30px_rgba(212,175,55,0.3)]">
+          <div className="absolute -top-10 -right-10 w-28 h-28 bg-[#d4af37]/20 rounded-full blur-2xl pointer-events-none"></div>
+          
+          <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between relative z-10">
+            <div className="flex items-start gap-3.5 min-w-0">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#d4af37] via-[#fef08a] to-[#d4af37] p-[1.5px] shrink-0 shadow-[0_0_18px_rgba(212,175,55,0.5)] mt-0.5">
+                <div className="w-full h-full bg-[#030a08] rounded-2xl flex items-center justify-center text-[#d4af37]">
+                  <Sparkles className="w-6 h-6 text-[#d4af37]" />
+                </div>
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-lg sm:text-xl font-bold text-white tracking-wide">अंकशास्त्र साप्ताहिक प्रतिवेदन</h3>
+                  <span className="text-sm bg-[#d4af37]/25 text-[#fef08a] border border-[#d4af37]/50 px-2.5 py-0.5 rounded-full font-bold">
+                    Janmank & Bhagyank
+                  </span>
+                </div>
+                <p className="text-base text-gray-200 mt-1.5 leading-[1.65] break-words">
+                  मूलांक एवं भाग्यांक विश्लेषण तथा ग्रह आधारित व्यक्तिगत साप्ताहिक मार्गदर्शन
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setIsNumerologyModalOpen(true)}
+              className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 bg-gradient-to-r from-[#d4af37] via-[#fef08a] to-[#b89528] text-[#030a08] font-bold rounded-xl text-base hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(212,175,55,0.5)] shrink-0 cursor-pointer text-center"
+            >
+              प्रतिवेदन देखें
             </button>
           </div>
         </div>
@@ -825,6 +860,14 @@ export default function Dashboard({ profile, navigate, showToast }: DashboardPro
             showToast(res.error || 'सदस्य जोड़ने में त्रुटि।');
           }
         }}
+      />
+
+      {/* Numerology Report Modal */}
+      <NumerologyReportModal
+        isOpen={isNumerologyModalOpen}
+        onClose={() => setIsNumerologyModalOpen(false)}
+        profile={profile}
+        showToast={showToast}
       />
     </div>
   );
