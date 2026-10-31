@@ -2,6 +2,10 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { LanguageCode, LanguageInfo, SUPPORTED_LANGUAGES, TranslationDictionary } from './types';
 import { en } from './locales/en';
 import { hi } from './locales/hi';
+import { es } from './locales/es';
+import { fr } from './locales/fr';
+import { de } from './locales/de';
+import { ru } from './locales/ru';
 import { mr } from './locales/mr';
 import { gu } from './locales/gu';
 import { bn } from './locales/bn';
@@ -21,6 +25,10 @@ export * from './types';
 export const LOCALES: Record<LanguageCode, TranslationDictionary> = {
   en: { ...en, guardian: guardianLocales.en, meditation: meditationLocales.en },
   hi: { ...hi, guardian: guardianLocales.hi, meditation: meditationLocales.hi },
+  es: { ...es, guardian: guardianLocales.en, meditation: meditationLocales.en },
+  fr: { ...fr, guardian: guardianLocales.en, meditation: meditationLocales.en },
+  de: { ...de, guardian: guardianLocales.en, meditation: meditationLocales.en },
+  ru: { ...ru, guardian: guardianLocales.en, meditation: meditationLocales.en },
   mr: { ...mr, guardian: guardianLocales.mr, meditation: meditationLocales.hi },
   gu: { ...gu, guardian: guardianLocales.gu, meditation: meditationLocales.hi },
   bn: { ...bn, guardian: guardianLocales.bn, meditation: meditationLocales.hi },

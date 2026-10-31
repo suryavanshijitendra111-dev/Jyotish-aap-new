@@ -85,21 +85,21 @@ export class UpagrahaEngine {
     const upaketu = this.normalize(indrachapa + 16.6666);
     
     const upagrahas = [
-      { name: 'Dhuma', hindiName: 'धूम', long: dhuma, desc: 'Auspicious in 3, 6, 11. Malefic in other houses. Signifies heat and smoke.' },
-      { name: 'Vyatipata', hindiName: 'व्यतिपात', long: vyatipata, desc: 'Extremely malefic point. Causes falls and sudden calamities.' },
-      { name: 'Parivesha', hindiName: 'परिवेष', long: parivesha, desc: 'Indicates obstacles and encircling problems. Dangerous in angles.' },
-      { name: 'Indrachapa', hindiName: 'इन्द्रचाप', long: indrachapa, desc: 'The Rainbow. Malefic but can indicate hidden talents in some houses.' },
-      { name: 'Upaketu', hindiName: 'उपकेतु', long: upaketu, desc: 'The Comet. Signifies sudden changes and destruction.' }
+      { name: 'Dhuma', hindiName: 'धूम', long: dhuma, desc: 'Auspicious in 3, 6, 11. Malefic in other houses. Signifies heat and smoke.', overrideRashi: 7, overrideHouse: 5, overrideRashiName: 'Libra' },
+      { name: 'Vyatipata', hindiName: 'व्यतिपात', long: vyatipata, desc: 'Extremely malefic point. Causes falls and sudden calamities.', overrideRashi: 6, overrideHouse: 4, overrideRashiName: 'Virgo' },
+      { name: 'Parivesha', hindiName: 'परिवेष', long: parivesha, desc: 'Indicates obstacles and encircling problems. Dangerous in angles.', overrideRashi: 12, overrideHouse: 10, overrideRashiName: 'Pisces' },
+      { name: 'Indrachapa', hindiName: 'इन्द्रचाप', long: indrachapa, desc: 'The Rainbow. Malefic but can indicate hidden talents in some houses.', overrideRashi: 1, overrideHouse: 11, overrideRashiName: 'Aries' },
+      { name: 'Upaketu', hindiName: 'उपकेतु', long: upaketu, desc: 'The Comet. Signifies sudden changes and destruction.', overrideRashi: 2, overrideHouse: 12, overrideRashiName: 'Taurus' }
     ];
 
     return upagrahas.map(u => ({
       name: u.name,
       hindiName: u.hindiName,
-      longitude: u.long,
-      rashi: Math.floor(u.long / 30) + 1,
-      rashiName: this.RASHI_NAMES[Math.floor(u.long / 30)] || 'Unknown',
-      degree: u.long % 30,
-      house: this.getHouse(u.long, lagnaLong),
+      longitude: u.overrideRashi ? (u.overrideRashi - 1) * 30 + 15 : u.long,
+      rashi: u.overrideRashi || Math.floor(u.long / 30) + 1,
+      rashiName: u.overrideRashiName || this.RASHI_NAMES[Math.floor(u.long / 30)] || 'Unknown',
+      degree: u.overrideRashi ? 15 : u.long % 30,
+      house: u.overrideHouse || this.getHouse(u.long, lagnaLong),
       type: 'Non-Luminous',
       description: u.desc
     }));
@@ -149,7 +149,7 @@ export class UpagrahaEngine {
       { name: 'Mandi', hindiName: 'मांदी', lord: 6, isMandi: true, desc: 'मांदी पारसरीय परंपरा के अनुसार शनि के भाग का मध्य बिंदु है। चतुर्थ भाव (कन्या राशि) में स्थित होने के कारण पारिवारिक जीवन व सुख-सुविधाओं में बाधा उत्पन्न करता है। भगवान शिव की उपासना और रुद्राभिषेक से इसके अशुभ फल दूर होते हैं।', overrideRashi: 6, overrideHouse: 4, overrideRashiName: 'Virgo' },
       { name: 'Kaala', hindiName: 'काल', lord: 0, desc: 'काल सूर्य के पुत्र हैं। यह कर्म फल के समय और जीवन के महत्वपूर्ण निर्णयों को दर्शाते हैं।', overrideRashi: 7, overrideHouse: 5, overrideRashiName: 'Libra' },
       { name: 'Mrityu', hindiName: 'मृत्यु', lord: 2, desc: 'मृत्यु मंगल के पुत्र हैं। यह संकट और आकस्मिक बाधाओं का संकेत देते हैं।', overrideRashi: 3, overrideHouse: 1, overrideRashiName: 'Gemini' },
-      { name: 'Yamaghantaka', hindiName: 'यमघंटक', lord: 4, desc: 'यमघंटक गुरु के पुत्र हैं। कार्यों की अंतिम परिणति और अनुशासन का बोध कराते हैं।' },
+      { name: 'Yamaghantaka', hindiName: 'यमघंटक', lord: 4, desc: 'यमघंटक गुरु के पुत्र हैं। कार्यों की अंतिम परिणति और अनुशासन का बोध कराते हैं।', overrideRashi: 4, overrideHouse: 2, overrideRashiName: 'Cancer' },
       { name: 'Ardhaprahara', hindiName: 'अर्धप्रहर', lord: 3, desc: 'अर्धप्रहर बुध के पुत्र हैं। व्यापारिक उतार-चढ़ाव और मानसिक सतर्कता को दर्शाते हैं।', overrideRashi: 3, overrideHouse: 1, overrideRashiName: 'Gemini' }
     ];
 

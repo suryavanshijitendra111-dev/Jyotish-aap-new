@@ -1,6 +1,10 @@
-export type LanguageCode = 
+export type LanguageCodeBase = 
   | 'hi' // Hindi - हिन्दी
   | 'en' // English
+  | 'es' // Spanish - Español
+  | 'fr' // French - Français
+  | 'de' // German - Deutsch
+  | 'ru' // Russian - Русский
   | 'mr' // Marathi - मराठी
   | 'gu' // Gujarati - ગુજરાતી
   | 'bn' // Bengali - বাংলা
@@ -12,6 +16,8 @@ export type LanguageCode =
   | 'or' // Odia - ଓଡ଼ିଆ
   | 'as' // Assamese - অসমীয়া
   | 'sa'; // Sanskrit - संस्कृत
+
+export type LanguageCode = LanguageCodeBase | (string & {});
 
 export interface LanguageInfo {
   code: LanguageCode;
@@ -25,6 +31,10 @@ export interface LanguageInfo {
 export const SUPPORTED_LANGUAGES: LanguageInfo[] = [
   { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', script: 'Devanagari', firstPersonMoon: 'मैं चंद्र हूँ।', notAvailableText: 'उपलब्ध नहीं' },
   { code: 'en', name: 'English', nativeName: 'English', script: 'Latin', firstPersonMoon: 'I am the Moon.', notAvailableText: 'Not Available' },
+  { code: 'es', name: 'Spanish', nativeName: 'Español', script: 'Latin', firstPersonMoon: 'Soy la Luna.', notAvailableText: 'No disponible' },
+  { code: 'fr', name: 'French', nativeName: 'Français', script: 'Latin', firstPersonMoon: 'Je suis la Lune.', notAvailableText: 'Non disponible' },
+  { code: 'de', name: 'German', nativeName: 'Deutsch', script: 'Latin', firstPersonMoon: 'Ich bin der Mond.', notAvailableText: 'Nicht verfügbar' },
+  { code: 'ru', name: 'Russian', nativeName: 'Русский', script: 'Cyrillic', firstPersonMoon: 'Я Луна.', notAvailableText: 'Недоступно' },
   { code: 'mr', name: 'Marathi', nativeName: 'मराठी', script: 'Devanagari', firstPersonMoon: 'मी चंद्र आहे.', notAvailableText: 'उपलब्ध नाही' },
   { code: 'gu', name: 'Gujarati', nativeName: 'ગુજરાતી', script: 'Gujarati', firstPersonMoon: 'હું ચંદ્ર છું.', notAvailableText: 'ઉપલબ્ધ નથી' },
   { code: 'bn', name: 'Bengali', nativeName: 'বাংলা', script: 'Bengali', firstPersonMoon: 'আমি চন্দ্র।', notAvailableText: 'উপলব্ধ নয়' },

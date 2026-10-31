@@ -191,7 +191,7 @@ export class GuardianCommandService {
     lang: LanguageCode,
     params?: Record<string, string>
   ): string {
-    const responses: Record<string, Record<LanguageCode, string>> = {
+    const responses: Record<string, Record<string, string>> = {
       voiceIncidentFound: {
         hi: 'Planet Speaks ऑडियो इंजन में {count} तकनीकी घटनाएं दर्ज हैं। ऑडियो बफ़र रीसेट अनुशंसित है।',
         en: 'Found {count} technical incidents in Planet Speaks audio engine. Audio buffer reset is recommended.',

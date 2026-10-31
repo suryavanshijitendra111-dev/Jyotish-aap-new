@@ -40,7 +40,7 @@ export interface BackupCenterTranslations {
   checksumLabel: string;
 }
 
-export const backupLocales: Record<LanguageCode, BackupCenterTranslations> = {
+export const backupLocales: Record<string, BackupCenterTranslations> = {
   hi: {
     backupAndRestoreTitle: 'बैकअप और पुनर्स्थापना',
     backupAndRestoreSubtitle: 'अपने JeevanDarpan डेटा का सुरक्षित बैकअप लें, PDF रिपोर्ट बनाएँ और जरूरत पड़ने पर डेटा पुनर्स्थापित करें।',

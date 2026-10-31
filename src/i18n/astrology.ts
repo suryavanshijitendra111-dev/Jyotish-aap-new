@@ -3,7 +3,7 @@ import { LanguageCode, getCurrentLanguage } from './index';
 // ----------------------------------------------------------------------
 // Planetary Names across 13 Languages
 // ----------------------------------------------------------------------
-export const PLANET_TRANSLATIONS: Record<string, Record<LanguageCode, string>> = {
+export const PLANET_TRANSLATIONS: Record<string, Record<string, string>> = {
   'Sun': {
     en: 'Sun',
     hi: 'सूर्य',
@@ -174,7 +174,7 @@ export const PLANET_TRANSLATIONS: Record<string, Record<LanguageCode, string>> =
 // ----------------------------------------------------------------------
 // Rashi Names across 13 Languages
 // ----------------------------------------------------------------------
-export const RASHI_TRANSLATIONS: Record<string, Record<LanguageCode, string>> = {
+export const RASHI_TRANSLATIONS: Record<string, Record<string, string>> = {
   'Aries': {
     en: 'Aries (Mesha)',
     hi: 'मेष',
@@ -366,7 +366,7 @@ const RASHI_INDEX_MAP: Record<number, string> = {
 // ----------------------------------------------------------------------
 // Dignities & Planetary States
 // ----------------------------------------------------------------------
-export const DIGNITY_TRANSLATIONS: Record<string, Record<LanguageCode, string>> = {
+export const DIGNITY_TRANSLATIONS: Record<string, Record<string, string>> = {
   'Exalted': {
     en: 'Exalted',
     hi: 'उच्च',
@@ -492,7 +492,7 @@ export const DIGNITY_TRANSLATIONS: Record<string, Record<LanguageCode, string>> 
 // ----------------------------------------------------------------------
 // Relationships
 // ----------------------------------------------------------------------
-export const RELATIONSHIP_TRANSLATIONS: Record<string, Record<LanguageCode, string>> = {
+export const RELATIONSHIP_TRANSLATIONS: Record<string, Record<string, string>> = {
   'Great Friend': {
     en: 'Great Friend',
     hi: 'अधिमित्र',
@@ -573,7 +573,7 @@ export const RELATIONSHIP_TRANSLATIONS: Record<string, Record<LanguageCode, stri
 // ----------------------------------------------------------------------
 // House Names & Ordinals across 13 Languages
 // ----------------------------------------------------------------------
-export const HOUSE_TRANSLATIONS: Record<number, Record<LanguageCode, { label: string; full: string; type: string }>> = {
+export const HOUSE_TRANSLATIONS: Record<number, Record<string, { label: string; full: string; type: string }>> = {
   1: {
     en: { label: 'House 1', full: '1st House (Lagna / Self)', type: 'Kendra / Trikona' },
     hi: { label: 'भाव 1', full: 'प्रथम भाव (तनु / लग्न)', type: 'केंद्र एवं त्रिकोण' },
@@ -759,7 +759,7 @@ export const HOUSE_TRANSLATIONS: Record<number, Record<LanguageCode, { label: st
 // ----------------------------------------------------------------------
 // Jaimini Chara Karakas
 // ----------------------------------------------------------------------
-export const KARAKA_TRANSLATIONS: Record<string, Record<LanguageCode, string>> = {
+export const KARAKA_TRANSLATIONS: Record<string, Record<string, string>> = {
   'Atmakaraka (AK)': {
     en: 'Atmakaraka (AK)',
     hi: 'आत्मकारक (AK)',
@@ -885,7 +885,7 @@ export const KARAKA_TRANSLATIONS: Record<string, Record<LanguageCode, string>> =
 // ----------------------------------------------------------------------
 // Yoga Names
 // ----------------------------------------------------------------------
-export const YOGA_NAME_TRANSLATIONS: Record<string, Record<LanguageCode, string>> = {
+export const YOGA_NAME_TRANSLATIONS: Record<string, Record<string, string>> = {
   'Hamsa Yoga': {
     en: 'Hamsa Yoga',
     hi: 'हंस योग',
@@ -1116,7 +1116,7 @@ export const YOGA_NAME_TRANSLATIONS: Record<string, Record<LanguageCode, string>
 // ----------------------------------------------------------------------
 // Why Engine Condition & Result Translations
 // ----------------------------------------------------------------------
-export const CONDITION_TRANSLATIONS: Record<string, Record<LanguageCode, string>> = {
+export const CONDITION_TRANSLATIONS: Record<string, Record<string, string>> = {
   'House Data Valid': {
     en: 'House Data Valid',
     hi: 'भाव डेटा वैध',
@@ -1194,7 +1194,7 @@ export const CONDITION_TRANSLATIONS: Record<string, Record<LanguageCode, string>
   }
 };
 
-export const AUDIT_RESULT_TRANSLATIONS: Record<string, Record<LanguageCode, string>> = {
+export const AUDIT_RESULT_TRANSLATIONS: Record<string, Record<string, string>> = {
   'Analyzed': {
     en: 'Analyzed',
     hi: 'विश्लेषित',
@@ -1288,7 +1288,7 @@ export function getLocalizedRashi(rashi: string | number, lang?: LanguageCode): 
   return RASHI_TRANSLATIONS[name]?.[code] || name;
 }
 
-export const NAKSHATRA_TRANSLATIONS: Record<string, Record<LanguageCode, string>> = {
+export const NAKSHATRA_TRANSLATIONS: Record<string, Record<string, string>> = {
   'Ashwini': { en: 'Ashwini', hi: 'अश्विनी', mr: 'अश्विनी', gu: 'અશ્વિની', bn: 'অশ্বিনী', ta: 'அஸ்வினி', te: 'అశ్విని', kn: 'ಅಶ್ವಿನಿ', ml: 'അശ്വതി', pa: 'ਅਸ਼ਵਿਨੀ', or: 'ଅଶ୍ୱିନୀ', as: 'অশ্বিনী', sa: 'अश्विनी' },
   'Bharani': { en: 'Bharani', hi: 'भरणी', mr: 'भरणी', gu: 'ભરણી', bn: 'ভরণী', ta: 'பரணி', te: 'భరణి', kn: 'ಭರಣಿ', ml: 'ഭരണി', pa: 'ਭਰਣੀ', or: 'ଭରଣୀ', as: 'ভৰণী', sa: 'भरणी' },
   'Krittika': { en: 'Krittika', hi: 'कृत्तिका', mr: 'कृतिका', gu: 'કૃત્તિકા', bn: 'কৃত্তিকা', ta: 'கார்த்திகை', te: 'కృత్తిక', kn: 'ಕೃತಿಕಾ', ml: 'കാർത്തിക', pa: 'ਕ੍ਰਿਤਿਕਾ', or: 'କୃତ୍ତିକା', as: 'কৃত্তিকা', sa: 'कृत्तिका' },
@@ -1378,7 +1378,7 @@ export function getLocalizedAuditResult(result: string, lang?: LanguageCode): st
   return AUDIT_RESULT_TRANSLATIONS[result]?.[code] || result;
 }
 
-export const PLANET_ABBREVIATIONS: Record<string, Record<LanguageCode, string>> = {
+export const PLANET_ABBREVIATIONS: Record<string, Record<string, string>> = {
   Sun: {
     en: 'Su', hi: 'सू', mr: 'सू', gu: 'સૂ', bn: 'সূ', ta: 'சூ', te: 'సూర్యు', kn: 'ಸೂ', ml: 'സൂ', pa: 'ਸੂ', or: 'ସୂ', as: 'সূ', sa: 'सू'
   },

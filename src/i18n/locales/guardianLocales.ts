@@ -1,6 +1,6 @@
 import { LanguageCode, GuardianTranslations } from '../types';
 
-export const guardianLocales: Record<LanguageCode, GuardianTranslations> = {
+export const guardianLocales: Record<string, GuardianTranslations> = {
   // 1. HINDI
   hi: {
     ownerControlCenter: 'स्वामी नियंत्रण केंद्र',
