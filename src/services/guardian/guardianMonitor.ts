@@ -119,6 +119,32 @@ export class GuardianMonitor {
         }
       });
 
+      window.addEventListener('online', () => {
+        try {
+          const incidents = getStoredIncidents();
+          let updated = false;
+          const normalized = incidents.map(inc => {
+            const combined = ((inc.title || '') + ' ' + (inc.description || '') + ' ' + (inc.message || '')).toLowerCase();
+            if ((inc.category === 'NETWORK' || combined.includes('offline') || combined.includes('connectivity')) && inc.status === 'OPEN') {
+              updated = true;
+              return {
+                ...inc,
+                status: 'RESOLVED' as const,
+                incidentState: 'RESOLVED_INCIDENT' as const,
+                resolvedAt: Date.now(),
+                suggestedAction: 'Network connection restored. Device online and fully synchronized.',
+              };
+            }
+            return inc;
+          });
+          if (updated) {
+            saveStoredIncidents(normalized);
+          }
+        } catch {
+          // Internal error handling
+        }
+      });
+
       // 4. CRITICAL: Browser window.fetch is NEVER globally monkey-patched or mutated.
       // Global window.fetch remains completely untouched and read-only.
       // Use the exported safeFetch() / guardianFetch() application wrappers for monitored API calls.

@@ -64,7 +64,7 @@ export const SudarshanaChakraView: React.FC<SudarshanaChakraViewProps> = ({ data
       <CarvedCard 
         header={
           <div className="flex flex-col">
-            <h2 className="text-[#D4AF37] text-xl font-bold tracking-widest uppercase text-center">Sudarshana Chakra</h2>
+            <h2 className="text-[#D4AF37] text-xl font-bold tracking-widest uppercase text-center">सुदर्शन चक्र (Sudarshana Chakra)</h2>
             <p className="text-[#D4AF37]/60 text-xs text-center italic">सुदर्शन चक्र: त्रिविध लग्न विश्लेषण</p>
           </div>
         }
@@ -107,9 +107,9 @@ export const SudarshanaChakraView: React.FC<SudarshanaChakraViewProps> = ({ data
               <circle cx="200" cy="200" r="5" fill="#D4AF37" />
               
               {/* Legend labels */}
-              <text x="200" y="55" fill="#60a5fa" fontSize="8" textAnchor="middle" className="uppercase font-bold">Lagna</text>
-              <text x="200" y="105" fill="#e879f9" fontSize="8" textAnchor="middle" className="uppercase font-bold">Chandra</text>
-              <text x="200" y="155" fill="#fb923c" fontSize="8" textAnchor="middle" className="uppercase font-bold">Surya</text>
+              <text x="200" y="55" fill="#60a5fa" fontSize="8" textAnchor="middle" className="uppercase font-bold">लग्न</text>
+              <text x="200" y="105" fill="#e879f9" fontSize="8" textAnchor="middle" className="uppercase font-bold">चंद्र</text>
+              <text x="200" y="155" fill="#fb923c" fontSize="8" textAnchor="middle" className="uppercase font-bold">सूर्य</text>
             </svg>
           </div>
 
@@ -118,25 +118,25 @@ export const SudarshanaChakraView: React.FC<SudarshanaChakraViewProps> = ({ data
             <div className="bg-black/40 border border-[#D4AF37]/20 p-4 rounded-lg">
               <h3 className="text-[#D4AF37] font-bold mb-2 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                Sudarshana Dasha (Current)
+                सुदर्शन चक्र दशा (वर्तमान वर्ष)
               </h3>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="text-gray-400">Current Year:</div>
+                <div className="text-gray-400">वर्तमान वर्ष:</div>
                 <div className="text-white font-mono">{sudarshana.currentDashaYear}</div>
-                <div className="text-gray-400">Active House:</div>
-                <div className="text-[#D4AF37] font-bold">{sudarshana.activeHouse}</div>
+                <div className="text-gray-400">सक्रिय भाव:</div>
+                <div className="text-[#D4AF37] font-bold">भाव {sudarshana.activeHouse}</div>
               </div>
             </div>
 
             <div className="bg-[#D4AF37]/5 border border-[#D4AF37]/20 p-4 rounded-lg">
-              <h4 className="text-[#D4AF37] text-xs font-bold uppercase mb-2">Classical Interpretation</h4>
+              <h4 className="text-[#D4AF37] text-xs font-bold uppercase mb-2">शास्त्रीय व्याख्या एवं फलकथन</h4>
               <p className="text-white text-sm italic leading-relaxed">
                 {sudarshana.analysis}
               </p>
             </div>
 
             <p className="text-xs text-gray-400 italic leading-relaxed">
-              * Sudarshana Chakra provides a synthesized view from Ascendant, Moon, and Sun. The active house changes every year, reflecting the unfolding of destiny.
+              * सुदर्शन चक्र लग्न, चंद्र और सूर्य से एक समन्वित दृष्टिकोण प्रदान करता है। सक्रिय भाव प्रत्येक वर्ष बदलता है, जो भाग्य के विकास को दर्शाता है।
             </p>
           </div>
         </div>

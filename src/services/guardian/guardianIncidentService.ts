@@ -755,6 +755,24 @@ export class GuardianIncidentService {
   public clearAllIncidents(): void {
     saveStoredIncidents([]);
   }
+
+  public clearActiveIncidents(): void {
+    const incidents = getStoredIncidents();
+    const updated = incidents.map(inc => {
+      const state = classifyIncidentState(inc);
+      if (state === 'ACTIVE_RUNTIME_INCIDENT' && (inc.status === 'OPEN' || inc.status === 'INVESTIGATING' || inc.status === 'APPROVAL_REQUESTED')) {
+        return {
+          ...inc,
+          status: 'RESOLVED' as const,
+          incidentState: 'RESOLVED_INCIDENT' as const,
+          resolvedAt: Date.now(),
+          suggestedAction: 'Acknowledged and cleared by owner.',
+        };
+      }
+      return inc;
+    });
+    saveStoredIncidents(updated);
+  }
 }
 
 export const guardianIncidentService = GuardianIncidentService.getInstance();

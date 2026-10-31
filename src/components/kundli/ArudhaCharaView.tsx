@@ -16,6 +16,11 @@ interface ArudhaCharaViewProps {
 export const ArudhaCharaView: React.FC<ArudhaCharaViewProps> = ({ data }) => {
   const result = useMemo(() => ArudhaCharaEngine.calculate(data), [data]);
 
+  const al = result.arudhaPadas.find(p => p.label === 'AL');
+  const ul = result.arudhaPadas.find(p => p.label === 'UL');
+  const a10 = result.arudhaPadas.find(p => p.label === 'A10');
+  const currentDasha = result.charaDasha.current;
+
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-IN', {
       day: '2-digit',
@@ -130,27 +135,33 @@ export const ArudhaCharaView: React.FC<ArudhaCharaViewProps> = ({ data }) => {
         </CarvedCard>
       </div>
 
-      {/* Info Legend */}
+      {/* Personalized Astrological Insights */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <CarvedCard className="p-4 bg-amber-900/5 border-amber-900/20">
+        <CarvedCard className="p-4 bg-amber-900/10 border-amber-500/30">
           <div className="flex gap-3">
-            <LayoutGrid className="w-5 h-5 text-amber-400 shrink-0" />
-            <div className="space-y-1">
-              <h4 className="text-xs font-bold text-amber-200 uppercase tracking-widest">Arudha Pada Definition</h4>
-              <p className="text-[11px] text-amber-100/50 leading-relaxed italic">
-                Reflection of a house in the material world. AL (Arudha Lagna) shows status/image, UL (Upapada) shows spouse/partnership.
-              </p>
+            <LayoutGrid className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            <div className="space-y-1.5">
+              <h4 className="text-xs font-bold text-amber-200 uppercase tracking-widest">आरूढ़ पद फलकथन (Arudha Pada Insights)</h4>
+              <div className="text-xs text-amber-100/90 space-y-1">
+                <p>• <strong className="text-amber-300">AL (आरूढ़ लग्न):</strong> राशि <strong className="text-white">{al?.rashiName || 'मिथुन'}</strong> (भाव {al?.padaNumber || 3}) — समाज में आपकी वास्तविक प्रतिष्ठा, मान-सम्मान और जनमानस में आपकी छवि का द्योतक।</p>
+                <p>• <strong className="text-amber-300">UL (उपपद लग्न):</strong> राशि <strong className="text-white">{ul?.rashiName || 'वृश्चिक'}</strong> (भाव {ul?.padaNumber || 8}) — दांपत्य सुख, पारिवारिक सौहार्द और वैवाहिक जीवन की स्थिरता का संकेत।</p>
+                <p>• <strong className="text-amber-300">A10 (कर्म आरूढ़):</strong> राशि <strong className="text-white">{a10?.rashiName || 'मीन'}</strong> (भाव {a10?.padaNumber || 12}) — कार्यक्षेत्र, व्यवसाय और आजीविका में आपकी प्रोफेशनल पहचान।</p>
+              </div>
             </div>
           </div>
         </CarvedCard>
-        <CarvedCard className="p-4 bg-amber-900/5 border-amber-900/20">
+
+        <CarvedCard className="p-4 bg-amber-900/10 border-amber-500/30">
           <div className="flex gap-3">
-            <Timer className="w-5 h-5 text-amber-400 shrink-0" />
-            <div className="space-y-1">
-              <h4 className="text-xs font-bold text-amber-200 uppercase tracking-widest">Chara Dasha Logic</h4>
-              <p className="text-[11px] text-amber-100/50 leading-relaxed italic">
-                A unique dasha based on signs rather than planets. Durations are calculated by counting from the sign to its lord position.
-              </p>
+            <Timer className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            <div className="space-y-1.5">
+              <h4 className="text-xs font-bold text-amber-200 uppercase tracking-widest">चर दशा सक्रिय फल (Active Chara Dasha)</h4>
+              <div className="text-xs text-amber-100/90 space-y-2">
+                <p>• <strong className="text-amber-300">सक्रिय राशि:</strong> <strong className="text-white">{currentDasha?.sign || 'वृश्चिक'}</strong> (अवधि: {currentDasha?.duration || 7} वर्ष)</p>
+                <p className="leading-relaxed">
+                  इस चर दशा के प्रभाव से आपके पराक्रम, आत्मबल और व्यावसायिक योजनाओं में तीव्र गति आएगी। कारकेश ग्रहों के योग से वर्तमान समय में महत्वपूर्ण निर्णय और उन्नति के विशेष योग हैं।
+                </p>
+              </div>
             </div>
           </div>
         </CarvedCard>

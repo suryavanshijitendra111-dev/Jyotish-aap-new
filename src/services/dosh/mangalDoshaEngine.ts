@@ -227,6 +227,16 @@ export class MangalDoshaEngine {
         explanationHindi: 'मंगल पर शुभ गुरु की पूर्ण दृष्टि (5वीं, 7वीं, 9वीं) अथवा युति होने से मंगल की उग्रता शांत होती है एवं दोष भंग होता है।',
         tradition: 'बृहद्दैवज्ञ रंजन ("गुरुणा दृष्टे संयुक्ते वा भौमदोषो न विद्यते")',
         confidence: 'CONFIDENT_CLASSICAL'
+      },
+      {
+        ruleId: 'BHANGA_JUPITER_H9_MARS_SAG',
+        name: 'Jupiter in 9th House & Mars in Sagittarius (गुरु नवम भाव में व मंगल धनु में)',
+        nameHindi: 'गुरु नवम भाव में स्थित है तथा मंगल धनु राशि में होने से मांगलिक दोष का पारंपरिक शमन (Parihar) होता है।',
+        triggered: Boolean(jupiter && jupiter.d1House === 9 && mars.rashi === 9),
+        explanation: 'Jupiter in 9th house and Mars in Sagittarius provides classical Parihar for Mangal Dosha.',
+        explanationHindi: 'गुरु नवम भाव में स्थित है तथा मंगल धनु राशि में होने से मांगलिक दोष का पारंपरिक शमन (Parihar) होता है।',
+        tradition: 'बृहद्दैवज्ञ रंजन / मुहूर्त मार्तण्ड',
+        confidence: 'CONFIDENT_CLASSICAL'
       }
     ];
 

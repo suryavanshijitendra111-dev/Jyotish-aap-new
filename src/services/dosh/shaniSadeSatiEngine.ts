@@ -255,7 +255,7 @@ export class ShaniSadeSatiEngine {
       status = 'PRESENT';
       classification = 'SADE_SATI';
       phase = 'SETTING';
-      phaseHindi = 'तृतीय चरण (अस्तगामी / Setting Phase)';
+      phaseHindi = 'सक्रिय: उतरती साढ़ेसाती (तृतीय चरण - द्वितीय भाव)';
     } else if (saturnFromMoonHouse === 4) {
       // 4th from Moon: Dhaiyya / Kantaka / Ardha-Ashtama
       status = 'PRESENT';
@@ -281,8 +281,13 @@ export class ShaniSadeSatiEngine {
     let interpretationHi = '';
 
     if (classification === 'SADE_SATI') {
-      interpretationEn = `Saturn is transiting ${saturnFromMoonHouse === 12 ? 'the 12th house (Rising)' : saturnFromMoonHouse === 1 ? 'the Janma Rashi (Peak)' : 'the 2nd house (Setting)'} from Natal Moon. In traditional Gochara Jyotish (Phaladeepika Ch. 26), this is recognized as Sade Sati (${phaseHindi}). It represents a period of practical discipline, psychological grounding, and life restructuring.`;
-      interpretationHi = `शनि जन्म चंद्र से ${saturnFromMoonHouse === 12 ? '12वें भाव (उदयमान)' : saturnFromMoonHouse === 1 ? 'जन्म राशि (शिखर)' : 'द्वितीय भाव (उतरती)'} में गोचर कर रहे हैं। फलदीपिका अध्याय 26 के अनुसार यह साढ़ेसाती का ${phaseHindi} है। यह काल अनुशासन, धैर्य, जीवन के प्राथमिकताओं के पुनर्गठन एवं आत्म-मंथन का संदेश देता है।`;
+      if (saturnFromMoonHouse === 2) {
+        interpretationEn = `Saturn is transiting the 2nd house from Natal Moon. Active: Setting Sade Sati (3rd Phase - 2nd House). Practical Outlook: Financial stabilization, clearing past responsibilities, and reaping sustained efforts. Simple Remedy: Light a mustard oil lamp under a Peepal tree on Saturdays.`;
+        interpretationHi = `शनि जन्म चंद्र से द्वितीय भाव में गोचर कर रहे हैं। सक्रिय: उतरती साढ़ेसाती (तृतीय चरण - द्वितीय भाव)। व्यावहारिक फल: आर्थिक प्रबंधन में स्थिरता, पिछले प्रयासों का प्रतिफल एवं परिवार में उत्तरदायित्व पूर्ण होना। सरल उपाय: शनिवार को पीपल वृक्ष के नीचे सरसों के तेल का दीपक प्रज्वलित करें।`;
+      } else {
+        interpretationEn = `Saturn is transiting ${saturnFromMoonHouse === 12 ? 'the 12th house (Rising)' : 'the Janma Rashi (Peak)'} from Natal Moon. In traditional Gochara Jyotish (Phaladeepika Ch. 26), this is recognized as Sade Sati (${phaseHindi}). It represents a period of practical discipline, psychological grounding, and life restructuring.`;
+        interpretationHi = `शनि जन्म चंद्र से ${saturnFromMoonHouse === 12 ? '12वें भाव (उदयमान)' : 'जन्म राशि (शिखर)'} में गोचर कर रहे हैं। फलदीपिका अध्याय 26 के अनुसार यह साढ़ेसाती का ${phaseHindi} है। यह काल अनुशासन, धैर्य, जीवन के प्राथमिकताओं के पुनर्गठन एवं आत्म-मंथन का संदेश देता है।`;
+      }
     } else if (classification === 'DHAIYYA_4TH') {
       interpretationEn = 'Saturn is transiting the 4th house from Natal Moon (Kantaka / Ardha-Ashtama Shani). Traditionally, this calls for focus on domestic balance, health awareness, and mindful decision-making.';
       interpretationHi = 'शनि जन्म चंद्र से चतुर्थ भाव में गोचर कर रहे हैं, जिसे कंटक अथवा अर्ध-अष्टम शनि ढैया कहा जाता है। पारंपरिक रूप से यह पारिवारिक शांति, स्वास्थ्य सजगता एवं धैर्यपूर्वक कर्तव्य-पालन का समय माना जाता है।';

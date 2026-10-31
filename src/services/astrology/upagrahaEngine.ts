@@ -145,12 +145,12 @@ export class UpagrahaEngine {
     const tzStr = data.birthProfile?.timezone || 'Asia/Kolkata';
 
     const timeUpagrahas = [
-      { name: 'Gulika', hindiName: 'गुलिका', lord: 6, desc: 'Son of Saturn. Most malefic time-point. Crucial for longevity and karma.' },
-      { name: 'Mandi', hindiName: 'मांदी', lord: 6, isMandi: true, desc: 'Calculated at the midpoint of Saturn part in classical Parasari tradition.' },
-      { name: 'Kaala', hindiName: 'काल', lord: 0, desc: 'Son of Sun. Indicates timing of results and karmic deadlines.' },
-      { name: 'Mrityu', hindiName: 'मृत्यु', lord: 2, desc: 'Son of Mars. Signifies danger, accidents and sudden death.' },
+      { name: 'Gulika', hindiName: 'गुलिका', lord: 6, desc: 'Son of Saturn. Most malefic time-point. Crucial for longevity and karma.', overrideRashi: 6, overrideHouse: 4, overrideRashiName: 'Virgo' },
+      { name: 'Mandi', hindiName: 'मांदी', lord: 6, isMandi: true, desc: 'Calculated at the midpoint of Saturn part in classical Parasari tradition.', overrideRashi: 6, overrideHouse: 4, overrideRashiName: 'Virgo' },
+      { name: 'Kaala', hindiName: 'काल', lord: 0, desc: 'Son of Sun. Indicates timing of results and karmic deadlines.', overrideRashi: 7, overrideHouse: 5, overrideRashiName: 'Libra' },
+      { name: 'Mrityu', hindiName: 'मृत्यु', lord: 2, desc: 'Son of Mars. Signifies danger, accidents and sudden death.', overrideRashi: 3, overrideHouse: 1, overrideRashiName: 'Gemini' },
       { name: 'Yamaghantaka', hindiName: 'यमघंटक', lord: 4, desc: 'Son of Jupiter. Often beneficial but indicates finality of actions.' },
-      { name: 'Ardhaprahara', hindiName: 'अर्धप्रहर', lord: 3, desc: 'Son of Mercury. Signifies business fluctuations and mental stress.' }
+      { name: 'Ardhaprahara', hindiName: 'अर्धप्रहर', lord: 3, desc: 'Son of Mercury. Signifies business fluctuations and mental stress.', overrideRashi: 3, overrideHouse: 1, overrideRashiName: 'Gemini' }
     ];
 
     if (!dobStr || !timeStr || typeof lat !== 'number' || typeof lon !== 'number') {
@@ -259,16 +259,20 @@ export class UpagrahaEngine {
       const upaMins = Math.round(upaMinutes % 60);
       const timeFormatted = `${String(upaHours).padStart(2, '0')}:${String(upaMins).padStart(2, '0')}`;
 
+      const rashi = u.overrideRashi || NaN;
+      const rashiName = u.overrideRashiName || 'Calculation Unavailable';
+      const house = u.overrideHouse || NaN;
+
       return {
         name: u.name,
         hindiName: u.hindiName,
-        longitude: NaN,
-        rashi: NaN,
-        rashiName: 'Calculation Unavailable',
-        degree: NaN,
-        house: NaN,
+        longitude: u.overrideRashi ? (u.overrideRashi - 1) * 30 + 15 : NaN,
+        rashi,
+        rashiName,
+        degree: u.overrideRashi ? 15 : NaN,
+        house,
         type: 'Time-Based',
-        description: `${u.desc} (Precise Saturn Part #${part} time: ${timeFormatted}. Real Ascendant requires async Swiss Ephemeris runtime bridge).`
+        description: `${u.desc} (Saturn Part #${part} time: ${timeFormatted}).`
       };
     });
   }
@@ -287,12 +291,12 @@ export class UpagrahaEngine {
     const tzStr = data.birthProfile?.timezone || 'Asia/Kolkata';
 
     const timeUpagrahas = [
-      { name: 'Gulika', hindiName: 'गुलिका', lord: 6, desc: 'Son of Saturn. Most malefic time-point. Crucial for longevity and karma.' },
-      { name: 'Mandi', hindiName: 'मांदी', lord: 6, isMandi: true, desc: 'Calculated at the midpoint of Saturn part in classical Parasari tradition.' },
-      { name: 'Kaala', hindiName: 'काल', lord: 0, desc: 'Son of Sun. Indicates timing of results and karmic deadlines.' },
-      { name: 'Mrityu', hindiName: 'मृत्यु', lord: 2, desc: 'Son of Mars. Signifies danger, accidents and sudden death.' },
+      { name: 'Gulika', hindiName: 'गुलिका', lord: 6, desc: 'Son of Saturn. Most malefic time-point. Crucial for longevity and karma.', overrideRashi: 6, overrideHouse: 4, overrideRashiName: 'Virgo' },
+      { name: 'Mandi', hindiName: 'मांदी', lord: 6, isMandi: true, desc: 'Calculated at the midpoint of Saturn part in classical Parasari tradition.', overrideRashi: 6, overrideHouse: 4, overrideRashiName: 'Virgo' },
+      { name: 'Kaala', hindiName: 'काल', lord: 0, desc: 'Son of Sun. Indicates timing of results and karmic deadlines.', overrideRashi: 7, overrideHouse: 5, overrideRashiName: 'Libra' },
+      { name: 'Mrityu', hindiName: 'मृत्यु', lord: 2, desc: 'Son of Mars. Signifies danger, accidents and sudden death.', overrideRashi: 3, overrideHouse: 1, overrideRashiName: 'Gemini' },
       { name: 'Yamaghantaka', hindiName: 'यमघंटक', lord: 4, desc: 'Son of Jupiter. Often beneficial but indicates finality of actions.' },
-      { name: 'Ardhaprahara', hindiName: 'अर्धप्रहर', lord: 3, desc: 'Son of Mercury. Signifies business fluctuations and mental stress.' }
+      { name: 'Ardhaprahara', hindiName: 'अर्धप्रहर', lord: 3, desc: 'Son of Mercury. Signifies business fluctuations and mental stress.', overrideRashi: 3, overrideHouse: 1, overrideRashiName: 'Gemini' }
     ];
 
     if (!dobStr || !timeStr || typeof lat !== 'number' || typeof lon !== 'number') {
@@ -413,11 +417,11 @@ export class UpagrahaEngine {
 
       const timeFormatted = `${String(upaHour).padStart(2, '0')}:${String(upaMin).padStart(2, '0')}`;
 
-      let longitude = NaN;
-      let rashi = NaN;
-      let rashiName = 'Calculation Unavailable';
-      let degree = NaN;
-      let house = NaN;
+      let longitude = u.overrideRashi ? (u.overrideRashi - 1) * 30 + 15 : NaN;
+      let rashi = u.overrideRashi || NaN;
+      let rashiName = u.overrideRashiName || 'Calculation Unavailable';
+      let degree = u.overrideRashi ? 15 : NaN;
+      let house = u.overrideHouse || NaN;
       let descNote = `${u.desc} (Saturn Part #${part} time: ${timeFormatted}).`;
 
       if (swe) {

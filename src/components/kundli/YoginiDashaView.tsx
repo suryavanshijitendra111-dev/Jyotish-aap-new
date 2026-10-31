@@ -37,16 +37,16 @@ export const YoginiDashaView: React.FC<YoginiDashaViewProps> = ({ data }) => {
   }, [currentMahadasha]);
 
   return (
-    <div className="space-y-8">
+      <div className="space-y-8">
       {/* 1. Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-serif text-yellow-500 flex items-center gap-2">
             <Timer className="w-6 h-6 text-yellow-400" />
-            Yogini Dasha (योगिनी दशा)
+            योगिनी दशा (Yogini Dasha)
           </h2>
           <p className="text-white/60 text-sm mt-1 font-sans italic">
-            Classical 36-year cyclic time-lord system
+            पारंपरिक ३६-वर्षीय चक्रीय दशा प्रणाली
           </p>
         </div>
       </div>
@@ -60,14 +60,14 @@ export const YoginiDashaView: React.FC<YoginiDashaViewProps> = ({ data }) => {
             </div>
             
             <div>
-              <div className="text-[10px] uppercase tracking-[0.2em] text-yellow-500/60 font-black">Current Dasha</div>
+              <div className="text-[10px] uppercase tracking-[0.2em] text-yellow-500/60 font-black">वर्तमान दशा</div>
               <h3 className="text-3xl font-serif text-yellow-500 mt-1">{currentMahadasha.hindiName}</h3>
               <div className="text-xs text-white/40 uppercase tracking-widest">{currentMahadasha.name} ({getLocalizedPlanet(currentMahadasha.planet, 'hi')})</div>
             </div>
 
             <div className="space-y-2 pt-4">
               <div className="flex justify-between text-[10px] uppercase font-bold text-white/30 px-1">
-                <span>Timeline Progress</span>
+                <span>दशा प्रगति</span>
                 <span>{progress.toFixed(1)}%</span>
               </div>
               <div className="w-full h-2 bg-black/60 rounded-full overflow-hidden border border-white/5">
@@ -80,11 +80,11 @@ export const YoginiDashaView: React.FC<YoginiDashaViewProps> = ({ data }) => {
 
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
               <div className="text-left">
-                <div className="text-[9px] text-white/30 uppercase font-bold">Starts</div>
+                <div className="text-[9px] text-white/30 uppercase font-bold">प्रारंभ</div>
                 <div className="text-xs text-white/80 font-mono">{currentMahadasha.startDate.toLocaleDateString()}</div>
               </div>
               <div className="text-right">
-                <div className="text-[9px] text-white/30 uppercase font-bold">Ends</div>
+                <div className="text-[9px] text-white/30 uppercase font-bold">समाप्ति</div>
                 <div className="text-xs text-white/80 font-mono">{currentMahadasha.endDate.toLocaleDateString()}</div>
               </div>
             </div>
@@ -96,17 +96,17 @@ export const YoginiDashaView: React.FC<YoginiDashaViewProps> = ({ data }) => {
           <CarvedCard cornerSize={24} className="p-0 overflow-hidden border-white/5 bg-[#082218]/40">
             <div className="p-4 border-b border-white/10 bg-white/5 flex items-center gap-2">
               <Calendar className="w-4 h-4 text-yellow-500/60" />
-              <h4 className="text-sm font-bold uppercase tracking-widest text-yellow-500/80">36-Year Cyclic Sequence</h4>
+              <h4 className="text-sm font-bold uppercase tracking-widest text-yellow-500/80">३६-वर्षीय चक्रीय क्रम</h4>
             </div>
             
             <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="text-[10px] uppercase tracking-wider text-white/30 border-b border-white/5 sticky top-0 bg-[#082218] z-10">
-                    <th className="px-4 py-3 font-medium">Yogini</th>
-                    <th className="px-4 py-3 font-medium">Duration</th>
-                    <th className="px-4 py-3 font-medium">Period</th>
-                    <th className="px-4 py-3 font-medium">Prediction</th>
+                    <th className="px-4 py-3 font-medium">योगिनी</th>
+                    <th className="px-4 py-3 font-medium">अवधि</th>
+                    <th className="px-4 py-3 font-medium">काल</th>
+                    <th className="px-4 py-3 font-medium">फलकथन</th>
                   </tr>
                 </thead>
                 <tbody className="text-[11px]">
@@ -120,7 +120,7 @@ export const YoginiDashaView: React.FC<YoginiDashaViewProps> = ({ data }) => {
                         <div className="text-[9px] text-white/40 uppercase">{period.name}</div>
                       </td>
                       <td className="px-4 py-3 text-white/60">
-                        {period.durationYears}y
+                        {period.durationYears} वर्ष
                       </td>
                       <td className="px-4 py-3 font-mono text-white/40 whitespace-nowrap">
                         {period.startDate.getFullYear()} - {period.endDate.getFullYear()}
@@ -138,7 +138,7 @@ export const YoginiDashaView: React.FC<YoginiDashaViewProps> = ({ data }) => {
           <div className="mt-4 p-4 bg-white/5 border border-white/10 rounded-2xl flex gap-3">
             <Info className="w-5 h-5 text-yellow-500/40 shrink-0" />
             <p className="text-[10px] text-white/40 leading-relaxed font-serif italic">
-              "Yogini Dasha is highly revered in northern India for its precision in timing events within a 36-year cycle. Each Yogini represents a specific Devi and a controlling planet."
+              "योगिनी दशा उत्तर भारत में ३६-वर्षीय चक्र के भीतर घटनाओं के सटीक निर्धारण के लिए अत्यंत आदरणीय है। प्रत्येक योगिनी एक विशिष्ट देवी और नियंत्रक ग्रह का प्रतिनिधित्व करती है।"
             </p>
           </div>
         </div>

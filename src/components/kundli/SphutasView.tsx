@@ -8,7 +8,7 @@ import { MasterKundliData } from '../../types/kundli';
 import { SphutasEngine } from '../../services/astrology/sphutasEngine';
 import CarvedCard from '../ui/CarvedCard';
 import { Sparkles, Shield, Zap, Target, Star, Info } from 'lucide-react';
-import { getLocalizedRashi } from '../../i18n/astrology';
+import { getLocalizedRashi, getLocalizedPlanet } from '../../i18n/astrology';
 
 interface SphutasViewProps {
   data: MasterKundliData;
@@ -31,10 +31,10 @@ export const SphutasView: React.FC<SphutasViewProps> = ({ data }) => {
       <div className="flex flex-col gap-2">
         <h2 className="text-2xl font-serif text-yellow-500 flex items-center gap-2">
           <Sparkles className="w-6 h-6" />
-          14 Classical Sphutas (१४ शास्त्रीय स्फुट)
+          १४ शास्त्रीय स्फुट (14 Classical Sphutas)
         </h2>
         <p className="text-white/60 text-sm font-sans max-w-2xl">
-          Derived mathematical points in the zodiac that reveal specific life dimensions like prosperity, health, progeny, and destiny.
+          चक्र के वे गणितीय बिंदु जो समृद्धि, स्वास्थ्य, संतान और भाग्य जैसे जीवन के विशेष आयामों को प्रकट करते हैं।
         </p>
       </div>
 
@@ -49,11 +49,11 @@ export const SphutasView: React.FC<SphutasViewProps> = ({ data }) => {
               <Star className="w-6 h-6 text-yellow-500" />
             </div>
             <div>
-              <div className="text-yellow-500 font-bold text-lg">Yogi (योगी)</div>
-              <div className="text-white font-serif text-2xl mt-1">{result.yogi.planet}</div>
-              <div className="text-white/60 text-sm mt-1">Nakshatra: <span className="text-yellow-400/80">{result.yogi.nakshatra}</span></div>
+              <div className="text-yellow-500 font-bold text-lg">योगी (Yogi)</div>
+              <div className="text-white font-serif text-2xl mt-1">{getLocalizedPlanet(result.yogi.planet, 'hi')}</div>
+              <div className="text-white/60 text-sm mt-1">नक्षत्र: <span className="text-yellow-400/80">{result.yogi.nakshatra}</span></div>
               <p className="text-white/40 text-xs mt-3 italic leading-relaxed">
-                The planet of prosperity and success. Transits of Yogi are highly favorable.
+                समृद्धि और सफलता का ग्रह। योगी का गोचर अत्यंत शुभ फलप्रद होता है।
               </p>
             </div>
           </div>
@@ -68,11 +68,11 @@ export const SphutasView: React.FC<SphutasViewProps> = ({ data }) => {
               <Shield className="w-6 h-6 text-red-500" />
             </div>
             <div>
-              <div className="text-red-400 font-bold text-lg">Avayogi (अवयोगी)</div>
-              <div className="text-white font-serif text-2xl mt-1">{result.avayogi.planet}</div>
-              <div className="text-white/60 text-sm mt-1">Nakshatra: <span className="text-red-400/80">{result.avayogi.nakshatra}</span></div>
+              <div className="text-red-400 font-bold text-lg">अवयोगी (Avayogi)</div>
+              <div className="text-white font-serif text-2xl mt-1">{getLocalizedPlanet(result.avayogi.planet, 'hi')}</div>
+              <div className="text-white/60 text-sm mt-1">नक्षत्र: <span className="text-red-400/80">{result.avayogi.nakshatra}</span></div>
               <p className="text-white/40 text-xs mt-3 italic leading-relaxed">
-                The planet of obstacles and challenges. Association with Avayogi causes delays.
+                बाधाओं और चुनौतियों का ग्रह। अवयोगी का संबंध कार्यों में विलंब उत्पन्न कर सकता है।
               </p>
             </div>
           </div>
@@ -83,7 +83,7 @@ export const SphutasView: React.FC<SphutasViewProps> = ({ data }) => {
       <CarvedCard cornerSize={32} className="p-6 bg-[#082218]/40 border-yellow-500/20">
         <h3 className="text-xl font-serif text-yellow-500 mb-6 flex items-center gap-2 border-b border-yellow-500/20 pb-3">
           <Zap className="w-5 h-5" />
-          Detailed Sphuta Calculations
+          विस्तृत स्फुट गणनाएं (Detailed Sphutas)
         </h3>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -104,14 +104,14 @@ export const SphutasView: React.FC<SphutasViewProps> = ({ data }) => {
                     {getSphutaIcon(sphuta.name)}
                   </div>
                   <div>
-                    <h4 className="text-yellow-500 font-bold text-sm leading-tight">{sphuta.name}</h4>
-                    <div className="text-white/80 font-serif text-base">{sphuta.hindiName}</div>
+                    <h4 className="text-yellow-500 font-bold text-sm leading-tight">{sphuta.hindiName}</h4>
+                    <div className="text-white/80 font-serif text-base">{sphuta.name}</div>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-yellow-400 font-mono text-sm font-bold">{sphuta.formatted}</div>
                   <div className="text-white/40 text-[10px] uppercase tracking-tighter mt-1">
-                    {getLocalizedRashi(sphuta.rashi)}
+                    {getLocalizedRashi(sphuta.rashi, 'hi')}
                   </div>
                 </div>
               </div>
@@ -133,8 +133,8 @@ export const SphutasView: React.FC<SphutasViewProps> = ({ data }) => {
           <Info className="w-5 h-5 text-yellow-500" />
         </div>
         <p className="text-xs text-white/60 leading-relaxed font-sans">
-          <strong className="text-yellow-500 block mb-1">Calculation Logic:</strong>
-          These Sphutas are calculated as per the Brihat Parashara Hora Shastra (BPHS) and Jagannatha Hora tradition using exact sidereal longitudes. Beeja and Kshetra Sphutas are vital for determining fertility and progeny potential in male and female charts respectively.
+          <strong className="text-yellow-500 block mb-1">गणना सिद्धांत:</strong>
+          ये स्फुट बृहत् पाराशर होरा शास्त्र (BPHS) और जगन्नाथ होरा परंपरा के अनुसार सटीक निरयन देशांतर से गणना किए गए हैं। बीज और क्षेत्र स्फुट क्रमशः पुरुष और स्त्री कुंडलियों में संतानोत्पत्ति क्षमता के निर्धारण के लिए अत्यंत महत्वपूर्ण हैं।
         </p>
       </div>
     </div>

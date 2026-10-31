@@ -503,18 +503,33 @@ export default function Dashboard({ profile, navigate, showToast }: DashboardPro
                   </div>
                 </div>
 
-                <button
-                  onClick={() => {
-                    if (openIncs.length > 0) {
-                      setSelectedIncident(openIncs[0]);
-                    } else {
-                      navigate('owner_control');
-                    }
-                  }}
-                  className="min-h-[44px] px-4 py-2 rounded-xl bg-[#d4af37] text-[#030a08] text-xs sm:text-sm font-bold hover:bg-[#d4af37]/90 transition-all cursor-pointer whitespace-nowrap shadow-md shrink-0"
-                >
-                  {openIncs.length > 0 ? (t('guardian.viewAction') || 'देखें') : (t('guardian.ownerControlCenter') || 'प्रशासन')}
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  {!isHealthy && (
+                    <button
+                      onClick={() => {
+                        guardianIncidentService.clearActiveIncidents();
+                        setIncidents(getStoredIncidents());
+                        showToast('सभी चेतावनियाँ साफ़ और स्वीकार कर ली गईं।');
+                      }}
+                      className="min-h-[44px] px-3 py-2 rounded-xl bg-amber-900/40 border border-amber-500/50 text-amber-200 text-xs font-bold hover:bg-amber-900/60 transition-all cursor-pointer whitespace-nowrap shadow-sm"
+                      title="सभी चेतावनियाँ साफ़ करें"
+                    >
+                      ⚠️ साफ़ करें
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      if (openIncs.length > 0) {
+                        setSelectedIncident(openIncs[0]);
+                      } else {
+                        navigate('owner_control');
+                      }
+                    }}
+                    className="min-h-[44px] px-4 py-2 rounded-xl bg-[#d4af37] text-[#030a08] text-xs sm:text-sm font-bold hover:bg-[#d4af37]/90 transition-all cursor-pointer whitespace-nowrap shadow-md"
+                  >
+                    {openIncs.length > 0 ? (t('guardian.viewAction') || 'देखें') : (t('guardian.ownerControlCenter') || 'प्रशासन')}
+                  </button>
+                </div>
               </div>
             </div>
           );

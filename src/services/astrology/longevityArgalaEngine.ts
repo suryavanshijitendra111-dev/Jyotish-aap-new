@@ -97,7 +97,18 @@ export class LongevityArgalaEngine {
         finalCategory = 'Deerghayu (Long Life)';
     }
 
-    const range = finalCategory.includes('Short') ? '0-36 Years' : finalCategory.includes('Middle') ? '36-72 Years' : '72-108+ Years';
+    const jupiterHouse = data.planets['Jupiter']?.d1House || data.planets['jupiter']?.d1House;
+    const saturnHouse = data.planets['Saturn']?.d1House || data.planets['saturn']?.d1House;
+    let kakshyaVriddhiApplied = false;
+    if (jupiterHouse === 9 && saturnHouse === 6) {
+      finalCategory = 'Deerghayu (Long Life)';
+      kakshyaVriddhiApplied = true;
+    }
+
+    const range = kakshyaVriddhiApplied ? '70-108+ Years (कक्षा वृद्धि नियम)' : finalCategory.includes('Short') ? '0-36 Years' : finalCategory.includes('Middle') ? '36-72 Years' : '72-108+ Years';
+    const explanation = kakshyaVriddhiApplied
+      ? "कक्षा वृद्धि नियम (Kakshya Vriddhi Rule) के अनुसार: नवम भाव में गुरु और छठे भाव में शनि की उपस्थिति से अल्पायु का परिहार होकर दीर्घायु / मध्यायु (70+ years) सुनिश्चित होती है।"
+      : "Calculated using Jaimini's Method of Three Pairs based on the nature of signs (Movable/Fixed/Dual).";
 
     return {
       category: finalCategory,
@@ -107,7 +118,7 @@ export class LongevityArgalaEngine {
         { pair: 'Moon & Saturn', result: res2 },
         { pair: 'Lagna & Hora Lagna', result: res3 }
       ],
-      explanation: "Calculated using Jaimini's Method of Three Pairs based on the nature of signs (Movable/Fixed/Dual)."
+      explanation
     };
   }
 

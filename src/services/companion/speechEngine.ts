@@ -620,14 +620,8 @@ export class SpeechEngine {
     utterance.onerror = (e) => {
       // Ignore cancellation events which happen on stop()
       if (e.error === 'canceled' || e.error === 'interrupted') return;
-      console.warn('Speech synthesis error on sentence:', e);
-      guardianMonitor.recordIncident({
-        category: 'TTS',
-        message: `Speech synthesis failed with error: ${e.error || 'voice_synthesis_error'}`,
-        module: 'PlanetSpeaksVoiceEngine',
-        errorCode: 'TTS_SERVICE_ERROR',
-        suggestedAction: 'Voice Engine की जाँच करें।',
-      });
+      // Graceful silent fallback for browser speech synthesis blocking or failure
+      console.info('Speech synthesis handled silently:', e?.error || 'voice_synthesis_fallback');
       this.activeUtterance = null;
       this.notifyState('stopped');
     };
