@@ -153,7 +153,7 @@ export const ProfileManagerView: React.FC<ProfileManagerViewProps> = ({
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-2xl font-bold text-white tracking-wide">{masterProfile.name}</h3>
                 <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#d4af37]/25 text-[#fef08a] border border-[#d4af37]/50 font-bold">
-                  {RELATION_LABELS.SELF.hi}
+                  {t('profile.self')}
                 </span>
                 {activeProfileId === 'master' && (
                   <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 border border-emerald-500/50 font-bold flex items-center gap-1">

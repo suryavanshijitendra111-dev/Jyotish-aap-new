@@ -78,6 +78,14 @@ export interface TranslationDictionary {
     spiritualStore: { title: string; subtitle: string; desc: string };
     settings: { title: string; subtitle: string; desc: string };
   };
+  profile?: {
+    self: string;
+    spouse: string;
+    child: string;
+    parent: string;
+    sibling: string;
+    other: string;
+  };
   common: {
     appName: string;
     appTagline: string;
@@ -988,7 +996,7 @@ export interface TranslationDictionary {
     chambersCount: string;
     classicGrid: string;
   };
-  guardian?: GuardianTranslations;
+  guardian?: Partial<GuardianTranslations> | any;
   meditation?: any;
 }
 

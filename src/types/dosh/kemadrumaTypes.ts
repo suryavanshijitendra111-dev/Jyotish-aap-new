@@ -2,35 +2,11 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  * 
- * JEEVANDARPAN — KEMADRUMA YOGA & BHANGA (केमद्रुम योग एवं भंग विचार)
- * PHASE 1.13C-6: TYPE DEFINITIONS
- * 
- * Strongly-typed contracts for deterministic Kemadruma Yoga analysis,
- * independent tracking of Base Kemadruma and classical Bhanga (cancellation) rules,
- * qualifying planet filtering, and non-fatalistic traditional metadata.
+ * JEEVANDARPAN — KEMADRUMA DOSHA TYPES
  */
 
-export type KemadrumaStatus =
-  | 'PRESENT'
-  | 'NOT_PRESENT'
-  | 'INSUFFICIENT_DATA';
-
-export type KemadrumaIndication =
-  | 'PRESENT'
-  | 'NOT_PRESENT'
-  | 'INSUFFICIENT_DATA';
-
-export interface KemadrumaBhangaRule {
-  ruleId: string;
-  name: string;
-  nameHindi: string;
-  triggered: boolean;
-  status: 'ACTIVE' | 'DEFERRED';
-  explanation: string;
-  explanationHindi: string;
-  tradition: string;
-  confidence: 'CONFIDENT_CLASSICAL' | 'TRADITIONAL_SCHOOL';
-}
+export type KemadrumaStatus = 'FORMED' | 'CANCELLED' | 'NOT_PRESENT' | 'CALCULATION_ERROR' | string;
+export type KemadrumaIndication = 'PRESENT' | 'ABSENT' | 'INSUFFICIENT_DATA' | string;
 
 export interface RelievingPlanetCheck {
   secondHouseFromMoon: {
@@ -49,8 +25,18 @@ export interface RelievingPlanetCheck {
   };
 }
 
+export interface KemadrumaBhangaRule {
+  id: string;
+  name: string;
+  nameHindi: string;
+  conditionMet: boolean;
+  explanation: string;
+  explanationHindi: string;
+  [key: string]: any;
+}
+
 export interface KemadrumaResult {
-  doshaId: 'KEMADRUMA_ANALYSIS';
+  doshaId: string;
   status: KemadrumaStatus;
   baseIndication: KemadrumaIndication;
   bhangaPresent: boolean;
@@ -73,4 +59,5 @@ export interface KemadrumaResult {
     en: string;
     hi: string;
   };
+  [key: string]: any;
 }

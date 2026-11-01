@@ -30,6 +30,14 @@ export const hi: TranslationDictionary = {
     spiritualStore: { title: 'आध्यात्मिक केंद्र', subtitle: 'रत्न व सामग्री', desc: 'प्रामाणिक रत्न, रुद्राक्ष एवं सामग्री' },
     settings: { title: 'सेटिंग्स एवं विन्यास', subtitle: 'भाषा व वरीयताएं', desc: 'भाषा, गार्जियन व वरीयताएं' }
   },
+  profile: {
+    self: '(स्वयं)',
+    spouse: '(जीवनसाथी)',
+    child: '(संतान)',
+    parent: '(माता / पिता)',
+    sibling: '(भाई / बहन)',
+    other: '(अन्य संबंधी)'
+  },
   common: {
     none: "कोई नहीं",
     empty: "रिक्त",

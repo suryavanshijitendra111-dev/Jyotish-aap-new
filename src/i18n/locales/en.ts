@@ -30,6 +30,14 @@ export const en: TranslationDictionary = {
     spiritualStore: { title: 'Spiritual Store', subtitle: 'Authentic Gems', desc: 'Authentic gemstones, rudraksha & items' },
     settings: { title: 'Settings & Preferences', subtitle: 'App Preferences', desc: 'Language, guardian security and preferences' }
   },
+  profile: {
+    self: '(Self)',
+    spouse: '(Spouse)',
+    child: '(Child)',
+    parent: '(Parent)',
+    sibling: '(Sibling)',
+    other: '(Other)'
+  },
   common: {
     none: "None",
     empty: "Empty",

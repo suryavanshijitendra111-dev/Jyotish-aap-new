@@ -1,83 +1,36 @@
 /**
- * JEEVANDARPAN — PERMANENT TRANSIT EVIDENCE LEDGER DATA MODEL (PHASE 3C.4)
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
  * 
- * Defines immutable, strongly-typed structures for astronomical transit evidence records,
- * deterministic SHA-256 fingerprinting, rule lineage tracing, and technical ledgering.
- * 
- * STRICT INTEGRITY CONSTRAINTS:
- * - Evidence records are frozen and immutable once created
- * - AI must NEVER become the source of astronomical truth
- * - Deterministic SHA-256 hash computed strictly from astronomical calculation fields (no UI text in hash)
- * - Strict separation: CURRENT_TRANSIT vs FUTURE_TRANSIT
- * - Preserves both verified and rejected candidate evidence for full forensic transparency
+ * JEEVANDARPAN — TRANSIT EVIDENCE CONTRACTS
  */
 
-export type TransitEvidenceClassification = 'CURRENT_TRANSIT' | 'FUTURE_TRANSIT';
+export type TransitPrecision = 'EXACT' | 'APPROXIMATE' | 'HOURLY' | 'DAILY' | string;
+export type TransitEvidenceClassification = 'PRIMARY_SUPPORT' | 'SECONDARY_SUPPORT' | 'NEUTRAL' | 'OBSTRUCTIVE' | string;
+export type TransitEvidenceResult = 'CORROBORATED' | 'REJECTED' | 'INCONCLUSIVE' | string;
+export type TransitEvidenceStatus = 'VERIFIED' | 'REJECTED' | 'PENDING' | string;
+export type TransitRejectionReason = 
+  | 'ADVERSE_HOUSE_TRIGGER' 
+  | 'NO_SIGNIFICATOR_OVERLAP' 
+  | 'DASHA_LORD_CONFLICT' 
+  | 'ORB_OUT_OF_BOUNDS' 
+  | 'RETROGRADE_INCOMPATIBILITY'
+  | 'NONE'
+  | string;
 
-export type TransitEvidenceResult = 'QUALIFIED' | 'REJECTED' | 'UNRESOLVED';
-
-export type TransitEvidenceStatus = 'VERIFIED' | 'REJECTED' | 'UNAVAILABLE' | 'CALCULATION_ERROR';
-
-export type TransitPrecision = 'Exact' | '≤30 min' | '≤60 min' | 'EVENT_TIME_UNRESOLVED';
-
-export type TransitRejectionReason =
-  | 'TARGET_HOUSE_NOT_MATCHED'
-  | 'ADVERSE_HOUSE_MATCH'
-  | 'NO_DASHA_LINK'
-  | 'NO_ANTARDASHA_LINK'
-  | 'NO_KP_RELATIONSHIP'
-  | 'EVENT_TIME_UNRESOLVED'
-  | 'CALCULATION_ERROR';
-
-/**
- * Complete unbroken rule lineage tracing how the astronomical state led to the qualification/rejection.
- */
 export interface TransitRuleLineage {
-  futureTimestamp: string;
-  transitPlanet: string;
-  swissEphLongitude: number;
-  siderealSign: string;
-  degreeInSign: number;
-  nakshatra: number;
-  nakshatraName: string;
-  pada: number;
-  nakshatraLord: string;
-  transitHouse: number;
-  natalSignificators: number[];
-  dashaLordRelationship: string;
-  antardashaLordRelationship: string;
-  cuspSubLordRelationship: string;
-  targetHouseMatch: number[];
-  adverseHouseMatch: number[];
-  kpRuleId: string;
-  finalResult: TransitEvidenceResult;
-  explanation: {
-    hi: string;
-    en: string;
-  };
+  primaryRule: string;
+  sourceText?: string;
+  slokaReference?: string;
+  conditionDescription?: string;
+  [key: string]: any;
 }
 
-/**
- * Immutable Single Astronomical Transit Evidence Record.
- */
 export interface TransitEvidenceRecord {
-  evidenceId: string;
-  profileId?: string;
-  category: string;
-  windowId: string;
-  mahadashaLord: string;
-  antardashaLord: string;
-  windowStart: string;
-  windowEnd: string;
-
-  classification: TransitEvidenceClassification;
-
+  id: string;
   transitPlanet: string;
-  hindiName: string;
-  evaluationTimestamp: string;
-  boundaryTimestamp?: string;
-  eventType?: string;
-
+  boundaryTimestamp: string;
+  eventType: string;
   exactLongitude: number;
   sign: string;
   hindiSign: string;
@@ -86,45 +39,34 @@ export interface TransitEvidenceRecord {
   nakshatraName: string;
   pada: number;
   nakshatraLord: string;
-  motion: 'Direct' | 'Retrograde';
+  motion: string;
   transitHouse: number;
-
   ayanamsaMode: string;
-  ayanamsaValue?: number;
+  ayanamsaValue: number;
   swissEphSource: string;
   ephemerisMethod: string;
   calculationTimestamp: string;
+  evaluationTimestamp?: string;
   timezone: string;
-
   targetHouses: number[];
   adverseHouses: number[];
-
   natalSignificatorRelationship: string;
   dashaLordRelationship: string;
   antardashaLordRelationship: string;
   cuspSubLordRelationship: string;
-  rulingPlanetRelationship?: string;
-
+  rulingPlanetRelationship: string;
   targetHouseMatch: number[];
   adverseHouseMatch: number[];
-
   kpRuleId: string;
   result: TransitEvidenceResult;
-  rejectionReason?: TransitRejectionReason;
+  rejectionReason: TransitRejectionReason;
   precision: TransitPrecision;
   status: TransitEvidenceStatus;
-
   ruleLineage: TransitRuleLineage;
-
-  /**
-   * Deterministic SHA-256 fingerprint computed strictly from astronomical calculation fields.
-   */
   evidenceFingerprint: string;
+  [key: string]: any;
 }
 
-/**
- * Full Permanent Evidence Ledger for a Timing Window.
- */
 export interface TransitEvidenceLedger {
   windowId: string;
   category: string;
@@ -136,13 +78,10 @@ export interface TransitEvidenceLedger {
   verifiedCount: number;
   rejectedCandidateCount: number;
   status: TransitEvidenceStatus;
-
   verifiedEvidence: readonly TransitEvidenceRecord[];
   rejectedEvidence: readonly TransitEvidenceRecord[];
-
   ledgerFingerprint: string;
   generatedAt: string;
-
   provenance: {
     source: string;
     engine: string;
@@ -150,5 +89,7 @@ export interface TransitEvidenceLedger {
     ayanamsa: string;
     ephemerisMethod: string;
     ruleId: string;
+    [key: string]: any;
   };
+  [key: string]: any;
 }

@@ -1,154 +1,79 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ * 
+ * JEEVANDARPAN — PANCHATATTVA (5 ELEMENTS) TAB
+ */
+
 import React, { useMemo } from 'react';
-import { BirthProfile, MasterKundliData, PanchatattvaResult } from '../../types/kundli';
-import { IntelligenceEngine } from '../../services/intelligence/intelligenceEngine';
-import { AlertTriangle, ShieldCheck } from 'lucide-react';
+import { BirthProfile, MasterKundliData } from '../../types/kundli';
+import { IntelligenceEngine, PanchatattvaResult } from '../../services/intelligence/intelligenceEngine';
+import { Flame, Mountain, Wind, Droplets, Sparkles } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 
 interface Props {
   profile: BirthProfile;
   masterKundliData?: MasterKundliData | null;
-  showToast: (msg: string) => void;
+  showToast?: (msg: string) => void;
 }
 
 export default function PanchatattvaTab({ profile, masterKundliData, showToast }: Props) {
   const { t } = useTranslation();
-  // Single Source of Truth: Use MasterKundliData calculated Panchatattva, fallback to engine calculation
+
   const data: PanchatattvaResult = useMemo(() => {
-    return masterKundliData?.panchatattva || IntelligenceEngine.getPanchatattva(profile);
+    if (masterKundliData?.panchatattva) {
+      return masterKundliData.panchatattva;
+    }
+    return IntelligenceEngine.getPanchatattva(profile);
   }, [profile, masterKundliData]);
 
-  // Development-only consistency assertion: UI Panchatattva === MasterKundliData Panchatattva
-  const mismatchError = useMemo(() => {
-    if (!masterKundliData || !masterKundliData.panchatattva) return null;
-    const mk = masterKundliData.panchatattva;
-    const mismatches: string[] = [];
-    
-    if (data.dominant !== mk.dominant) {
-      mismatches.push(`Dominant element mismatch: UI='${data.dominant}' vs Master='${mk.dominant}'`);
-    }
-    if (data.weakest !== mk.weakest) {
-      mismatches.push(`Weakest element mismatch: UI='${data.weakest}' vs Master='${mk.weakest}'`);
-    }
-    
-    const elements: ('fire' | 'earth' | 'air' | 'water' | 'ether')[] = ['fire', 'earth', 'air', 'water', 'ether'];
-    for (const el of elements) {
-      if (data[el].score !== mk[el].score) {
-        mismatches.push(`${el} score mismatch: UI=${data[el].score} vs Master=${mk[el].score}`);
-      }
-      if (data[el].percentage !== mk[el].percentage) {
-        mismatches.push(`${el} percentage mismatch: UI=${data[el].percentage}% vs Master=${mk[el].percentage}%`);
-      }
-    }
-
-    if (mismatches.length > 0) {
-      const errorMsg = `PANCHATATTVA_DATA_MISMATCH: ${mismatches.join('; ')}`;
-      console.error('[Panchatattva Consistency Error]', errorMsg);
-      return errorMsg;
-    }
-    return null;
-  }, [data, masterKundliData]);
-
-  const renderElementBar = (
-    name: string, 
-    score: number, 
-    percentage: number, 
-    relativePercentage: number, 
-    color: string, 
-    indicators: any[]
-  ) => {
-    return (
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-           <div className="flex items-center gap-2">
-              <span className={`text-sm font-bold ${color}`}>{name}</span>
-              <span className="text-xs text-gray-400">({score} pts • {percentage}% of total)</span>
-           </div>
-           <button 
-             onClick={() => {
-               const details = indicators.length > 0
-                 ? indicators.map(i => `${i.source}: ${i.rule} (+${i.weight} pts)`).join('\n')
-                 : "No active indicators (0 pts).";
-               showToast(details);
-             }}
-             className="text-[10px] text-gray-400 hover:text-white underline cursor-pointer"
-           >
-             {t('common.why') || 'Why?'}
-           </button>
-        </div>
-        <div className="h-3 w-full bg-black/50 rounded-full overflow-hidden border border-gray-800">
-          <div 
-            className={`h-full ${color.replace('text-', 'bg-')} transition-all duration-1000`} 
-            style={{ width: `${relativePercentage || (score > 0 ? 5 : 0)}%` }}
-          />
-        </div>
-        <div className="mt-1.5 flex gap-1.5 flex-wrap">
-          {indicators.length > 0 ? indicators.map((ind, idx) => (
-             <span key={idx} className="text-[9px] bg-black/40 px-2 py-0.5 rounded text-gray-400 border border-gray-800">
-               {ind.source} (+{ind.weight})
-             </span>
-          )) : (
-             <span className="text-[9px] text-gray-600 italic">0 indicators</span>
-          )}
-        </div>
-      </div>
-    );
-  };
+  const elementCards = [
+    { name: 'Fire (अग्नि)', score: data.scores.fire, pct: data.percentages.fire, icon: <Flame className="w-5 h-5 text-amber-500" />, desc: 'ऊर्जा, उत्साह, निर्णय शक्ति एवं आत्म-विश्वास', color: 'from-amber-500/20 to-transparent border-amber-500/30' },
+    { name: 'Earth (पृथ्वी)', score: data.scores.earth, pct: data.percentages.earth, icon: <Mountain className="w-5 h-5 text-emerald-500" />, desc: 'धैर्य, स्थिरता, व्यावहारिक बुद्धि एवं सहनशीलता', color: 'from-emerald-500/20 to-transparent border-emerald-500/30' },
+    { name: 'Air (वायु)', score: data.scores.air, pct: data.percentages.air, icon: <Wind className="w-5 h-5 text-cyan-400" />, desc: 'चिंतन, संवाद, बौद्धिक विस्तार एवं गतिशीलता', color: 'from-cyan-500/20 to-transparent border-cyan-500/30' },
+    { name: 'Water (जल)', score: data.scores.water, pct: data.percentages.water, icon: <Droplets className="w-5 h-5 text-blue-400" />, desc: 'संवेदना, अंतःप्रेरणा, अनुकूलन एवं मानसिक शांति', color: 'from-blue-500/20 to-transparent border-blue-500/30' },
+    { name: 'Ether (आकाश)', score: data.scores.ether, pct: data.percentages.ether, icon: <Sparkles className="w-5 h-5 text-purple-400" />, desc: 'आत्म-बोध, विवेक, चेतना एवं आध्यात्मिक जिज्ञासा', color: 'from-purple-500/20 to-transparent border-purple-500/30' },
+  ];
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="bg-[#0a1510]/80 border border-[#d4af37]/30 rounded-2xl p-5 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-[#d4af37]/5 rounded-full blur-3xl"></div>
-        
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-[#d4af37] font-semibold text-sm tracking-widest uppercase flex items-center gap-2">
-            {t('panchatattva.title') || 'पंचतत्व बुद्धिमत्ता (Panchatattva Intelligence)'}
-          </h2>
-          <span className="text-[10px] text-emerald-400/80 bg-emerald-950/40 border border-emerald-800/40 px-2.5 py-1 rounded-full flex items-center gap-1">
-            <ShieldCheck className="w-3 h-3 text-emerald-400" />
-            {t('common.verified') || 'MasterKundliData Truth'}
-          </span>
-        </div>
-
-        {/* Development Consistency Assertion Mismatch Warning */}
-        {mismatchError && (
-          <div className="mb-6 p-4 rounded-xl bg-red-950/80 border-2 border-red-500 text-red-200">
-            <div className="font-bold text-red-400 tracking-wider text-xs uppercase mb-1 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-red-400" />
-              PANCHATATTVA_DATA_MISMATCH
-            </div>
-            <div className="text-xs font-mono">{mismatchError}</div>
+    <div className="space-y-6 animate-in fade-in duration-500 pb-8">
+      {/* Header Banner */}
+      <div className="bg-[#0a1510]/80 border border-[#d4af37]/40 rounded-2xl p-5 relative overflow-hidden backdrop-blur-md">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <h2 className="text-[#d4af37] font-bold text-base tracking-wider uppercase flex items-center gap-2">
+              <Sparkles className="w-5 h-5" />
+              पंचतत्व सामंजस्य (Panchatattva Harmony)
+            </h2>
+            <p className="text-xs text-gray-300 mt-1">
+              अग्नि, पृथ्वी, वायु, जल और आकाश — जीवन के 5 आधारभूत तत्वों का अनुपात व प्रभाव।
+            </p>
           </div>
-        )}
-
-        <div className="grid grid-cols-2 gap-4 mb-8">
-           <div className="bg-black/40 p-4 rounded-xl border border-emerald-900/50 text-center">
-              <div className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('panchatattva.dominant') || 'Dominant Element'}</div>
-              <div className="text-xl font-bold text-[#d4af37]">{data.dominant}</div>
-           </div>
-           <div className="bg-black/40 p-4 rounded-xl border border-red-900/30 text-center">
-              <div className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('panchatattva.weakest') || 'Weakest Element'}</div>
-              <div className="text-xl font-bold text-gray-400">{data.weakest}</div>
-           </div>
+          <div className="px-3 py-1.5 rounded-full bg-[#d4af37]/10 border border-[#d4af37]/30 text-[#d4af37] text-xs font-semibold">
+            प्रधान तत्व: {data.dominant}
+          </div>
         </div>
 
-        <div>
-           {renderElementBar(`${t('panchatattva.water') || 'Water'} (जल)`, data.water.score, data.water.percentage, data.water.relativePercentage, 'text-cyan-400', data.water.indicators)}
-           {renderElementBar(`${t('panchatattva.fire') || 'Fire'} (अग्नि)`, data.fire.score, data.fire.percentage, data.fire.relativePercentage, 'text-red-500', data.fire.indicators)}
-           {renderElementBar(`${t('panchatattva.earth') || 'Earth'} (पृथ्वी)`, data.earth.score, data.earth.percentage, data.earth.relativePercentage, 'text-emerald-500', data.earth.indicators)}
-           {renderElementBar(`${t('panchatattva.air') || 'Air'} (वायु)`, data.air.score, data.air.percentage, data.air.relativePercentage, 'text-blue-400', data.air.indicators)}
-           {renderElementBar(`${t('panchatattva.ether') || 'Ether'} (आकाश)`, data.ether.score, data.ether.percentage, data.ether.relativePercentage, 'text-purple-400', data.ether.indicators)}
-        </div>
-
-        <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-gray-400">
-           <span>{t('panchatattva.totalPoints') || 'Total Elemental Points'}: <strong className="text-white">{data.totalScore} pts</strong></span>
-           <span className="text-[#d4af37]">{t('common.verified') || 'Composition: 100% Deterministic'}</span>
-        </div>
-
-        <div className="mt-6 bg-black/60 p-4 rounded-xl border border-gray-800 text-sm text-gray-300 leading-relaxed">
-          <p>
-            <strong className="text-[#d4af37]">{t('common.traditionalInterpretation') || 'Traditional Interpretation'}:</strong><br/>
-            This representation is based on your Numerology numbers and approximate Sun Sign mapping. A dominant <strong>{data.dominant}</strong> element traditionally suggests strong traits associated with that element, while a weaker <strong>{data.weakest}</strong> element may represent an area requiring conscious balancing. 
-          </p>
+        {/* Progress Bars */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+          {elementCards.map(item => (
+            <div key={item.name} className={`bg-gradient-to-r ${item.color} p-3.5 rounded-xl border bg-black/40`}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  {item.icon}
+                  <span className="font-semibold text-xs text-white">{item.name}</span>
+                </div>
+                <span className="text-xs font-bold text-[#d4af37]">{item.pct}%</span>
+              </div>
+              <div className="w-full bg-black/50 h-2 rounded-full overflow-hidden border border-white/10">
+                <div 
+                  className="bg-[#d4af37] h-full rounded-full transition-all duration-500" 
+                  style={{ width: `${item.pct}%` }}
+                />
+              </div>
+              <p className="text-[11px] text-gray-400 mt-2">{item.desc}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>

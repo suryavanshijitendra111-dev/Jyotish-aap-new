@@ -168,14 +168,15 @@ export function t(
   // Step 1: Active Language
   let current = resolveInObject(LOCALES[activeLang], parts);
 
-  // Step 2: Fallback to Hindi
-  if (!current && activeLang !== 'hi') {
-    current = resolveInObject(LOCALES.hi, parts);
-  }
-
-  // Step 3: Fallback to English
-  if (!current && activeLang !== 'en') {
-    current = resolveInObject(LOCALES.en, parts);
+  // Step 2: Fallback chain based on language family
+  if (!current) {
+    if (activeLang === 'hi') {
+      current = resolveInObject(LOCALES.en, parts);
+    } else if (['es', 'fr', 'de', 'ru', 'en'].includes(activeLang)) {
+      current = resolveInObject(LOCALES.en, parts);
+    } else {
+      current = resolveInObject(LOCALES.hi, parts) || resolveInObject(LOCALES.en, parts);
+    }
   }
 
   // Step 4: Graceful Humanized Fallback (CRITICAL: NEVER DISPLAY RAW TECHNICAL DOT-PATHS TO USER)

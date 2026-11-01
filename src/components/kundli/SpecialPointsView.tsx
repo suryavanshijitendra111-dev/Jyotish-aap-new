@@ -5,16 +5,18 @@
 
 import React, { useMemo } from 'react';
 import { MasterKundliData } from '../../types/kundli';
-import { SpecialLagnaEngine, SpecialLagnaAnalysis } from '../../services/astrology/specialLagnaEngine';
+import { SpecialLagnaEngine } from '../../services/astrology/specialLagnaEngine';
 import CarvedCard from '../ui/CarvedCard';
 import { Compass, Star, Coins, Crown, Heart, BookOpen, UserCircle, Zap } from 'lucide-react';
 import { getLocalizedRashi } from '../../i18n/astrology';
+import { useTranslation } from '../../i18n';
 
 interface SpecialPointsViewProps {
   data: MasterKundliData;
 }
 
 export const SpecialPointsView: React.FC<SpecialPointsViewProps> = ({ data }) => {
+  const { language } = useTranslation();
   const analysis = useMemo(() => SpecialLagnaEngine.calculate(data), [data]);
   const { lagnas, sahams } = analysis;
 
@@ -36,10 +38,12 @@ export const SpecialPointsView: React.FC<SpecialPointsViewProps> = ({ data }) =>
         <div>
           <h2 className="text-2xl font-serif text-yellow-500 flex items-center gap-2">
             <Compass className="w-6 h-6 text-yellow-400" />
-            Special Lagnas & Sahams (विशेष लग्न और सहम)
+            {language === 'hi' ? 'विशेष लग्न एवं सहम' : 'Special Lagnas & Sahams'}
           </h2>
           <p className="text-white/60 text-sm mt-1 font-sans italic">
-            Advanced Arabic points and mathematical lagnas from Jagannatha Hora
+            {language === 'hi' 
+              ? 'जागन्नाथ होरा आधारित उन्नत गणितीय लग्न एवं अरबी बिंदु' 
+              : 'Advanced Arabic points and mathematical lagnas from Jagannatha Hora'}
           </p>
         </div>
       </div>
@@ -49,7 +53,7 @@ export const SpecialPointsView: React.FC<SpecialPointsViewProps> = ({ data }) =>
         <div className="space-y-4">
           <h3 className="text-lg font-serif text-yellow-500/80 mb-2 flex items-center gap-2 px-1">
             <Star className="w-5 h-5" />
-            Mathematical Lagnas
+            {language === 'hi' ? 'गणितीय लग्न' : 'Mathematical Lagnas'}
           </h3>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -60,22 +64,23 @@ export const SpecialPointsView: React.FC<SpecialPointsViewProps> = ({ data }) =>
                     {getLagnaIcon(lagna.name)}
                   </div>
                   <div>
-                    <div className="text-yellow-400 text-sm font-bold font-serif">{lagna.hindiName}</div>
-                    <div className="text-[10px] text-white/40 uppercase tracking-widest font-sans">{lagna.name}</div>
+                    <div className="text-yellow-400 text-sm font-bold font-serif">
+                      {language === 'hi' ? lagna.hindiName : lagna.name}
+                    </div>
                   </div>
                 </div>
                 
                 <div className="flex justify-between items-end">
                   <div className="space-y-1">
                     <div className="text-xs font-bold text-white/90">
-                      {getLocalizedRashi(lagna.rashi, 'hi')} ({lagna.rashi})
+                      {getLocalizedRashi(lagna.rashi, language as any)}
                     </div>
                     <div className="text-[10px] font-mono text-white/40">
                       {lagna.degree.toFixed(2)}°
                     </div>
                   </div>
                   <div className="text-[8px] bg-yellow-500/10 text-yellow-500/60 px-2 py-0.5 rounded border border-yellow-500/20 uppercase font-black">
-                    Active
+                    {language === 'hi' ? 'सक्रिय' : 'Active'}
                   </div>
                 </div>
                 
@@ -91,7 +96,7 @@ export const SpecialPointsView: React.FC<SpecialPointsViewProps> = ({ data }) =>
         <div className="space-y-4">
           <h3 className="text-lg font-serif text-yellow-500/80 mb-2 flex items-center gap-2 px-1">
             <Zap className="w-5 h-5" />
-            Tajik Sahams (Arabic Parts)
+            {language === 'hi' ? 'ताजिक सहम' : 'Tajik Sahams'}
           </h3>
 
           <div className="space-y-3">
@@ -107,12 +112,13 @@ export const SpecialPointsView: React.FC<SpecialPointsViewProps> = ({ data }) =>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <div className="font-serif">
-                      <span className="text-yellow-400 text-sm font-bold mr-2">{saham.hindiName}</span>
-                      <span className="text-[9px] text-white/20 uppercase tracking-widest">{saham.name}</span>
+                      <span className="text-yellow-400 text-sm font-bold mr-2">
+                        {language === 'hi' ? saham.hindiName : saham.name}
+                      </span>
                     </div>
                     <div className="text-right">
                       <div className="text-[11px] font-bold text-white/80">
-                        {getLocalizedRashi(saham.rashi, 'hi')}
+                        {getLocalizedRashi(saham.rashi, language as any)}
                       </div>
                       <div className="text-[9px] font-mono text-white/30">
                         {saham.degree.toFixed(2)}°
@@ -131,7 +137,9 @@ export const SpecialPointsView: React.FC<SpecialPointsViewProps> = ({ data }) =>
             <div className="flex gap-3">
               <Compass className="w-5 h-5 text-yellow-500/40 shrink-0" />
               <p className="text-[10px] text-white/40 leading-relaxed italic font-serif">
-                "Special Lagnas and Sahams act as sensitive points in the zodiac. Their calculation involves complex spherical math to reveal specific life dimensions like wealth (Indu), knowledge (Vidya), and fame (Yasas)."
+                {language === 'hi'
+                  ? '"विशेष लग्न और सहम राशिचक्र के संवेदनशील बिंदु हैं। इनका गणना में विशिष्ट गणितीय सूत्रों का प्रयोग होता है।"'
+                  : '"Special Lagnas and Sahams act as sensitive points in the zodiac, revealing specific life dimensions like wealth, knowledge, and fame."'}
               </p>
             </div>
           </CarvedCard>

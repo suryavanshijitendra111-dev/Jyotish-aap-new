@@ -13,6 +13,7 @@ export interface YoginiDashaPeriod {
   startDate: Date;
   endDate: Date;
   description: string;
+  hindiDescription: string;
   isCurrent: boolean;
 }
 
@@ -22,14 +23,14 @@ export interface YoginiDashaResult {
 }
 
 const YOGINIS = [
-  { id: 1, name: 'Mangala', hindiName: 'मंगला', planet: 'Moon', duration: 1, description: 'Success, happiness and auspicious events.' },
-  { id: 2, name: 'Pingala', hindiName: 'पिंगला', planet: 'Sun', duration: 2, description: 'Minor health issues, success after effort.' },
-  { id: 3, name: 'Dhanya', hindiName: 'धान्या', planet: 'Jupiter', duration: 3, description: 'Wealth, prosperity and wisdom.' },
-  { id: 4, name: 'Bhramari', hindiName: 'भ्रामरी', planet: 'Mars', duration: 4, description: 'Travel, dynamic energy, possible restlessness.' },
-  { id: 5, name: 'Bhadrika', hindiName: 'भद्रिका', planet: 'Mercury', duration: 5, description: 'Intellectual growth, family happiness.' },
-  { id: 6, name: 'Ulka', hindiName: 'उल्का', planet: 'Saturn', duration: 6, description: 'Hard work, challenges, but long-term gains.' },
-  { id: 7, name: 'Siddha', hindiName: 'सिद्धा', planet: 'Venus', duration: 7, description: 'Fulfillment of desires, luxury and art.' },
-  { id: 8, name: 'Sankata', hindiName: 'संकटा', planet: 'Rahu', duration: 8, description: 'Sudden changes, caution required, spiritual growth.' },
+  { id: 1, name: 'Mangala', hindiName: 'मंगला', planet: 'Moon', duration: 1, description: 'Success, happiness and auspicious events.', hindiDescription: 'सफलता, सुख एवं शुभ घटनाओं का आगमन।' },
+  { id: 2, name: 'Pingala', hindiName: 'पिंगला', planet: 'Sun', duration: 2, description: 'Minor health issues, success after effort.', hindiDescription: 'स्वास्थ्य पर ध्यान, प्रयास के बाद सफलता।' },
+  { id: 3, name: 'Dhanya', hindiName: 'धान्या', planet: 'Jupiter', duration: 3, description: 'Wealth, prosperity and wisdom.', hindiDescription: 'धन, समृद्धि एवं ज्ञान की प्राप्ति।' },
+  { id: 4, name: 'Bhramari', hindiName: 'भ्रामरी', planet: 'Mars', duration: 4, description: 'Travel, dynamic energy, possible restlessness.', hindiDescription: 'यात्रा, ऊर्जावान गतिविधि एवं मानसिक चंचलता।' },
+  { id: 5, name: 'Bhadrika', hindiName: 'भद्रिका', planet: 'Mercury', duration: 5, description: 'Intellectual growth, family happiness.', hindiDescription: 'बौद्धिक विकास एवं पारिवारिक सुख।' },
+  { id: 6, name: 'Ulka', hindiName: 'उल्का', planet: 'Saturn', duration: 6, description: 'Hard work, challenges, but long-term gains.', hindiDescription: 'कड़ी मेहनत, चुनौतियाँ एवं दीर्घकालिक लाभ।' },
+  { id: 7, name: 'Siddha', hindiName: 'सिद्धा', planet: 'Venus', duration: 7, description: 'Fulfillment of desires, luxury and art.', hindiDescription: 'इच्छाओं की पूर्ति, विलासिता एवं कला में रुचि।' },
+  { id: 8, name: 'Sankata', hindiName: 'संकटा', planet: 'Rahu', duration: 8, description: 'Sudden changes, caution required, spiritual growth.', hindiDescription: 'अचानक परिवर्तन, सतर्कता आवश्यक, आध्यात्मिक उन्नति।' },
 ];
 
 export class YoginiDashaEngine {
@@ -129,6 +130,7 @@ export class YoginiDashaEngine {
           startDate: periodStart,
           endDate: periodEnd,
           description: yogini.description,
+          hindiDescription: yogini.hindiDescription,
           isCurrent
         });
 

@@ -784,7 +784,7 @@ export const FamilyMemberFormModal: React.FC<FamilyMemberFormModalProps> = ({
               </label>
               {isMaster ? (
                 <div className="px-3 py-2.5 rounded-xl bg-black/30 border border-[#d4af37]/20 text-[#d4af37] text-sm font-bold flex items-center justify-between">
-                  <span>स्वयं (SELF)</span>
+                  <span>{t('profile.self')}</span>
                   <span className="text-[10px] text-gray-400 uppercase">स्थायी</span>
                 </div>
               ) : (
@@ -793,11 +793,11 @@ export const FamilyMemberFormModal: React.FC<FamilyMemberFormModalProps> = ({
                   onChange={e => setRelationship(e.target.value as ProfileRelation)}
                   className="w-full px-3 py-2.5 rounded-xl bg-black/50 border border-[#d4af37]/40 text-white focus:outline-none focus:border-[#d4af37] text-sm"
                 >
-                  <option value="SPOUSE">जीवनसाथी (Spouse)</option>
-                  <option value="CHILD">संतान (Child)</option>
-                  <option value="PARENT">माता / पिता (Parent)</option>
-                  <option value="SIBLING">भाई / बहन (Sibling)</option>
-                  <option value="OTHER">अन्य संबंधी (Other)</option>
+                  <option value="SPOUSE">{t('profile.spouse')}</option>
+                  <option value="CHILD">{t('profile.child')}</option>
+                  <option value="PARENT">{t('profile.parent')}</option>
+                  <option value="SIBLING">{t('profile.sibling')}</option>
+                  <option value="OTHER">{t('profile.other')}</option>
                 </select>
               )}
             </div>

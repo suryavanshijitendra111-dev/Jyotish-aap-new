@@ -1,182 +1,162 @@
-import { NumerologyEngine } from './numerologyEngine';
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ * 
+ * JEEVANDARPAN — DIGITAL NUMEROLOGY ENGINE
+ * Mobile, House, Vehicle, Angel numbers & sacred yantra numeric mappings
+ */
 
-export interface MobileAnalysis {
-  maskedNumber: string;
-  compoundNumber: number;
-  rootNumber: number;
-  pairs: NumberPairAnalysis[];
-  driverCompatibility: CompatibilityResult;
-  conductorCompatibility: CompatibilityResult;
-  breakdown: string;
+export interface NumberEntry {
+  number: string;
+  title: string;
+  category: string;
+  description: string;
+  name?: string;
 }
 
-export interface NumberPairAnalysis {
-  pair: string;
-  classification: string;
-  interpretation: string;
+export const angelNumbers: NumberEntry[] = [
+  { number: '111', title: 'New Beginnings', category: 'Guidance', description: 'Manifestation portal is open. Keep thoughts focused on aspirations.' },
+  { number: '222', title: 'Balance & Trust', category: 'Peace', description: 'Divine timing is in play. Trust where you are being led.' },
+  { number: '333', title: 'Ascended Masters', category: 'Spirituality', description: 'Spiritual guides and protectors surround you with wisdom.' },
+  { number: '444', title: 'Protection & Grounding', category: 'Health', description: 'Angelic presence and stability. You are safe and guided.' },
+  { number: '555', title: 'Major Transformation', category: 'Finance', description: 'Significant positive shifts in life direction approaching.' },
+  { number: '777', title: 'Divine Luck', category: 'Spirituality', description: 'Spiritual evolution, good fortune and auspicious alignment.' },
+  { number: '888', title: 'Abundance & Karma', category: 'Finance', description: 'Financial flow, karmic rewards, and material balance.' }
+];
+
+export const esotericCodes: NumberEntry[] = [
+  { number: '520 741 8', title: 'Unexpected Wealth & Instant Results', category: 'Finance', description: 'Grabovoi sequence for rapid economic turnaround.' },
+  { number: '71427321893', title: 'Absolute Normalization of Health', category: 'Health', description: 'Restoration of bodily equilibrium and vitality.' },
+  { number: '1888888 9 1', title: 'Spiritual Illumination & Peace', category: 'Peace', description: 'Deep mental stillness and inner clarity.' }
+];
+
+export const switchNumbers: NumberEntry[] = [
+  { number: '19751', title: 'Universal Harmony & Relief', category: 'Peace', description: 'Harmonizes surrounding vibrations and resolves tensions.' },
+  { number: '58', title: 'Immediate Flow & Action', category: 'Finance', description: 'Unblocks stagnant creative and commercial momentum.' }
+];
+
+export const yantraNumbers: NumberEntry[] = [
+  { number: '15', title: 'Surya / Panchadashi Yantra Total', category: 'Spirituality', description: 'The 3x3 sacred grid summing to 15 in all directions.' },
+  { number: '24', title: 'Brihaspati Gurukrupa Yantra Sum', category: 'Guidance', description: 'Auspicious Guru matrix conferring wisdom and righteous conduct.' }
+];
+
+function reduceToSingleDigit(numStr: string): { root: number; compound: number; steps: string } {
+  const digits = numStr.replace(/\D/g, '').split('').map(Number);
+  if (digits.length === 0) return { root: 1, compound: 1, steps: '1' };
+  
+  const compound = digits.reduce((acc, curr) => acc + curr, 0);
+  let cur = compound;
+  while (cur > 9 && cur !== 11 && cur !== 22 && cur !== 33) {
+    cur = cur.toString().split('').map(Number).reduce((a, b) => a + b, 0);
+  }
+  return {
+    root: cur > 9 ? cur.toString().split('').map(Number).reduce((a, b) => a + b, 0) : cur,
+    compound,
+    steps: `${digits.join('+')} = ${compound} -> ${cur}`
+  };
 }
 
-export interface CompatibilityResult {
-  status: "compatible" | "neutral" | "challenging";
-  explanation: string;
+function checkCompatibility(num: number, target: number): 'compatible' | 'challenging' | 'neutral' {
+  const friendly: Record<number, number[]> = {
+    1: [1, 2, 3, 5, 9],
+    2: [1, 2, 5],
+    3: [1, 3, 5, 9],
+    4: [5, 6, 7],
+    5: [1, 2, 3, 5, 6],
+    6: [5, 6, 7],
+    7: [4, 6],
+    8: [5, 6],
+    9: [1, 3, 5, 9]
+  };
+
+  const hostile: Record<number, number[]> = {
+    1: [8],
+    2: [8, 9],
+    3: [6],
+    4: [4, 8, 9],
+    5: [],
+    6: [3],
+    7: [1],
+    8: [1, 2, 4],
+    9: [2, 4]
+  };
+
+  if (friendly[target]?.includes(num)) return 'compatible';
+  if (hostile[target]?.includes(num)) return 'challenging';
+  return 'neutral';
 }
-
-const pairInterpretations: Record<string, { classification: string, interpretation: string }> = {
-  "11": { classification: "Leadership", interpretation: "Double Sun energy. High authority, ego, and independence. Good for leadership." },
-  "12": { classification: "Creation", interpretation: "Sun and Moon. Father and mother energy. Good for creative fields." },
-  "13": { classification: "Action", interpretation: "Sun and Jupiter. Fast growth, dynamic action, but can bring sudden changes." },
-  "14": { classification: "Movement", interpretation: "Sun and Rahu. Travel, dynamic energy, financial fluctuation." },
-  "15": { classification: "Success", interpretation: "Sun and Mercury. Highly auspicious for business, communication, and intelligence." },
-  "18": { classification: "Struggle", interpretation: "Sun and Saturn. Hard work, delays, father-son conflict energy." },
-  "24": { classification: "Wealth", interpretation: "Moon and Rahu. Good for property, wealth, but emotional ups and downs." },
-  "28": { classification: "Delay", interpretation: "Moon and Saturn. Delays, hard work, emotional suppression." },
-  "33": { classification: "Master", interpretation: "Double Jupiter. Master teacher energy. Great for consulting, teaching." },
-  "44": { classification: "Hard Work", interpretation: "Double Rahu. Need for structure. Hard work required. Can bring sudden events." },
-  "55": { classification: "Change", interpretation: "Double Mercury. Fast-paced, business-minded, constant communication." },
-  "66": { classification: "Luxury", interpretation: "Double Venus. Family, luxury, beauty, but can indicate indulgence." },
-  "77": { classification: "Spiritual", interpretation: "Double Ketu. High intuition, spiritual depth, detachment from material." },
-  "88": { classification: "Power", interpretation: "Double Saturn. Intense karmic lessons. High wealth or big struggles." },
-  "99": { classification: "Completion", interpretation: "Double Mars. High energy, aggression, completion of cycles." },
-};
-
-// Extremely basic compatibility table for 1-9 (Driver/Conductor vs Root)
-// This is a simplified representation of Chaldean numerology compatibilities.
-const compatibilityMatrix: Record<number, Record<number, string>> = {
-  1: { 1: "compatible", 2: "compatible", 3: "compatible", 4: "compatible", 5: "compatible", 6: "neutral", 7: "compatible", 8: "challenging", 9: "compatible" },
-  2: { 1: "compatible", 2: "compatible", 3: "compatible", 4: "neutral", 5: "compatible", 6: "challenging", 7: "compatible", 8: "challenging", 9: "challenging" },
-  3: { 1: "compatible", 2: "compatible", 3: "compatible", 4: "neutral", 5: "compatible", 6: "challenging", 7: "compatible", 8: "neutral", 9: "compatible" },
-  4: { 1: "compatible", 2: "neutral", 3: "neutral", 4: "challenging", 5: "compatible", 6: "compatible", 7: "compatible", 8: "challenging", 9: "challenging" },
-  5: { 1: "compatible", 2: "compatible", 3: "compatible", 4: "compatible", 5: "compatible", 6: "compatible", 7: "neutral", 8: "compatible", 9: "neutral" },
-  6: { 1: "neutral", 2: "challenging", 3: "challenging", 4: "compatible", 5: "compatible", 6: "compatible", 7: "compatible", 8: "compatible", 9: "compatible" },
-  7: { 1: "compatible", 2: "compatible", 3: "compatible", 4: "compatible", 5: "neutral", 6: "compatible", 7: "neutral", 8: "challenging", 9: "challenging" },
-  8: { 1: "challenging", 2: "challenging", 3: "neutral", 4: "challenging", 5: "compatible", 6: "compatible", 7: "challenging", 8: "challenging", 9: "challenging" },
-  9: { 1: "compatible", 2: "challenging", 3: "compatible", 4: "challenging", 5: "neutral", 6: "compatible", 7: "challenging", 8: "challenging", 9: "compatible" }
-};
 
 export class DigitalNumerologyEngine {
-  
-  static analyzeMobile(mobile: string, driver: number, conductor: number): MobileAnalysis {
-    const cleaned = mobile.replace(/\D/g, '');
-    let compoundNumber = 0;
-    
-    for (let i = 0; i < cleaned.length; i++) {
-      compoundNumber += parseInt(cleaned[i], 10);
+  public static analyzeMobile(mobileNumber: string, birthNumber: number = 1, destinyNumber: number = 1): any {
+    const cleanDigits = mobileNumber.replace(/\D/g, '');
+    const { root, compound, steps } = reduceToSingleDigit(cleanDigits);
+
+    const maskedNumber = cleanDigits.length >= 4 
+      ? cleanDigits.slice(0, 2) + '••••' + cleanDigits.slice(-4)
+      : cleanDigits;
+
+    const pairs: Array<{ pair: string; classification: string; interpretation: string }> = [];
+    for (let i = 0; i < cleanDigits.length - 1; i++) {
+      const p = cleanDigits.slice(i, i + 2);
+      if (p === '11') pairs.push({ pair: p, classification: 'Master Energy', interpretation: 'Intuitive leadership' });
+      else if (p === '24') pairs.push({ pair: p, classification: 'Wisdom', interpretation: 'Subtle guidance and luck' });
+      else if (p === '33') pairs.push({ pair: p, classification: 'Compassion', interpretation: 'Universal love and teaching' });
+      else if (p === '77') pairs.push({ pair: p, classification: 'Mystic', interpretation: 'Spiritual focus' });
+      else if (p === '88') pairs.push({ pair: p, classification: 'Material Flow', interpretation: 'Karma and discipline' });
     }
-    
-    const rootNumber = NumerologyEngine.reduceNumber(compoundNumber);
-    
-    const pairs: NumberPairAnalysis[] = [];
-    for (let i = 0; i < cleaned.length - 1; i++) {
-      const pair = cleaned.substring(i, i + 2);
-      if (pairInterpretations[pair] && !pairs.find(p => p.pair === pair)) {
-         pairs.push({
-           pair,
-           classification: pairInterpretations[pair].classification,
-           interpretation: pairInterpretations[pair].interpretation
-         });
-      }
-    }
-    
-    const maskedNumber = cleaned.substring(0, 2) + "XXXXXX" + cleaned.substring(8);
-    
-    const dComp = this.getCompatibility(driver, rootNumber);
-    const cComp = this.getCompatibility(conductor, rootNumber);
 
     return {
       maskedNumber,
-      compoundNumber,
-      rootNumber,
-      pairs,
+      rootNumber: root,
+      compoundNumber: compound,
       driverCompatibility: {
-        status: dComp as any,
-        explanation: `Driver ${driver} and Root ${rootNumber} are ${dComp}.`
+        status: checkCompatibility(root, birthNumber || 1)
       },
       conductorCompatibility: {
-        status: cComp as any,
-        explanation: `Conductor ${conductor} and Root ${rootNumber} are ${cComp}.`
+        status: checkCompatibility(root, destinyNumber || 1)
       },
-      breakdown: `Sum of digits: ${cleaned.split('').join(' + ')} = ${compoundNumber} -> ${rootNumber}`
+      pairs,
+      breakdown: `Digits sum: ${steps}. Driver: ${birthNumber}, Conductor: ${destinyNumber}.`
     };
   }
 
-  static analyzeObjectNumber(objectNumber: string, driver: number, conductor: number) {
-    const cleaned = objectNumber.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
-    let compoundNumber = 0;
-    
-    // Using Chaldean alphabet values for letters if any
-    const chaldeanValues: Record<string, number> = {
-      'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 8, 'G': 3, 'H': 5, 'I': 1,
-      'J': 1, 'K': 2, 'L': 3, 'M': 4, 'N': 5, 'O': 7, 'P': 8, 'Q': 1, 'R': 2,
-      'S': 3, 'T': 4, 'U': 6, 'V': 6, 'W': 6, 'X': 5, 'Y': 1, 'Z': 7
+  public static analyzeObjectNumber(objectNumber: string, birthNumber: number = 1, destinyNumber: number = 1): any {
+    const clean = objectNumber.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    // Convert chars to pythagorean or chaldean values
+    const charValues: Record<string, number> = {
+      A: 1, I: 1, J: 1, Q: 1, Y: 1,
+      B: 2, K: 2, R: 2,
+      C: 3, G: 3, L: 3, S: 3,
+      D: 4, M: 4, T: 4,
+      E: 5, H: 5, N: 5, X: 5,
+      U: 6, V: 6, W: 6,
+      O: 7, Z: 7,
+      F: 8, P: 8
     };
 
-    let breakdownParts = [];
-
-    for (let i = 0; i < cleaned.length; i++) {
-      const char = cleaned[i];
-      if (/[0-9]/.test(char)) {
-        compoundNumber += parseInt(char, 10);
-        breakdownParts.push(char);
-      } else if (chaldeanValues[char]) {
-        compoundNumber += chaldeanValues[char];
-        breakdownParts.push(`${char}(${chaldeanValues[char]})`);
-      }
+    let total = 0;
+    for (const ch of clean) {
+      if (/\d/.test(ch)) total += parseInt(ch, 10);
+      else if (charValues[ch]) total += charValues[ch];
     }
 
-    const rootNumber = NumerologyEngine.reduceNumber(compoundNumber);
-    
-    const dComp = this.getCompatibility(driver, rootNumber);
-    const cComp = this.getCompatibility(conductor, rootNumber);
+    let root = total;
+    while (root > 9) {
+      root = root.toString().split('').map(Number).reduce((a, b) => a + b, 0);
+    }
 
     return {
-      compoundNumber,
-      rootNumber,
+      objectIdentifier: clean,
+      rootNumber: root || 1,
+      compoundNumber: total || 1,
       driverCompatibility: {
-        status: dComp as any,
-        explanation: `Driver ${driver} and Root ${rootNumber} are ${dComp}.`
+        status: checkCompatibility(root || 1, birthNumber || 1)
       },
       conductorCompatibility: {
-        status: cComp as any,
-        explanation: `Conductor ${conductor} and Root ${rootNumber} are ${cComp}.`
+        status: checkCompatibility(root || 1, destinyNumber || 1)
       },
-      breakdown: `Sum: ${breakdownParts.join(' + ')} = ${compoundNumber} -> ${rootNumber}`
+      pairs: [],
+      breakdown: `Calculation for ${clean}: Total ${total} reduces to Root ${root}.`
     };
   }
-
-  static getCompatibility(a: number, b: number): string {
-    if (!a || !b || !compatibilityMatrix[a]) return "neutral";
-    return compatibilityMatrix[a][b] || "neutral";
-  }
 }
-
-export const angelNumbers = [
-  { number: "111", title: "Alignment", category: "Spirituality", meaning: "Your thoughts are manifesting quickly. Keep them positive." },
-  { number: "222", title: "Balance", category: "Peace", meaning: "Trust the process. You are exactly where you need to be." },
-  { number: "333", title: "Support", category: "Guidance", meaning: "Ascended masters and spiritual guides are offering support." },
-  { number: "444", title: "Protection", category: "Guidance", meaning: "You are surrounded by protective spiritual energy." },
-  { number: "555", title: "Change", category: "Change", meaning: "Major life changes are coming. Embrace them." },
-  { number: "777", title: "Luck", category: "Prosperity", meaning: "You are on the right spiritual path. Good fortune." },
-  { number: "888", title: "Abundance", category: "Finance", meaning: "Financial and material abundance is on its way." },
-  { number: "999", title: "Completion", category: "Reflection", meaning: "A cycle is ending. Prepare for a new beginning." },
-  { number: "1111", title: "Awakening", category: "Spirituality", meaning: "A gateway of manifestation is open. Spiritual awakening." },
-];
-
-export const esotericCodes = [
-  { code: "520", category: "Finance", traditionalAssociation: "Unexpected Money", practice: "Focus on abundance, not lack.", instructions: "Write in green ink or visualize." },
-  { code: "741", category: "Peace", traditionalAssociation: "Problem Solving", practice: "Visualize dissolving obstacles.", instructions: "Chant or write on a piece of paper." },
-  { code: "318 798", category: "Finance", traditionalAssociation: "Financial Independence", practice: "Focus on creating value.", instructions: "Keep in wallet." },
-  { code: "8888", category: "Spirituality", traditionalAssociation: "Divine Protection", practice: "Feel enveloped in white light.", instructions: "Meditate upon this sequence." },
-  { code: "1814321", category: "Health", traditionalAssociation: "Perfect Health Pattern", practice: "Traditional spiritual visualization for well-being. Not medical advice.", instructions: "Visualize over the body." },
-];
-
-export const switchNumbers = [
-  { number: "1176", category: "Desire", association: "Manifestation", instructions: "Write on left body part or chant 28 times." },
-  { number: "808", category: "Finance", association: "Debt Free / Money", instructions: "Keep written in workspace or wallet." },
-  { number: "517", category: "Focus", association: "Confidence & Clarity", instructions: "Chant before exams or meetings." },
-  { number: "45", category: "Peace", association: "Reduce Anxiety", instructions: "Visualize the number in blue light." }
-];
-
-export const yantraNumbers = [
-  { name: "Kubera Yantra Grid", numbers: "27, 20, 25 | 22, 24, 26 | 23, 28, 21", association: "Wealth & Prosperity", purpose: "Traditional grid where all rows/columns sum to 72 (7+2=9).", source: "Traditional Vedic Numerology" },
-  { name: "Surya Yantra Grid", numbers: "6, 1, 8 | 7, 5, 3 | 2, 9, 4", association: "Health & Authority", purpose: "Sun magic square. All rows/columns sum to 15 (1+5=6).", source: "Traditional Vedic Numerology" },
-];
