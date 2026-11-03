@@ -1,3 +1,8 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 export interface ModuleItem {
   id: string;
   title: string;
@@ -9,7 +14,7 @@ export interface ModuleItem {
 
 export function getModules(
   t: (key: string) => string,
-  navigate: (view: string) => void,
+  navigate: (view: string, modId?: string) => void,
   showToast: (msg: string) => void,
   setShowLangModal: (open: boolean) => void
 ): ModuleItem[] {
@@ -20,7 +25,7 @@ export function getModules(
       subtitle: t('modules.kundli.subtitle'),
       desc: t('modules.kundli.desc'),
       isLive: true,
-      action: () => navigate('kundli_intro')
+      action: () => navigate('module_screen', 'kundli')
     },
     {
       id: 'kp',
@@ -28,10 +33,7 @@ export function getModules(
       subtitle: t('modules.kp.subtitle'),
       desc: t('modules.kp.desc'),
       isLive: true,
-      action: () => {
-        try { sessionStorage.setItem('jeevandarpan_scroll_to', 'kp'); } catch {}
-        navigate('kundli_shell');
-      }
+      action: () => navigate('module_screen', 'kp')
     },
     {
       id: 'pragya',
@@ -47,10 +49,23 @@ export function getModules(
       subtitle: t('modules.dasha.subtitle'),
       desc: t('modules.dasha.desc'),
       isLive: true,
-      action: () => {
-        try { sessionStorage.setItem('jeevandarpan_scroll_to', 'dasha'); } catch {}
-        navigate('kundli_shell');
-      }
+      action: () => navigate('module_screen', 'dasha')
+    },
+    {
+      id: 'yogini_dasha',
+      title: t('modules.yogini_dasha.title'),
+      subtitle: t('modules.yogini_dasha.subtitle'),
+      desc: t('modules.yogini_dasha.desc'),
+      isLive: true,
+      action: () => navigate('module_screen', 'yogini_dasha')
+    },
+    {
+      id: 'ashtottari',
+      title: t('modules.ashtottari.title'),
+      subtitle: t('modules.ashtottari.subtitle'),
+      desc: t('modules.ashtottari.desc'),
+      isLive: true,
+      action: () => navigate('module_screen', 'ashtottari')
     },
     {
       id: 'gochar',
@@ -58,10 +73,7 @@ export function getModules(
       subtitle: t('modules.gochar.subtitle'),
       desc: t('modules.gochar.desc'),
       isLive: true,
-      action: () => {
-        try { sessionStorage.setItem('jeevandarpan_scroll_to', 'transit'); } catch {}
-        navigate('kundli_shell');
-      }
+      action: () => navigate('module_screen', 'gochar')
     },
     {
       id: 'varga',
@@ -69,10 +81,87 @@ export function getModules(
       subtitle: t('modules.varga.subtitle'),
       desc: t('modules.varga.desc'),
       isLive: true,
-      action: () => {
-        try { sessionStorage.setItem('jeevandarpan_scroll_to', 'varga'); } catch {}
-        navigate('kundli_shell');
-      }
+      action: () => navigate('module_screen', 'varga')
+    },
+    {
+      id: 'sphutas',
+      title: t('modules.sphutas.title'),
+      subtitle: t('modules.sphutas.subtitle'),
+      desc: t('modules.sphutas.desc'),
+      isLive: true,
+      action: () => navigate('module_screen', 'sphutas')
+    },
+    {
+      id: 'upagrahas',
+      title: t('modules.upagrahas.title'),
+      subtitle: t('modules.upagrahas.subtitle'),
+      desc: t('modules.upagrahas.desc'),
+      isLive: true,
+      action: () => navigate('module_screen', 'upagrahas')
+    },
+    {
+      id: 'bnn',
+      title: t('modules.bnn.title'),
+      subtitle: t('modules.bnn.subtitle'),
+      desc: t('modules.bnn.desc'),
+      isLive: true,
+      action: () => navigate('module_screen', 'bnn')
+    },
+    {
+      id: 'ashtakavarga',
+      title: t('modules.ashtakavarga.title'),
+      subtitle: t('modules.ashtakavarga.subtitle'),
+      desc: t('modules.ashtakavarga.desc'),
+      isLive: true,
+      action: () => navigate('module_screen', 'ashtakavarga')
+    },
+    {
+      id: 'jaimini',
+      title: t('modules.jaimini.title'),
+      subtitle: t('modules.jaimini.subtitle'),
+      desc: t('modules.jaimini.desc'),
+      isLive: true,
+      action: () => navigate('module_screen', 'jaimini')
+    },
+    {
+      id: 'arudha',
+      title: t('modules.arudha.title'),
+      subtitle: t('modules.arudha.subtitle'),
+      desc: t('modules.arudha.desc'),
+      isLive: true,
+      action: () => navigate('module_screen', 'arudha')
+    },
+    {
+      id: 'sudarshana',
+      title: t('modules.sudarshana.title'),
+      subtitle: t('modules.sudarshana.subtitle'),
+      desc: t('modules.sudarshana.desc'),
+      isLive: true,
+      action: () => navigate('module_screen', 'sudarshana')
+    },
+    {
+      id: 'sarvatobhadra',
+      title: t('modules.sarvatobhadra.title'),
+      subtitle: t('modules.sarvatobhadra.subtitle'),
+      desc: t('modules.sarvatobhadra.desc'),
+      isLive: true,
+      action: () => navigate('module_screen', 'sarvatobhadra')
+    },
+    {
+      id: 'yoga_dosha',
+      title: t('modules.yoga_dosha.title'),
+      subtitle: t('modules.yoga_dosha.subtitle'),
+      desc: t('modules.yoga_dosha.desc'),
+      isLive: true,
+      action: () => navigate('module_screen', 'yoga_dosha')
+    },
+    {
+      id: 'shadbala',
+      title: t('modules.shadbala.title'),
+      subtitle: t('modules.shadbala.subtitle'),
+      desc: t('modules.shadbala.desc'),
+      isLive: true,
+      action: () => navigate('module_screen', 'shadbala')
     },
     {
       id: 'numerology',
@@ -164,10 +253,7 @@ export function getModules(
       subtitle: t('modules.lalKitab.subtitle'),
       desc: t('modules.lalKitab.desc'),
       isLive: true,
-      action: () => {
-        try { sessionStorage.setItem('jeevandarpan_scroll_to', 'lalkitab'); } catch {}
-        navigate('kundli_shell');
-      }
+      action: () => navigate('module_screen', 'lal_kitab')
     },
     {
       id: 'reports',
@@ -215,7 +301,7 @@ export function getModules(
       subtitle: t('modules.mantraJaap.subtitle'),
       desc: t('modules.mantraJaap.desc'),
       isLive: false,
-      action: () => showToast(t('common.moduleComingSoon'))
+      action: () => showToast(t('common.moduleComingSoon') || 'यह मॉड्यूल शीघ्र उपलब्ध होगा।')
     },
     {
       id: 'puja3d',
@@ -223,7 +309,7 @@ export function getModules(
       subtitle: t('modules.puja3d.subtitle'),
       desc: t('modules.puja3d.desc'),
       isLive: false,
-      action: () => showToast(t('common.moduleComingSoon'))
+      action: () => showToast(t('common.moduleComingSoon') || 'यह मॉड्यूल शीघ्र उपलब्ध होगा।')
     },
     {
       id: 'templeExplorer',
@@ -231,7 +317,7 @@ export function getModules(
       subtitle: t('modules.templeExplorer.subtitle'),
       desc: t('modules.templeExplorer.desc'),
       isLive: false,
-      action: () => showToast(t('common.moduleComingSoon'))
+      action: () => showToast(t('common.moduleComingSoon') || 'यह मॉड्यूल शीघ्र उपलब्ध होगा।')
     },
     {
       id: 'templeTravel',
@@ -239,7 +325,7 @@ export function getModules(
       subtitle: t('modules.templeTravel.subtitle'),
       desc: t('modules.templeTravel.desc'),
       isLive: false,
-      action: () => showToast(t('common.moduleComingSoon'))
+      action: () => showToast(t('common.moduleComingSoon') || 'यह मॉड्यूल शीघ्र उपलब्ध होगा।')
     },
     {
       id: 'spiritualStore',
@@ -247,7 +333,7 @@ export function getModules(
       subtitle: t('modules.spiritualStore.subtitle'),
       desc: t('modules.spiritualStore.desc'),
       isLive: false,
-      action: () => showToast(t('common.moduleComingSoon'))
+      action: () => showToast(t('common.moduleComingSoon') || 'यह मॉड्यूल शीघ्र उपलब्ध होगा।')
     },
     {
       id: 'settings',

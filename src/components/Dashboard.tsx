@@ -14,11 +14,12 @@ import { ProfileService } from '../services/profile/profileService';
 
 interface DashboardProps {
   profile: BirthProfile | null;
-  navigate: (view: string) => void;
+  navigate: (view: string, activeModule?: string) => void;
   showToast: (msg: string) => void;
+  onSelectModule?: (modId: string) => void;
 }
 
-export default function Dashboard({ profile, navigate, showToast }: DashboardProps) {
+export default function Dashboard({ profile, navigate, showToast, onSelectModule }: DashboardProps) {
   const { t, currentLanguageInfo } = useTranslation();
   const [showLangModal, setShowLangModal] = useState(false);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -37,7 +38,9 @@ export default function Dashboard({ profile, navigate, showToast }: DashboardPro
 
   useEffect(() => {
     const handleUpdate = () => {
-      setIncidents(getStoredIncidents());
+      setTimeout(() => {
+        setIncidents(getStoredIncidents());
+      }, 0);
     };
     window.addEventListener('jeevandarpan_incidents_updated', handleUpdate);
     return () => window.removeEventListener('jeevandarpan_incidents_updated', handleUpdate);
@@ -488,250 +491,49 @@ export default function Dashboard({ profile, navigate, showToast }: DashboardPro
 
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {[
-              {
-                id: 'kundli',
-                title: 'Kundli',
-                titleHindi: 'कुंडली जन्मांग',
-                desc: 'लग्न, 12 भाव एवं ग्रह स्थिति',
-                isLive: true,
-                action: () => navigate('kundli_intro')
-              },
-              {
-                id: 'kp',
-                title: 'KP Jyotish',
-                titleHindi: 'केपी ज्योतिष',
-                desc: 'नक्षत्र स्वामी, उप-स्वामी व कस्प',
-                isLive: true,
-                action: () => {
-                  try { sessionStorage.setItem('jeevandarpan_scroll_to', 'kp'); } catch {}
-                  navigate('kundli_shell');
-                }
-              },
-              {
-                id: 'pragya',
-                title: 'Jeevan Pragya',
-                titleHindi: 'जीवन प्रज्ञा मार्गदर्शन',
-                desc: 'अतीत • वर्तमान • भविष्य',
-                isLive: true,
-                action: () => navigate('jeevan_pragya')
-              },
-              {
-                id: 'dasha',
-                title: 'Dasha',
-                titleHindi: 'विंशोत्तरी दशा',
-                desc: 'महादशा, अंतर्दशा एवं कालक्रम',
-                isLive: true,
-                action: () => {
-                  try { sessionStorage.setItem('jeevandarpan_scroll_to', 'dasha'); } catch {}
-                  navigate('kundli_shell');
-                }
-              },
-              {
-                id: 'gochar',
-                title: 'Gochar',
-                titleHindi: 'गोचर (Transit)',
-                desc: 'तात्कालिक आकाशीय ग्रह चाल',
-                isLive: true,
-                action: () => {
-                  try { sessionStorage.setItem('jeevandarpan_scroll_to', 'transit'); } catch {}
-                  navigate('kundli_shell');
-                }
-              },
-              {
-                id: 'varga',
-                title: 'Varga',
-                titleHindi: 'वर्ग कुंडलियां',
-                desc: 'D1 से D60 षोडशवर्ग',
-                isLive: true,
-                action: () => {
-                  try { sessionStorage.setItem('jeevandarpan_scroll_to', 'varga'); } catch {}
-                  navigate('kundli_shell');
-                }
-              },
-              {
-                id: 'numerology',
-                title: 'Numerology',
-                titleHindi: 'अंकशास्त्र',
-                desc: 'मूलांक, भाग्यांक एवं नामांक',
-                isLive: true,
-                action: () => {
-                  try { sessionStorage.setItem('jeevandarpan_numerology_tab', 'CORE'); } catch {}
-                  navigate('numerology');
-                }
-              },
-              {
-                id: 'loshu',
-                title: 'Lo Shu',
-                titleHindi: 'लो शू ग्रिड',
-                desc: 'अंक चक्र एवं योग विश्लेषण',
-                isLive: true,
-                action: () => {
-                  try { sessionStorage.setItem('jeevandarpan_numerology_tab', 'LOSHU'); } catch {}
-                  navigate('numerology');
-                }
-              },
-              {
-                id: 'prashna',
-                title: 'Prashna Kundli',
-                titleHindi: 'प्रश्न कुंडली',
-                desc: 'वर्तमान क्षण का प्रश्न विचार',
-                isLive: true,
-                action: () => navigate('prashna_kundli')
-              },
-              {
-                id: 'ai_jyotish',
-                title: 'AI Jyotish',
-                titleHindi: 'ज्योतिष प्रज्ञा AI',
-                desc: 'प्रत्यक्ष प्रश्नोत्तर एवं विश्लेषण',
-                isLive: true,
-                action: () => {
-                  try { sessionStorage.setItem('jeevandarpan_intel_tab', 'AI'); } catch {}
-                  navigate('intelligence_dashboard');
-                }
-              },
-              {
-                id: 'life_questions',
-                title: 'Life Questions',
-                titleHindi: 'जीवन प्रश्न',
-                desc: 'करियर, वित्त, विवाह, स्वास्थ्य',
-                isLive: true,
-                action: () => {
-                  try { sessionStorage.setItem('jeevandarpan_intel_tab', 'QUESTIONS'); } catch {}
-                  navigate('intelligence_dashboard');
-                }
-              },
-              {
-                id: 'daily_companion',
-                title: 'Daily Companion',
-                titleHindi: 'दैनिक सहचर',
-                desc: 'प्रातः, दोपहर, संध्या, रात्रि',
-                isLive: true,
-                action: () => navigate('daily_companion')
-              },
-              {
-                id: 'pratah_sanskar',
-                title: 'Pratah Sanskar',
-                titleHindi: 'प्रातः संस्कार',
-                desc: 'गायत्री मंत्र, सूर्य अर्घ्य, संकल्प',
-                isLive: true,
-                action: () => navigate('pratah_sanskar')
-              },
-              {
-                id: 'muhurat',
-                title: 'Muhurat',
-                titleHindi: 'शुभ मुहूर्त',
-                desc: 'चौघड़िया, अभिजित व पंचांग',
-                isLive: true,
-                action: () => navigate('muhurat')
-              },
-              {
-                id: 'dosh_remedies',
-                title: 'Dosh & Remedies',
-                titleHindi: 'दोष एवं उपाय',
-                desc: 'कालसर्प, मांगलिक व वैदिक शांति',
-                isLive: true,
-                action: () => navigate('dosh_remedies')
-              },
-              {
-                id: 'lal_kitab',
-                title: 'Lal Kitab',
-                titleHindi: 'लाल किताब',
-                desc: 'ग्रह ऋण, दृष्टि एवं सरल उपाय',
-                isLive: true,
-                action: () => {
-                  try { sessionStorage.setItem('jeevandarpan_scroll_to', 'lalkitab'); } catch {}
-                  navigate('kundli_shell');
-                }
-              },
-              {
-                id: 'reports',
-                title: 'Reports',
-                titleHindi: 'विस्तृत रिपोर्ट',
-                desc: '21-सेक्शन विस्तृत PDF प्रतिवेदन',
-                isLive: true,
-                action: () => navigate('reports')
-              },
-              {
-                id: 'family',
-                title: 'Family',
-                titleHindi: 'पारिवारिक कुंडली',
-                desc: 'मास्टर प्रोफाइल एवं परिवार',
-                isLive: true,
-                action: () => navigate('profile')
-              },
-              {
-                id: 'life_journal',
-                title: 'Life Journal',
-                titleHindi: 'जीवन दैनंदिनी',
-                desc: 'आत्म-चिंतन व अनुभव संकलन',
-                isLive: true,
-                action: () => navigate('daily_report_card')
-              },
-              {
-                id: 'meditation',
-                title: 'Meditation',
-                titleHindi: 'ध्यान व साधना',
-                desc: 'आत्म-साधना एवं आंतरिक शांति',
-                isLive: true,
-                action: () => navigate('meditation')
-              },
-              {
-                id: 'yoga',
-                title: 'Yoga & Sadhana',
-                titleHindi: 'योग एवं साधना',
-                desc: 'प्राणायाम एवं नित्य साधना विधि',
-                isLive: true,
-                action: () => navigate('yoga')
-              },
-              {
-                id: 'mantra_jaap',
-                title: 'Mantra Jaap',
-                titleHindi: 'मंत्र जाप',
-                desc: 'डिजिटल माला एवं मंत्र सिद्धि',
-                isLive: false,
-                action: () => showToast('मंत्र जाप एवं माला गणना केंद्र शीघ्र उपलब्ध होगा।')
-              },
-              {
-                id: 'puja_3d',
-                title: '3D Puja',
-                titleHindi: '3D डिजिटल पूजा',
-                desc: 'देव अर्चन एवं आरती (स्वतंत्र)',
-                isLive: false,
-                action: () => showToast('3D डिजिटल पूजा स्वतंत्र मॉड्यूल के रूप में शीघ्र उपलब्ध होगी।')
-              },
-              {
-                id: 'temple_explorer',
-                title: 'Temple Explorer',
-                titleHindi: 'तीर्थ एवं मंदिर',
-                desc: 'पवित्र देवालय एवं महात्म्य',
-                isLive: false,
-                action: () => showToast('तीर्थ एवं मंदिर दर्शन मार्गदर्शिका शीघ्र उपलब्ध होगी।')
-              },
-              {
-                id: 'temple_travel',
-                title: 'Temple + Travel',
-                titleHindi: 'तीर्थ यात्रा',
-                desc: 'धार्मिक यात्रा एवं सुविधा केंद्र',
-                isLive: false,
-                action: () => showToast('तीर्थ यात्रा योजना एवं सुविधा केंद्र शीघ्र उपलब्ध होगा।')
-              },
-              {
-                id: 'spiritual_store',
-                title: 'Spiritual Store',
-                titleHindi: 'आध्यात्मिक केंद्र',
-                desc: 'प्रामाणिक रत्न, रुद्राक्ष एवं सामग्री',
-                isLive: false,
-                action: () => showToast('वैदिक आध्यात्मिक सामग्री एवं रत्न केंद्र शीघ्र उपलब्ध होगा।')
-              },
-              {
-                id: 'settings',
-                title: 'Settings',
-                titleHindi: 'सेटिंग्स एवं विन्यास',
-                desc: 'भाषा, गार्जियन व वरीयताएं',
-                isLive: true,
-                action: () => setShowLangModal(true)
-              }
+              { id: 'kundli', isLive: true, action: () => onSelectModule ? onSelectModule('kundli') : navigate('kundli_intro') },
+              { id: 'kp', isLive: true, action: () => onSelectModule ? onSelectModule('kp') : navigate('module_screen', 'kp') },
+              { id: 'pragya', isLive: true, action: () => onSelectModule ? onSelectModule('pragya') : navigate('jeevan_pragya') },
+              { id: 'dasha', isLive: true, action: () => onSelectModule ? onSelectModule('dasha') : navigate('module_screen', 'dasha') },
+              { id: 'yogini_dasha', isLive: true, action: () => onSelectModule ? onSelectModule('yogini_dasha') : navigate('module_screen', 'yogini_dasha') },
+              { id: 'ashtottari', isLive: true, action: () => onSelectModule ? onSelectModule('ashtottari') : navigate('module_screen', 'ashtottari') },
+              { id: 'gochar', isLive: true, action: () => onSelectModule ? onSelectModule('gochar') : navigate('module_screen', 'gochar') },
+              { id: 'varga', isLive: true, action: () => onSelectModule ? onSelectModule('varga') : navigate('module_screen', 'varga') },
+              { id: 'sphutas', isLive: true, action: () => onSelectModule ? onSelectModule('sphutas') : navigate('module_screen', 'sphutas') },
+              { id: 'upagrahas', isLive: true, action: () => onSelectModule ? onSelectModule('upagrahas') : navigate('module_screen', 'upagrahas') },
+              { id: 'bnn', isLive: true, action: () => onSelectModule ? onSelectModule('bnn') : navigate('module_screen', 'bnn') },
+              { id: 'ashtakavarga', isLive: true, action: () => onSelectModule ? onSelectModule('ashtakavarga') : navigate('module_screen', 'ashtakavarga') },
+              { id: 'jaimini', isLive: true, action: () => onSelectModule ? onSelectModule('jaimini') : navigate('module_screen', 'jaimini') },
+              { id: 'arudha', isLive: true, action: () => onSelectModule ? onSelectModule('arudha') : navigate('module_screen', 'arudha') },
+              { id: 'sudarshana', isLive: true, action: () => onSelectModule ? onSelectModule('sudarshana') : navigate('module_screen', 'sudarshana') },
+              { id: 'sarvatobhadra', isLive: true, action: () => onSelectModule ? onSelectModule('sarvatobhadra') : navigate('module_screen', 'sarvatobhadra') },
+              { id: 'yoga_dosha', isLive: true, action: () => onSelectModule ? onSelectModule('yoga_dosha') : navigate('module_screen', 'yoga_dosha') },
+              { id: 'shadbala', isLive: true, action: () => onSelectModule ? onSelectModule('shadbala') : navigate('module_screen', 'shadbala') },
+              { id: 'numerology', isLive: true, action: () => { try { sessionStorage.setItem('jeevandarpan_numerology_tab', 'CORE'); } catch {} onSelectModule ? onSelectModule('numerology') : navigate('numerology'); } },
+              { id: 'loshu', isLive: true, action: () => { try { sessionStorage.setItem('jeevandarpan_numerology_tab', 'LOSHU'); } catch {} onSelectModule ? onSelectModule('loshu') : navigate('numerology'); } },
+              { id: 'prashna', isLive: true, action: () => onSelectModule ? onSelectModule('prashna') : navigate('prashna_kundli') },
+              { id: 'aiJyotish', isLive: true, action: () => { try { sessionStorage.setItem('jeevandarpan_intel_tab', 'AI'); } catch {} onSelectModule ? onSelectModule('aiJyotish') : navigate('intelligence_dashboard'); } },
+              { id: 'lifeQuestions', isLive: true, action: () => { try { sessionStorage.setItem('jeevandarpan_intel_tab', 'QUESTIONS'); } catch {} onSelectModule ? onSelectModule('lifeQuestions') : navigate('intelligence_dashboard'); } },
+              { id: 'dailyCompanion', isLive: true, action: () => onSelectModule ? onSelectModule('dailyCompanion') : navigate('daily_companion') },
+              { id: 'pratahSanskar', isLive: true, action: () => onSelectModule ? onSelectModule('pratahSanskar') : navigate('pratah_sanskar') },
+              { id: 'muhurat', isLive: true, action: () => onSelectModule ? onSelectModule('muhurat') : navigate('muhurat') },
+              { id: 'doshRemedies', isLive: true, action: () => onSelectModule ? onSelectModule('doshRemedies') : navigate('dosh_remedies') },
+              { id: 'lalKitab', isLive: true, action: () => onSelectModule ? onSelectModule('lal_kitab') : navigate('module_screen', 'lal_kitab') },
+              { id: 'reports', isLive: true, action: () => onSelectModule ? onSelectModule('reports') : navigate('reports') },
+              { id: 'family', isLive: true, action: () => onSelectModule ? onSelectModule('family') : navigate('profile') },
+              { id: 'lifeJournal', isLive: true, action: () => onSelectModule ? onSelectModule('lifeJournal') : navigate('daily_report_card') },
+              { id: 'meditation', isLive: true, action: () => onSelectModule ? onSelectModule('meditation') : navigate('meditation') },
+              { id: 'yoga', isLive: true, action: () => onSelectModule ? onSelectModule('yoga') : navigate('yoga') },
+              { id: 'mantraJaap', isLive: false, action: () => showToast('मंत्र जाप एवं माला गणना केंद्र शीघ्र उपलब्ध होगा।') },
+              { id: 'puja3d', isLive: false, action: () => showToast('3D डिजिटल पूजा स्वतंत्र मॉड्यूल के रूप में शीघ्र उपलब्ध होगी।') },
+              { id: 'templeExplorer', isLive: false, action: () => showToast('तीर्थ एवं मंदिर दर्शन मार्गदर्शिका शीघ्र उपलब्ध होगी।') },
+              { id: 'templeTravel', isLive: false, action: () => showToast('तीर्थ यात्रा योजना एवं सुविधा केंद्र शीघ्र उपलब्ध होगा।') },
+              { id: 'spiritualStore', isLive: false, action: () => showToast('वैदिक आध्यात्मिक सामग्री एवं रत्न केंद्र शीघ्र उपलब्ध होगा।') },
+              { id: 'settings', isLive: true, action: () => setShowLangModal(true) }
             ].map((mod, idx) => {
+              const titleText = t(`modules.${mod.id}.title`) || mod.id;
+              const subtitleText = t(`modules.${mod.id}.subtitle`) || '';
+              const descText = t(`modules.${mod.id}.desc`) || '';
               return (
                 <button
                   key={idx}
@@ -747,10 +549,10 @@ export default function Dashboard({ profile, navigate, showToast }: DashboardPro
                   <div className="flex items-start justify-between gap-1 w-full">
                     <div>
                       <h4 className={`font-bold tracking-wide text-sm sm:text-base leading-snug ${mod.isLive ? 'text-[#d4af37] group-hover:text-[#fef08a]' : 'text-gray-300 group-hover:text-white'}`}>
-                        {mod.titleHindi}
+                        {titleText}
                       </h4>
                       <p className="text-[11px] text-gray-400 font-medium">
-                        {mod.title}
+                        {subtitleText}
                       </p>
                     </div>
                     {mod.isLive && (
@@ -758,7 +560,7 @@ export default function Dashboard({ profile, navigate, showToast }: DashboardPro
                     )}
                   </div>
                   <p className="text-[11px] text-gray-300 mt-2 line-clamp-1 leading-normal">
-                    {mod.desc}
+                    {descText}
                   </p>
                   {mod.isLive && (
                     <div className="absolute inset-0 bg-gradient-to-tr from-[#d4af37]/0 via-[#d4af37]/5 to-[#d4af37]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />

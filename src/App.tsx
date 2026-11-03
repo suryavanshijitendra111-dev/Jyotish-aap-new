@@ -20,6 +20,7 @@ import DoshDashboard from './components/dosh/DoshDashboard';
 import MeditationDashboard from './components/meditation/MeditationDashboard';
 import YogaDashboard from './components/yogaSadhana/YogaDashboard';
 import JeevanPragyaDashboard from './components/jeevanPragya/JeevanPragyaDashboard';
+import { ModuleScreen } from './components/kundli/ModuleScreen';
 import { ProfileManagerView } from './components/profile/ProfileManagerView';
 import { GuardianErrorBoundary } from './components/guardian/GuardianErrorBoundary';
 import { guardianMonitor } from './services/guardian/guardianMonitor';
@@ -38,9 +39,20 @@ import { useProfile } from './context/ProfileContext';
 
 export default function App() {
   const [view, setView] = useState('dashboard');
+  const [activeModule, setActiveModule] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const { t, currentLanguageInfo } = useTranslation();
+
+  const handleNavigate = (targetView: string, modId?: string) => {
+    if (targetView === 'module_screen' && modId) {
+      setActiveModule(modId);
+      setView('module_screen');
+    } else {
+      setActiveModule(null);
+      setView(targetView);
+    }
+  };
   
   const { activeProfile } = useProfile();
 
@@ -79,6 +91,22 @@ export default function App() {
   }, [toastMessage]);
 
   const renderView = () => {
+    // If activeModule is active and view is module_screen, render ModuleScreen directly
+    if (activeModule && view === 'module_screen') {
+      return (
+        <ModuleScreen
+          key={activeModule}
+          activeModule={activeModule}
+          profile={activeProfile}
+          onBack={() => {
+            setActiveModule(null);
+            setView('dashboard');
+          }}
+          showToast={setToastMessage}
+        />
+      );
+    }
+
     // If maintenance mode active and not on owner_control, display maintenance notice
     if (ownerConfig.maintenanceControls.maintenanceMode && !ownerConfig.maintenanceControls.bypassForOwner && view !== 'owner_control') {
       return (
@@ -169,7 +197,50 @@ export default function App() {
           />
         );
       case 'dashboard':
-        return <Dashboard key={activeProfile.id} profile={activeProfile} navigate={setView} showToast={setToastMessage} />;
+        return (
+          <Dashboard 
+            key={activeProfile?.id || 'default'} 
+            profile={activeProfile} 
+            navigate={handleNavigate} 
+            showToast={setToastMessage} 
+            onSelectModule={(modId) => {
+              if (modId === 'numerology' || modId === 'loshu') setView('numerology');
+              else if (modId === 'pragya') setView('jeevan_pragya');
+              else if (modId === 'aiJyotish' || modId === 'lifeQuestions') setView('intelligence_dashboard');
+              else if (modId === 'prashna') setView('prashna_kundli');
+              else if (modId === 'dailyCompanion') setView('daily_companion');
+              else if (modId === 'pratahSanskar') setView('pratah_sanskar');
+              else if (modId === 'muhurat') setView('muhurat');
+              else if (modId === 'doshRemedies') setView('dosh_remedies');
+              else if (modId === 'reports') setView('reports');
+              else if (modId === 'family') setView('profile');
+              else if (modId === 'lifeJournal') setView('daily_report_card');
+              else if (modId === 'meditation') setView('meditation');
+              else if (modId === 'yoga') setView('yoga');
+              else if (modId === 'settings') setShowLanguageModal(true);
+              else {
+                setActiveModule(modId);
+                setView('module_screen');
+              }
+            }}
+          />
+        );
+      case 'module_screen':
+        if (!activeModule) {
+          return <Dashboard key={activeProfile?.id || 'default'} profile={activeProfile} navigate={handleNavigate} showToast={setToastMessage} />;
+        }
+        return (
+          <ModuleScreen
+            key={activeModule}
+            activeModule={activeModule}
+            profile={activeProfile}
+            onBack={() => {
+              setActiveModule(null);
+              setView('dashboard');
+            }}
+            showToast={setToastMessage}
+          />
+        );
       case 'jeevan_pragya':
         return <JeevanPragyaDashboard key={activeProfile.id} profile={activeProfile} navigate={setView} showToast={setToastMessage} />;
       case 'numerology':

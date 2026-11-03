@@ -8,6 +8,7 @@ import { MasterKundliData } from '../../types/kundli';
 import { ShadbalaEngine, ShadbalaResult } from '../../services/astrology/shadbalaEngine';
 import CarvedCard from '../ui/CarvedCard';
 import { Shield, TrendingUp, Award, Info, Zap } from 'lucide-react';
+import { useTranslation } from '../../i18n';
 import { getLocalizedPlanet, getLocalizedHouse } from '../../i18n/astrology';
 
 interface ShadbalaViewProps {
@@ -17,6 +18,9 @@ interface ShadbalaViewProps {
 const PLANETS = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'];
 
 export const ShadbalaView: React.FC<ShadbalaViewProps> = ({ data }) => {
+  const { t, currentLanguageInfo } = useTranslation();
+  const lang = currentLanguageInfo.code;
+
   const shadbala = useMemo(() => {
     return ShadbalaEngine.calculate(data);
   }, [data]);
@@ -42,16 +46,16 @@ export const ShadbalaView: React.FC<ShadbalaViewProps> = ({ data }) => {
         <div>
           <h2 className="text-2xl font-serif text-yellow-500 flex items-center gap-2">
             <Shield className="w-6 h-6" />
-            Shadbala (षड्बल)
+            {t('modules.shadbala.title') || 'षड्बल विश्लेषण'} ({t('shadbala.title') || 'Shadbala'})
           </h2>
           <p className="text-white/60 text-sm mt-1 font-sans">
-            Six-fold strength analysis of planets for karmic impact
+            {t('shadbala.desc') || 'Six-fold strength analysis of planets for karmic impact'}
           </p>
         </div>
         <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-xl border border-white/10">
           <TrendingUp className="w-4 h-4 text-emerald-400" />
           <span className="text-xs uppercase tracking-widest text-emerald-400 font-bold">
-            Classical Strength Engine
+            {t('modules.shadbala.subtitle') || 'षड्बल गणना'}
           </span>
         </div>
       </div>
@@ -61,7 +65,7 @@ export const ShadbalaView: React.FC<ShadbalaViewProps> = ({ data }) => {
         <div className="space-y-4">
           <h3 className="text-lg font-serif text-yellow-500/80 mb-2 flex items-center gap-2">
             <Zap className="w-5 h-5" />
-            Planetary Strength Ratio
+            {t('shadbala.planetaryStrength') || 'Planetary Strength Ratio'}
           </h3>
           <div className="space-y-3">
             {PLANETS.map(pName => {
@@ -75,7 +79,7 @@ export const ShadbalaView: React.FC<ShadbalaViewProps> = ({ data }) => {
                         {getLocalizedPlanet(pName)}
                       </span>
                       <span className="text-[10px] text-white/40 font-mono">
-                        {res.totalRupas.toFixed(2)} Rupas
+                        {res.totalRupas.toFixed(2)} {t('shadbala.totalRupas') || 'Rupas'}
                       </span>
                     </div>
                     <div className="text-right">
@@ -93,13 +97,23 @@ export const ShadbalaView: React.FC<ShadbalaViewProps> = ({ data }) => {
                     />
                   </div>
 
+                  {/* 6-Fold Breakdown */}
+                  <div className="grid grid-cols-3 gap-2 mt-3 pt-2 border-t border-white/5 text-[9px]">
+                    <div className="flex justify-between"><span className="text-white/40">{t('shadbala.sthana')}:</span> <span className="font-mono text-white/80">{res.sthanaBala.toFixed(0)}v</span></div>
+                    <div className="flex justify-between"><span className="text-white/40">{t('shadbala.dig')}:</span> <span className="font-mono text-white/80">{res.digBala.toFixed(0)}v</span></div>
+                    <div className="flex justify-between"><span className="text-white/40">{t('shadbala.kala')}:</span> <span className="font-mono text-white/80">{res.kaalaBala.toFixed(0)}v</span></div>
+                    <div className="flex justify-between"><span className="text-white/40">{t('shadbala.chesta')}:</span> <span className="font-mono text-white/80">{res.cheshtaBala.toFixed(0)}v</span></div>
+                    <div className="flex justify-between"><span className="text-white/40">{t('shadbala.naisargika')}:</span> <span className="font-mono text-white/80">{res.naisargikaBala.toFixed(0)}v</span></div>
+                    <div className="flex justify-between"><span className="text-white/40">{t('shadbala.drik')}:</span> <span className="font-mono text-white/80">{res.drikBala.toFixed(0)}v</span></div>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4 mt-3 pt-2 border-t border-white/5">
                     <div className="flex justify-between items-center">
-                      <span className="text-[9px] text-emerald-400/60 uppercase font-bold">Ishta (इष्ट)</span>
+                      <span className="text-[9px] text-emerald-400/60 uppercase font-bold">{t('shadbala.ishtaPhala') || 'Ishta'}</span>
                       <span className="text-[10px] text-emerald-400 font-mono">{res.ishtaPhala.toFixed(1)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-[9px] text-red-400/60 uppercase font-bold">Kashta (कष्ट)</span>
+                      <span className="text-[9px] text-red-400/60 uppercase font-bold">{t('shadbala.kashtaPhala') || 'Kashta'}</span>
                       <span className="text-[10px] text-red-400 font-mono">{res.kashtaPhala.toFixed(1)}</span>
                     </div>
                   </div>
@@ -113,7 +127,7 @@ export const ShadbalaView: React.FC<ShadbalaViewProps> = ({ data }) => {
         <div className="space-y-4">
           <h3 className="text-lg font-serif text-yellow-500/80 mb-2 flex items-center gap-2">
             <Award className="w-5 h-5" />
-            Bhava Bala Rankings (भाव बल)
+            {t('shadbala.bhavaRankings') || 'Bhava Bala Rankings'}
           </h3>
           <div className="grid grid-cols-1 gap-2">
             {shadbala.houses.sort((a, b) => a.rank - b.rank).map(h => (
@@ -127,16 +141,16 @@ export const ShadbalaView: React.FC<ShadbalaViewProps> = ({ data }) => {
                   </div>
                   <div>
                     <div className="text-sm font-bold flex items-center gap-2">
-                      {h.house}. {getLocalizedHouse(h.house, 'hi').full}
+                      {h.house}. {getLocalizedHouse(h.house, lang).full}
                     </div>
                     <div className="text-[9px] opacity-60 uppercase tracking-tighter">
-                      Lord Strength: {h.adhipatiBala.toFixed(0)} • Rank {h.rank}
+                      {t('shadbala.adhipati')}: {h.adhipatiBala.toFixed(0)} • {t('shadbala.rank')} {h.rank}
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-mono font-bold">{h.totalRupas.toFixed(2)}</div>
-                  <div className="text-[8px] opacity-50 uppercase tracking-widest">Rupas</div>
+                  <div className="text-[8px] opacity-50 uppercase tracking-widest">{t('shadbala.totalRupas')}</div>
                 </div>
               </div>
             ))}
@@ -145,8 +159,7 @@ export const ShadbalaView: React.FC<ShadbalaViewProps> = ({ data }) => {
           <div className="mt-6 p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl flex gap-3">
             <Info className="w-5 h-5 text-yellow-500 shrink-0" />
             <p className="text-[11px] text-white/60 leading-relaxed italic">
-              "Shadbala reveals the potential energy of a planet. Bhava Bala indicates the capacity of a house to deliver its results. 
-              A high rank for a specific house ensures fruition of that department of life."
+              {t('shadbala.note')}
             </p>
           </div>
         </div>

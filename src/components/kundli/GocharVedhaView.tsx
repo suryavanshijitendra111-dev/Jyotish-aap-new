@@ -3,25 +3,49 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { MasterKundliData } from '../../types/kundli';
-import { TransitAnalysisResult } from '../../services/jyotish/transitEngine';
+import { TransitAnalysisResult, TransitEngine } from '../../services/jyotish/transitEngine';
 import { GocharVedhaEngine, GocharVedhaAnalysis } from '../../services/astrology/gocharVedhaEngine';
 import { AshtakavargaEngine } from '../../services/astrology/ashtakavargaEngine';
 import CarvedCard from '../ui/CarvedCard';
-import { Shield, Timer, AlertTriangle, CheckCircle, Ban, ArrowRight, Info } from 'lucide-react';
+import { Shield, Timer, AlertTriangle, CheckCircle, Ban, ArrowRight, Info, RotateCw } from 'lucide-react';
 import { getLocalizedPlanet, getLocalizedHouse } from '../../i18n/astrology';
 
 interface GocharVedhaViewProps {
   natalData: MasterKundliData;
-  transitResult: TransitAnalysisResult | null;
+  transitResult?: TransitAnalysisResult | null;
 }
 
 const PLANETS = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'];
 
-export const GocharVedhaView: React.FC<GocharVedhaViewProps> = ({ natalData, transitResult }) => {
+export const GocharVedhaView: React.FC<GocharVedhaViewProps> = ({ natalData, transitResult: propTransitResult }) => {
+  const [transitResult, setTransitResult] = useState<TransitAnalysisResult | null>(() => {
+    if (propTransitResult && propTransitResult.transitPlanets) return propTransitResult;
+    try {
+      const engine = new TransitEngine();
+      return engine.calculateDeterministicAstronomicalTransit({}, natalData);
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    if (propTransitResult && propTransitResult.transitPlanets) {
+      setTransitResult(propTransitResult);
+    }
+  }, [propTransitResult]);
+
   const analysis = useMemo(() => {
-    if (!transitResult || !transitResult.transitPlanets) return null;
+    if (!transitResult || !transitResult.transitPlanets) {
+      try {
+        const engine = new TransitEngine();
+        const fallback = engine.calculateDeterministicAstronomicalTransit({}, natalData);
+        return GocharVedhaEngine.analyze(natalData, fallback.transitPlanets!);
+      } catch {
+        return null;
+      }
+    }
     return GocharVedhaEngine.analyze(natalData, transitResult.transitPlanets);
   }, [natalData, transitResult]);
 
@@ -31,8 +55,9 @@ export const GocharVedhaView: React.FC<GocharVedhaViewProps> = ({ natalData, tra
 
   if (!analysis) {
     return (
-      <div className="p-8 text-center text-white/40 italic font-serif">
-        Initializing Real-Time Transit Data...
+      <div className="p-12 text-center text-[#d4af37] italic font-serif flex items-center justify-center gap-3">
+        <RotateCw className="w-6 h-6 animate-spin" />
+        <span>Initializing Real-Time Transit Data...</span>
       </div>
     );
   }

@@ -13,7 +13,8 @@
  * - Master profile relationship cannot be altered away from 'SELF'.
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import type { FC } from 'react';
 import { X, Calendar, Clock, MapPin, User, Phone, AlertCircle, Info, Check, Shield, Globe, Navigation } from 'lucide-react';
 import { FamilyMemberProfile, ProfileGender, ProfileRelation } from '../../types/profile/profileTypes';
 import { useTranslation } from '../../i18n';
@@ -264,7 +265,7 @@ const fromInputTime = (time24: string): string => {
   return `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
 };
 
-export const FamilyMemberFormModal: React.FC<FamilyMemberFormModalProps> = ({
+export const FamilyMemberFormModal: FC<FamilyMemberFormModalProps> = ({
   isOpen,
   onClose,
   onSave,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Bell, 
   AlertTriangle, 
@@ -22,7 +22,7 @@ import {
   getStoredIncidents,
   classifyIncidentState 
 } from '../../services/guardian/guardianIncidentService';
-import { t } from '../../i18n';
+import { useTranslation } from '../../i18n';
 
 interface OwnerNotificationCenterProps {
   onOpenIncidentModal: (incident: GuardianIncident) => void;
@@ -35,6 +35,7 @@ export default function OwnerNotificationCenter({
   onOpenOwnerControl,
   onDirectFix,
 }: OwnerNotificationCenterProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<OwnerNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -46,13 +47,17 @@ export default function OwnerNotificationCenter({
     setUnreadCount(ownerNotificationService.getUnreadCount());
 
     const unsubscribe = ownerNotificationService.subscribe((list, unread) => {
-      setNotifications([...list]);
-      setUnreadCount(unread);
+      setTimeout(() => {
+        setNotifications([...list]);
+        setUnreadCount(unread);
+      }, 0);
     });
 
     const handleIncidentUpdate = () => {
-      // Force refresh unread count
-      setUnreadCount(ownerNotificationService.getUnreadCount());
+      // Force refresh unread count asynchronously
+      setTimeout(() => {
+        setUnreadCount(ownerNotificationService.getUnreadCount());
+      }, 0);
     };
 
     window.addEventListener('jeevandarpan_incidents_updated', handleIncidentUpdate);

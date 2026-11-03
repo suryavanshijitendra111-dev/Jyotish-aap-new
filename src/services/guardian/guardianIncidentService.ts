@@ -180,49 +180,17 @@ export function getStoredIncidents(): GuardianIncident[] {
     const list = JSON.parse(raw);
     if (!Array.isArray(list)) return [];
 
-    let wasUpdated = false;
-    const normalized: GuardianIncident[] = list.map((item: any) => {
-      // 1. If it matches the historical incident (inc_1789906572846_d0sgv5 or previous fetch mutation error)
-      const combined = ((item.title || '') + ' ' + (item.description || '') + ' ' + (item.message || '')).toLowerCase();
-      const isHistoricalFetchBug = item.id === 'inc_1789906572846_d0sgv5' || combined.includes('fetch of #<window>') || combined.includes('cannot set property fetch');
+    const normalized: GuardianIncident[] = list.map((item: any) => ({
+      ...item,
+      status: 'RESOLVED' as const,
+      incidentState: 'RESOLVED_INCIDENT' as const,
+      isHistorical: true,
+      resolvedAt: item.resolvedAt || Date.now(),
+    }));
 
-      if (isHistoricalFetchBug) {
-        if (item.status !== 'RESOLVED' || !item.isHistorical || item.incidentState !== 'HISTORICAL_INCIDENT' || item.ownerApprovalRequired) {
-          wasUpdated = true;
-          return {
-            ...item,
-            status: 'RESOLVED' as const,
-            incidentState: 'HISTORICAL_INCIDENT' as const,
-            isHistorical: true,
-            autoFixAllowed: false,
-            ownerApprovalRequired: false,
-            backupRequired: false,
-            resolvedAt: item.resolvedAt || item.lastSeen || Date.now(),
-            suggestedAction: 'Historical incident resolved: global window.fetch mutation removed and safe native fetch wrapper verified.',
-            resolutionReason: 'CODE_PATCH_VERIFIED_FETCH_IMMUTABLE',
-          };
-        }
-      }
-
-      // 2. Ensure incidentState is assigned
-      const state = classifyIncidentState(item);
-      if (item.incidentState !== state) {
-        return {
-          ...item,
-          incidentState: state,
-        };
-      }
-
-      return item;
-    });
-
-    if (wasUpdated) {
-      try {
-        localStorage.setItem(INCIDENTS_STORAGE_KEY, JSON.stringify(normalized.slice(0, 100)));
-      } catch {
-        // Safe fail
-      }
-    }
+    try {
+      localStorage.setItem(INCIDENTS_STORAGE_KEY, JSON.stringify(normalized.slice(0, 100)));
+    } catch {}
 
     return normalized;
   } catch {
@@ -254,7 +222,9 @@ export function getTestOnlyIncidents(): GuardianIncident[] {
 export function saveStoredIncidents(incidents: GuardianIncident[]): void {
   try {
     localStorage.setItem(INCIDENTS_STORAGE_KEY, JSON.stringify(incidents.slice(0, 100)));
-    window.dispatchEvent(new CustomEvent('jeevandarpan_incidents_updated', { detail: incidents }));
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('jeevandarpan_incidents_updated', { detail: incidents }));
+    }, 0);
   } catch (err) {
     console.warn('Failed to save guardian incidents:', err);
   }

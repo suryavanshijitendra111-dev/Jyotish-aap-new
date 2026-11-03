@@ -130,8 +130,15 @@ export default function LiveTransitChart({ masterData, className = '' }: LiveTra
   const { language } = useTranslation();
   const isHindi = language === 'hi' || (language as string) === 'Hindi' || language === 'sa';
 
-  const [transitResult, setTransitResult] = useState<TransitAnalysisResult | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [transitResult, setTransitResult] = useState<TransitAnalysisResult | null>(() => {
+    try {
+      const transitEngine = new TransitEngine();
+      return transitEngine.calculateDeterministicAstronomicalTransit({}, masterData);
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<TransitViewMode>('birth_moon');
   const [selectedPlanet, setSelectedPlanet] = useState<string | null>(null);
@@ -141,7 +148,6 @@ export default function LiveTransitChart({ masterData, className = '' }: LiveTra
   // Fetch real-time live transit coordinates
   const fetchLiveTransit = useCallback(async (isManualRefresh = false) => {
     if (isManualRefresh) setIsRefreshing(true);
-    else setLoading(true);
     setError(null);
 
     try {
@@ -162,23 +168,10 @@ export default function LiveTransitChart({ masterData, className = '' }: LiveTra
 
       if (res && res.status === 'AVAILABLE' && res.transits && res.transits.length > 0) {
         setTransitResult(res);
-      } else {
-        const fallbackRes = transitEngine.calculateDeterministicAstronomicalTransit({
-          date: targetDate,
-          time: targetTime,
-          latitude: targetLat,
-          longitude: targetLon,
-          timezone: targetTz
-        }, masterData);
-        setTransitResult(fallbackRes);
       }
     } catch (err: any) {
-      console.warn('Fallback to deterministic live transit:', err);
-      const transitEngine = new TransitEngine();
-      const fallbackRes = transitEngine.calculateDeterministicAstronomicalTransit({}, masterData);
-      setTransitResult(fallbackRes);
+      console.warn('Background live transit update note:', err);
     } finally {
-      setLoading(false);
       setIsRefreshing(false);
     }
   }, [masterData]);

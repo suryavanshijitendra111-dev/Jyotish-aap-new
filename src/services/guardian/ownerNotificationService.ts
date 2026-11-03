@@ -53,9 +53,11 @@ export function saveStoredNotifications(list: OwnerNotification[]): void {
   try {
     localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(list.slice(0, 50)));
     const unread = list.filter(n => !n.read).length;
-    window.dispatchEvent(new CustomEvent('jeevandarpan_notifications_updated', { 
-      detail: { notifications: list, unreadCount: unread } 
-    }));
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('jeevandarpan_notifications_updated', { 
+        detail: { notifications: list, unreadCount: unread } 
+      }));
+    }, 0);
   } catch (err) {
     console.warn('Failed to save owner notifications:', err);
   }

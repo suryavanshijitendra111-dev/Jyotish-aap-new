@@ -9,7 +9,8 @@ import CarvedCard from '../ui/CarvedCard';
 import { Activity, ChevronDown, ChevronRight, Clock, Zap } from 'lucide-react';
 
 interface DashaChartViewProps {
-  dasha: VimshottariData | null;
+  dasha?: VimshottariData | null;
+  data?: MasterKundliData | any | null;
 }
 
 const planetColors: Record<string, string> = {
@@ -51,14 +52,24 @@ const isActive = (start: string, end: string) => {
   return now >= s && now < e;
 };
 
-export const DashaChartView: React.FC<DashaChartViewProps> = ({ dasha }) => {
+export const DashaChartView: React.FC<DashaChartViewProps> = ({ dasha, data }) => {
   const [expandedMd, setExpandedMd] = useState<string | null>(null);
   const [expandedAd, setExpandedAd] = useState<string | null>(null);
 
-  if (!dasha) return null;
+  const dashaObj = dasha || data?.vimshottariDasha || (data?.currentMahadasha ? data : null);
 
-  const md = dasha.currentMahadasha;
-  const ad = dasha.currentAntardasha;
+  if (!dashaObj || !dashaObj.currentMahadasha || !dashaObj.mahadashas) {
+    return (
+      <div className="p-6 bg-black/40 border border-amber-500/30 rounded-2xl text-center space-y-3">
+        <Clock className="w-8 h-8 text-amber-400 animate-spin mx-auto" />
+        <p className="text-sm text-amber-200/80 font-medium">Vimshottari Dasha calculation loading or data required...</p>
+      </div>
+    );
+  }
+
+  const md = dashaObj.currentMahadasha;
+  const ad = dashaObj.currentAntardasha;
+  const mahadashas = dashaObj.mahadashas || dashaObj.mahadashaList || dashaObj.periods || [];
   
   const now = new Date().getTime();
   const pd = ad.subPeriods?.find(p => {
@@ -147,7 +158,7 @@ export const DashaChartView: React.FC<DashaChartViewProps> = ({ dasha }) => {
         </div>
 
         <div className="space-y-2">
-          {dasha.mahadashas.map((mPeriod, mIdx) => {
+          {mahadashas.map((mPeriod, mIdx) => {
             const isMdActive = isActive(mPeriod.startDate, mPeriod.endDate);
             const isMdExpanded = expandedMd === mPeriod.planet;
             

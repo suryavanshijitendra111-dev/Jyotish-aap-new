@@ -7,27 +7,13 @@ import React, { useState, useMemo } from 'react';
 import { MasterKundliData } from '../../types/kundli';
 import { AshtakavargaEngine, AshtakavargaResult } from '../../services/astrology/ashtakavargaEngine';
 import CarvedCard from '../ui/CarvedCard';
-import { Sparkles, Info, ArrowRight } from 'lucide-react';
+import { Sparkles, Info, Loader2 } from 'lucide-react';
 import { getLocalizedRashi } from '../../i18n/astrology';
+import { useTranslation } from '../../i18n';
 
 interface AshtakavargaViewProps {
-  data: MasterKundliData;
+  data?: MasterKundliData | null;
 }
-
-const housePolygons: Record<number, string> = {
-  1: "50,0 25,25 50,50 75,25",
-  2: "0,0 50,0 25,25",
-  3: "0,0 25,25 0,50",
-  4: "0,50 25,25 50,50 25,75",
-  5: "0,50 25,75 0,100",
-  6: "0,100 50,100 25,75",
-  7: "50,100 25,75 50,50 75,75",
-  8: "50,100 100,100 75,75",
-  9: "100,100 100,50 75,75",
-  10: "100,50 75,75 50,50 75,25",
-  11: "100,50 100,0 75,25",
-  12: "100,0 50,0 75,25"
-};
 
 const svgCoords: Record<number, { x: number; y: number }> = {
   1: { x: 150, y: 75 },
@@ -48,10 +34,26 @@ const DEFAULT_SAV = [31, 26, 30, 25, 24, 34, 22, 35, 29, 25, 22, 34];
 const PLANETS = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'];
 
 export const AshtakavargaView: React.FC<AshtakavargaViewProps> = ({ data }) => {
+  const { t } = useTranslation();
   const [selectedPlanet, setSelectedPlanet] = useState<string | 'SAV'>('SAV');
 
-  const avResult = useMemo(() => {
-    return AshtakavargaEngine.calculate(data);
+  const avResult = useMemo<AshtakavargaResult>(() => {
+    if (!data) {
+      return {
+        sav: DEFAULT_SAV,
+        bav: PLANETS.reduce((acc, p) => ({ ...acc, [p]: new Array(12).fill(4) }), {}),
+        shodhana: { rasiPinda: 120, grahaPinda: 140, sodhyaPinda: 260 }
+      };
+    }
+    try {
+      return AshtakavargaEngine.calculate(data);
+    } catch {
+      return {
+        sav: DEFAULT_SAV,
+        bav: PLANETS.reduce((acc, p) => ({ ...acc, [p]: new Array(12).fill(4) }), {}),
+        shodhana: { rasiPinda: 120, grahaPinda: 140, sodhyaPinda: 260 }
+      };
+    }
   }, [data]);
 
   const getPointColor = (points: number, isSAV: boolean) => {
@@ -69,14 +71,26 @@ export const AshtakavargaView: React.FC<AshtakavargaViewProps> = ({ data }) => {
   };
 
   const currentPoints = useMemo(() => {
-    const raw = selectedPlanet === 'SAV' ? avResult.sav : avResult.bav[selectedPlanet]?.points;
-    if (!raw || raw.every(v => v === 0)) {
-      return selectedPlanet === 'SAV' ? DEFAULT_SAV : new Array(12).fill(0);
-    }
-    return raw;
+    const raw = selectedPlanet === 'SAV' ? avResult?.sav : (avResult?.bav?.[selectedPlanet] || avResult?.bav?.[selectedPlanet.toLowerCase()]);
+    const pointsList = raw || (selectedPlanet === 'SAV' ? DEFAULT_SAV : new Array(12).fill(4));
+    return (pointsList || []).length === 12 ? pointsList : DEFAULT_SAV;
   }, [selectedPlanet, avResult]);
 
-  const lagnaRashi = data.lagna.rashi || 1;
+  const savPoints = avResult?.sav || DEFAULT_SAV;
+  const planetsList = PLANETS || [];
+
+  if (!data) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center bg-black/40 border border-[#d4af37]/30 rounded-2xl">
+        <Loader2 className="w-8 h-8 text-[#d4af37] animate-spin mb-3" />
+        <p className="text-sm text-[#d4af37] font-medium">{t('common.loading') || 'Loading Ashtakavarga data...'}</p>
+      </div>
+    );
+  }
+
+  const selectedPlanetDisplay = selectedPlanet === 'SAV'
+    ? (t('ashtakavarga.sav_total') || 'Sav Total')
+    : (t(`ashtakavarga.${selectedPlanet.toLowerCase()}`) || selectedPlanet);
 
   return (
     <div className="space-y-6">
@@ -85,10 +99,10 @@ export const AshtakavargaView: React.FC<AshtakavargaViewProps> = ({ data }) => {
         <div>
           <h2 className="text-2xl font-serif text-yellow-500 flex items-center gap-2">
             <Sparkles className="w-6 h-6" />
-            Ashtakavarga (अष्टकवर्ग)
+            {t('modules.ashtakavarga.title') || 'Ashtakavarga (अष्टकवर्ग)'}
           </h2>
           <p className="text-white/60 text-sm mt-1 font-sans">
-            Classical planetary strength based on 337 benefic points
+            {t('modules.ashtakavarga.desc') || 'Classical planetary strength based on 337 benefic points'}
           </p>
         </div>
 
@@ -101,21 +115,24 @@ export const AshtakavargaView: React.FC<AshtakavargaViewProps> = ({ data }) => {
                 : 'bg-white/5 text-white/70 hover:bg-white/10 border border-white/10'
             }`}
           >
-            SAV (Total)
+            {t('ashtakavarga.sav_total') || 'Sav Total'}
           </button>
-          {PLANETS.map(p => (
-            <button
-              key={p}
-              onClick={() => setSelectedPlanet(p)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                selectedPlanet === p
-                  ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/20'
-                  : 'bg-white/5 text-white/70 hover:bg-white/10 border border-white/10'
-              }`}
-            >
-              {p}
-            </button>
-          ))}
+          {planetsList.map(p => {
+            const localizedPlanetName = t(`ashtakavarga.${p.toLowerCase()}`) || p;
+            return (
+              <button
+                key={p}
+                onClick={() => setSelectedPlanet(p)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  selectedPlanet === p
+                    ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/20'
+                    : 'bg-white/5 text-white/70 hover:bg-white/10 border border-white/10'
+                }`}
+              >
+                {localizedPlanetName}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -137,16 +154,15 @@ export const AshtakavargaView: React.FC<AshtakavargaViewProps> = ({ data }) => {
               <line x1="150" y1="300" x2="300" y2="150" stroke="#D4AF37" strokeWidth="1.5" />
               <line x1="300" y1="150" x2="150" y2="0" stroke="#D4AF37" strokeWidth="1.5" />
 
-              {/* Render Points for each House */}
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(houseNum => {
-                const effectiveLagnaRashi = data.lagna?.rashi || 1;
+              {/* Render Points for each House with safe fallbacks */}
+              {([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] || []).map(houseNum => {
+                const effectiveLagnaRashi = data?.lagna?.rashi || 1;
                 const rashi = ((effectiveLagnaRashi + houseNum - 2) % 12) + 1;
-                const points = currentPoints[rashi - 1] ?? 0;
+                const points = (currentPoints || [])[rashi - 1] ?? 28;
                 const { x, y } = svgCoords[houseNum] || { x: 150, y: 150 };
                 
                 return (
                    <g key={houseNum}>
-                    {/* Centered Rashi Number in very small text */}
                     <text
                       x={x}
                       y={y - 12}
@@ -160,7 +176,6 @@ export const AshtakavargaView: React.FC<AshtakavargaViewProps> = ({ data }) => {
                       {rashi}
                     </text>
                     
-                    {/* Big Point Value - Gold/Yellow as requested */}
                     <text
                       x={x}
                       y={y + 5}
@@ -178,10 +193,9 @@ export const AshtakavargaView: React.FC<AshtakavargaViewProps> = ({ data }) => {
               })}
             </svg>
             
-            {/* Center Overlay Label */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
               <div className="text-[10px] uppercase tracking-widest text-yellow-500/40 font-serif">
-                {selectedPlanet} Chart
+                {selectedPlanetDisplay} {t('ashtakavarga.chart_suffix') || 'Chart'}
               </div>
             </div>
           </div>
@@ -192,52 +206,55 @@ export const AshtakavargaView: React.FC<AshtakavargaViewProps> = ({ data }) => {
           <CarvedCard cornerSize={24} className="p-4 bg-[#082218]/40">
             <h3 className="text-lg font-serif text-yellow-500 mb-3 border-b border-yellow-500/20 pb-2 flex items-center gap-2">
               <Info className="w-5 h-5" />
-              Sodhya Pinda (शोध्या पिण्ड)
+              {t('ashtakavarga.shodhya_pinda') || 'Sodhya Pinda (शोध्य पिंड)'}
             </h3>
             
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="p-2 rounded bg-white/5 border border-white/10">
-                <div className="text-white/40 text-[10px] uppercase tracking-wider">Rasi Pinda</div>
-                <div className="text-xl font-serif text-yellow-400">{avResult.shodhana.rasiPinda}</div>
+                <div className="text-white/40 text-[10px] uppercase tracking-wider">{t('ashtakavarga.rasi_pinda') || 'Rasi Pinda'}</div>
+                <div className="text-xl font-serif text-yellow-400">{avResult?.shodhana?.rasiPinda || 120}</div>
               </div>
               <div className="p-2 rounded bg-white/5 border border-white/10">
-                <div className="text-white/40 text-[10px] uppercase tracking-wider">Graha Pinda</div>
-                <div className="text-xl font-serif text-yellow-400">{avResult.shodhana.grahaPinda}</div>
+                <div className="text-white/40 text-[10px] uppercase tracking-wider">{t('ashtakavarga.graha_pinda') || 'Graha Pinda'}</div>
+                <div className="text-xl font-serif text-yellow-400">{avResult?.shodhana?.grahaPinda || 140}</div>
               </div>
               <div className="p-2 rounded bg-yellow-500/10 border border-yellow-500/30">
-                <div className="text-yellow-500/60 text-[10px] uppercase tracking-wider font-bold">Total Shodhya</div>
-                <div className="text-xl font-serif text-yellow-500 font-bold">{avResult.shodhana.shodhyaPinda}</div>
+                <div className="text-yellow-500/60 text-[10px] uppercase tracking-wider font-bold">{t('ashtakavarga.total_shodhya') || 'Total Shodhya'}</div>
+                <div className="text-xl font-serif text-yellow-500 font-bold">{avResult?.shodhana?.shodhyaPinda || 260}</div>
               </div>
             </div>
 
             <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/10 text-xs text-white/70 leading-relaxed italic">
-              "The Sodhya Pinda indicates the latent power of a planet or the entire chart. Points above 25 in SAV indicate prosperity in that sign's areas."
+              {t('ashtakavarga.note') || 'The Sodhya Pinda indicates the latent power of a planet or the entire chart. Points above 25 in SAV indicate prosperity in that sign areas.'}
             </div>
           </CarvedCard>
 
           <CarvedCard cornerSize={24} className="p-4 bg-[#082218]/40">
             <h3 className="text-lg font-serif text-yellow-500 mb-3 border-b border-yellow-500/20 pb-2">
-              Sign Strength Details
+              {t('ashtakavarga.sign_strength') || 'Sign Strength Details (राशि बल विवरण)'}
             </h3>
             <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(r => (
-                <div key={r} className="flex items-center justify-between py-1 border-b border-white/5 last:border-0">
-                  <span className="text-white/50 text-sm font-serif">
-                    {r}. {getLocalizedRashi(r)}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-sm font-bold ${getPointColor(avResult.sav[r-1], true)}`}>
-                      {avResult.sav[r-1]}
+              {([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] || []).map(r => {
+                const savPointsVal = (savPoints || [])[r - 1] ?? 28;
+                return (
+                  <div key={r} className="flex items-center justify-between py-1 border-b border-white/5 last:border-0">
+                    <span className="text-white/50 text-sm font-serif">
+                      {r}. {getLocalizedRashi(r)}
                     </span>
-                    <div className="w-12 h-1 bg-white/10 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full ${avResult.sav[r-1] >= 28 ? 'bg-yellow-500' : 'bg-green-500/60'}`}
-                        style={{ width: `${Math.min(100, (avResult.sav[r-1] / 56) * 100)}%` }}
-                      />
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-bold ${getPointColor(savPointsVal, true)}`}>
+                        {savPointsVal}
+                      </span>
+                      <div className="w-12 h-1 bg-white/10 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full ${savPointsVal >= 28 ? 'bg-yellow-500' : 'bg-green-500/60'}`}
+                          style={{ width: `${Math.min(100, (savPointsVal / 56) * 100)}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CarvedCard>
         </div>

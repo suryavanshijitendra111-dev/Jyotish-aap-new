@@ -78,6 +78,8 @@ export interface TranslationDictionary {
     spiritualStore: { title: string; subtitle: string; desc: string };
     settings: { title: string; subtitle: string; desc: string };
   };
+  bnnView?: Record<string, string>;
+  [key: string]: any;
   profile?: {
     self: string;
     spouse: string;

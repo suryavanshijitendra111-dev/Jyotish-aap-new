@@ -7,6 +7,7 @@ import React, { useMemo } from 'react';
 import { MasterKundliData } from '../../types/kundli';
 import { YogaDoshaEngine, YogaResult, DoshaResult } from '../../services/astrology/yogaDoshaEngine';
 import CarvedCard from '../ui/CarvedCard';
+import { useTranslation } from '../../i18n';
 import { Sparkles, AlertCircle, CheckCircle2, ShieldAlert, Award, Zap, Info } from 'lucide-react';
 
 interface YogaDoshaViewProps {
@@ -14,6 +15,9 @@ interface YogaDoshaViewProps {
 }
 
 export const YogaDoshaView: React.FC<YogaDoshaViewProps> = ({ data }) => {
+  const { t, currentLanguageInfo } = useTranslation();
+  const isHindi = currentLanguageInfo.code === 'hi';
+
   const analysis = useMemo(() => YogaDoshaEngine.analyze(data), [data]);
   const { yogas, doshas } = analysis;
 
@@ -35,6 +39,17 @@ export const YogaDoshaView: React.FC<YogaDoshaViewProps> = ({ data }) => {
     }
   };
 
+  const translateStatus = (status: string) => {
+    if (!isHindi) return status;
+    switch (status) {
+      case 'Canceled': return 'दोष भंग / शांत';
+      case 'Absent': return 'अनुपस्थित / मुक्त';
+      case 'Present': return 'सक्रिय';
+      case 'Partial': return 'आंशिक';
+      default: return status;
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* 1. Header & Summary */}
@@ -42,17 +57,17 @@ export const YogaDoshaView: React.FC<YogaDoshaViewProps> = ({ data }) => {
         <div>
           <h2 className="text-2xl font-serif text-yellow-500 flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-yellow-400" />
-            Classical Yogas & Doshas (योग और दोष)
+            {isHindi ? 'योग एवं दोष' : 'Yogas & Doshas'}
           </h2>
           <p className="text-white/60 text-sm mt-1 font-sans italic">
-            Shastriya detection of cosmic alignments from Jagannatha Hora
+            {isHindi ? 'जन्मकुंडली के आधार पर शास्त्रीय शुभ योग एवं कार्मिक दोष विश्लेषण' : 'Shastriya detection of cosmic alignments from Jagannatha Hora'}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <div className="bg-yellow-500/10 border border-yellow-500/30 px-3 py-1.5 rounded-full flex items-center gap-2">
             <Award className="w-4 h-4 text-yellow-500" />
             <span className="text-xs font-black text-yellow-500 uppercase tracking-widest">
-              {yogas.length} Active Yogas
+              {yogas.length} {isHindi ? 'संभावित योग' : 'Active Yogas'}
             </span>
           </div>
         </div>
@@ -63,7 +78,7 @@ export const YogaDoshaView: React.FC<YogaDoshaViewProps> = ({ data }) => {
         <div className="space-y-4">
           <h3 className="text-lg font-serif text-yellow-500/80 mb-2 flex items-center gap-2 px-1">
             <Zap className="w-5 h-5" />
-            Active Auspicious Yogas
+            {isHindi ? 'सक्रिय शुभ योग' : 'Active Auspicious Yogas'}
           </h3>
           
           <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
@@ -73,7 +88,6 @@ export const YogaDoshaView: React.FC<YogaDoshaViewProps> = ({ data }) => {
                   <div className="flex justify-between items-start mb-2">
                     <div className="font-serif">
                       <div className="text-yellow-400 text-base font-bold">{yoga.hindiName}</div>
-                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-sans">{yoga.name}</div>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center">
                       <CheckCircle2 className="w-4 h-4 text-yellow-500/60" />
@@ -86,7 +100,9 @@ export const YogaDoshaView: React.FC<YogaDoshaViewProps> = ({ data }) => {
               ))
             ) : (
               <div className="p-12 text-center border-2 border-dashed border-white/5 rounded-3xl">
-                <p className="text-white/20 italic font-serif">No classical yogas detected in current chart.</p>
+                <p className="text-white/20 italic font-serif">
+                  {isHindi ? 'वर्तमान कुंडली में कोई प्रमुख शास्त्रीय योग सक्रिय नहीं मिला।' : 'No classical yogas detected in current chart.'}
+                </p>
               </div>
             )}
           </div>
@@ -96,7 +112,7 @@ export const YogaDoshaView: React.FC<YogaDoshaViewProps> = ({ data }) => {
         <div className="space-y-4">
           <h3 className="text-lg font-serif text-yellow-500/80 mb-2 flex items-center gap-2 px-1">
             <ShieldAlert className="w-5 h-5" />
-            Karmic Dosha Analysis
+            {isHindi ? 'कर्म दोष विश्लेषण' : 'Karmic Dosha Analysis'}
           </h3>
 
           <div className="grid grid-cols-1 gap-3">
@@ -112,24 +128,29 @@ export const YogaDoshaView: React.FC<YogaDoshaViewProps> = ({ data }) => {
                     </div>
                     <div>
                       <div className="text-sm font-bold font-serif">{dosha.hindiName}</div>
-                      <div className="text-[9px] uppercase tracking-tighter opacity-60 font-sans">{dosha.name}</div>
                     </div>
                   </div>
                   <div className="text-right">
                     <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-black/20`}>
-                      {dosha.status}
+                      {translateStatus(dosha.status)}
                     </span>
                   </div>
                 </div>
                 
-                <p className="text-[10px] opacity-80 leading-relaxed font-sans">
+                <p className="text-[10px] opacity-80 leading-relaxed font-sans mb-2">
                   {dosha.description}
                 </p>
+
+                {dosha.remedy && dosha.status !== 'Absent' && (
+                  <div className="text-[9px] text-yellow-300/90 bg-black/20 p-2 rounded-lg border border-yellow-500/20 font-sans mt-1">
+                    <span className="font-bold">{isHindi ? 'शास्त्रीय उपाय:' : 'Remedy:'}</span> {dosha.remedy}
+                  </div>
+                )}
 
                 {dosha.status === 'Present' && dosha.intensity !== undefined && (
                   <div className="mt-3 space-y-1">
                     <div className="flex justify-between text-[8px] uppercase font-black opacity-40">
-                      <span>Karmic Intensity</span>
+                      <span>{isHindi ? 'कार्मिक तीव्रता' : 'Karmic Intensity'}</span>
                       <span>{dosha.intensity}%</span>
                     </div>
                     <div className="w-full h-1 bg-black/40 rounded-full overflow-hidden">
@@ -147,7 +168,9 @@ export const YogaDoshaView: React.FC<YogaDoshaViewProps> = ({ data }) => {
           <div className="mt-6 p-4 bg-[#082218]/20 border border-yellow-500/10 rounded-2xl flex gap-3">
             <Info className="w-5 h-5 text-yellow-500/40 shrink-0" />
             <p className="text-[10px] text-white/40 leading-relaxed italic font-serif">
-              "Yogas represent cosmic assets and talents, while Doshas indicate karmic challenges that require awareness and remedies (Upaya)."
+              {isHindi 
+                ? 'योग जीवन की दिव्यता और सामर्थ्य को दर्शाते हैं, जबकि दोष उन कार्मिक चुनौतियों का संकेत देते हैं जिन्हें जागरूकता और वैदिक उपायों से संतुलित किया जा सकता है।'
+                : '"Yogas represent cosmic assets and talents, while Doshas indicate karmic challenges that require awareness and remedies (Upaya)."'}
             </p>
           </div>
         </div>
