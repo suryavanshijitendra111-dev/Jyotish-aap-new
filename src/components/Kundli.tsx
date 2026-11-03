@@ -38,10 +38,38 @@ export const KundliIntro: React.FC<{ onStart?: () => void }> = ({ onStart }) => 
 export const KundliShell: React.FC<{ profile?: BirthProfile | null; navigate?: (view: string) => void; showToast?: (msg: string) => void }> = ({
   profile
 }) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [kundliData, setKundliData] = useState<MasterKundliData | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const getSubLabel = (key: string) => {
+    switch (key) {
+      case 'd1':
+        if (language === 'hi') return 'D1 लग्न कुंडली';
+        if (language === 'es') return 'Carta D1 Lagna';
+        if (language === 'fr') return 'Thème D1 Lagna';
+        if (language === 'de') return 'D1 Lagna Diagramm';
+        if (language === 'ru') return 'Карта D1 Лагна';
+        return 'D1 Lagna Kundli';
+      case 'd9':
+        if (language === 'hi') return 'D9 नवांश कुंडली';
+        if (language === 'es') return 'Carta D9 Navamsha';
+        if (language === 'fr') return 'Thème D9 Navamsha';
+        if (language === 'de') return 'D9 Navamsha Diagramm';
+        if (language === 'ru') return 'Карта D9 Навамша';
+        return 'D9 Navamsha';
+      case 'shadbala':
+        if (language === 'hi') return 'मुख्य षडबल';
+        if (language === 'es') return 'Shadbala Principal';
+        if (language === 'fr') return 'Shadbala Principal';
+        if (language === 'de') return 'Shadbala Stärke';
+        if (language === 'ru') return 'Сила Шадбала';
+        return 'Core Shadbala Strength';
+      default:
+        return key;
+    }
+  };
 
   useEffect(() => {
     if (!profile) {
@@ -97,7 +125,7 @@ export const KundliShell: React.FC<{ profile?: BirthProfile | null; navigate?: (
           {/* 1. D1 Lagna Kundli */}
           <div className="space-y-2">
             <h4 className="text-sm font-bold text-[#d4af37] uppercase tracking-wider px-1">
-              D1 Lagna Kundli (लग्न कुंडली)
+              {getSubLabel('d1')}
             </h4>
             <LiveTransitChart masterData={kundliData} />
           </div>
@@ -105,7 +133,7 @@ export const KundliShell: React.FC<{ profile?: BirthProfile | null; navigate?: (
           {/* 2. D9 Navamsha */}
           <div className="space-y-2">
             <h4 className="text-sm font-bold text-[#d4af37] uppercase tracking-wider px-1">
-              D9 Navamsha (नवांश कुंडली)
+              {getSubLabel('d9')}
             </h4>
             <VargaSpeaksControl masterData={kundliData} />
           </div>
@@ -113,7 +141,7 @@ export const KundliShell: React.FC<{ profile?: BirthProfile | null; navigate?: (
           {/* 3. Mukhya Shadbala */}
           <div className="space-y-2">
             <h4 className="text-sm font-bold text-[#d4af37] uppercase tracking-wider px-1">
-              Mukhya Shadbala (मुख्य षडबल)
+              {getSubLabel('shadbala')}
             </h4>
             <ShadbalaView data={kundliData} />
           </div>

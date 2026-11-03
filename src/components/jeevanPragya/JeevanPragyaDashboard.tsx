@@ -30,6 +30,7 @@ import { JeevanPragyaService } from '../../services/jeevanPragya/jeevanPragyaSer
 import { PastValidationService } from '../../services/jeevanPragya/pastValidationService';
 import { JeevanPragyaData, ValidationSelection } from '../../types/jeevanPragya/jeevanPragyaTypes';
 import { BirthProfile } from '../../types/kundli';
+import { useI18n } from '../../i18n';
 
 interface JeevanPragyaDashboardProps {
   profile?: BirthProfile | null;
@@ -42,6 +43,7 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
   navigate,
   showToast
 }) => {
+  const { currentLanguageInfo } = useI18n();
   const profileId = PastValidationService.getProfileId(profile || null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -196,7 +198,7 @@ export const JeevanPragyaDashboard: React.FC<JeevanPragyaDashboardProps> = ({
           body: JSON.stringify({
             question: queryToUse,
             prompt: promptText,
-            language: 'Hindi',
+            language: currentLanguageInfo.name,
             context: {
               name: 'Jitendra Suryavanshi',
               lagna: 'Mithuna (Gemini)',

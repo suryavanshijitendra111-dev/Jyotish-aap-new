@@ -141,14 +141,14 @@ export default function Dashboard({ profile, navigate, showToast, onSelectModule
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-xl sm:text-2xl font-bold text-white tracking-wide">
-                      जीवन प्रज्ञा मार्गदर्शन
+                      {t('modules.pragya.title') || 'जीवन प्रज्ञा मार्गदर्शन'}
                     </h3>
                     <span className="text-xs bg-[#d4af37]/25 text-[#fef08a] border border-[#d4af37]/50 px-2.5 py-0.5 rounded-full font-bold">
-                      त्रिकाल दृष्टि
+                      {t('dashboard.tristateBadge') || 'त्रिकाल दृष्टि'}
                     </span>
                   </div>
                   <p className="text-xs sm:text-sm text-[#d4af37]/90 font-medium mt-0.5">
-                    अतीत • वर्तमान • भविष्य का सूक्ष्म आध्यात्मिक एवं ज्योतिषीय बोध
+                    {t('modules.pragya.desc') || 'अतीत • वर्तमान • भविष्य का सूक्ष्म आध्यात्मिक एवं ज्योतिषीय बोध'}
                   </p>
                 </div>
               </div>
@@ -161,24 +161,24 @@ export default function Dashboard({ profile, navigate, showToast, onSelectModule
                 className="py-2.5 px-2 rounded-xl bg-black/40 border border-[#d4af37]/35 hover:border-[#d4af37] transition-all text-center group cursor-pointer"
               >
                 <Clock className="w-4 h-4 mx-auto text-[#d4af37] mb-1" />
-                <span className="text-xs uppercase tracking-wider text-[#d4af37] block font-bold">अतीत</span>
-                <span className="text-[11px] text-gray-300 group-hover:text-white">पूर्व संस्कार</span>
+                <span className="text-xs uppercase tracking-wider text-[#d4af37] block font-bold">{t('dashboard.pastLabel') || 'अतीत'}</span>
+                <span className="text-[11px] text-gray-300 group-hover:text-white">{t('dashboard.pastSub') || 'पूर्व संस्कार'}</span>
               </button>
               <button
                 onClick={() => navigate('jeevan_pragya')}
                 className="py-2.5 px-2 rounded-xl bg-[#d4af37]/20 border border-[#d4af37]/60 hover:bg-[#d4af37]/30 transition-all text-center group cursor-pointer shadow-sm"
               >
                 <Sun className="w-4 h-4 mx-auto text-[#fef08a] mb-1" />
-                <span className="text-xs uppercase tracking-wider text-[#fef08a] block font-bold">वर्तमान</span>
-                <span className="text-[11px] text-white group-hover:text-[#fef08a] font-semibold">दशा गोचर</span>
+                <span className="text-xs uppercase tracking-wider text-[#fef08a] block font-bold">{t('dashboard.presentLabel') || 'वर्तमान'}</span>
+                <span className="text-[11px] text-white group-hover:text-[#fef08a] font-semibold">{t('dashboard.presentSub') || 'दशा गोचर'}</span>
               </button>
               <button
                 onClick={() => navigate('jeevan_pragya')}
                 className="py-2.5 px-2 rounded-xl bg-black/40 border border-[#d4af37]/35 hover:border-[#d4af37] transition-all text-center group cursor-pointer"
               >
                 <Calendar className="w-4 h-4 mx-auto text-[#d4af37] mb-1" />
-                <span className="text-xs uppercase tracking-wider text-[#d4af37] block font-bold">भविष्य</span>
-                <span className="text-[11px] text-gray-300 group-hover:text-white">आगामी काल</span>
+                <span className="text-xs uppercase tracking-wider text-[#d4af37] block font-bold">{t('dashboard.futureLabel') || 'भविष्य'}</span>
+                <span className="text-[11px] text-gray-300 group-hover:text-white">{t('dashboard.futureSub') || 'आगामी काल'}</span>
               </button>
             </div>
 
@@ -186,7 +186,7 @@ export default function Dashboard({ profile, navigate, showToast, onSelectModule
               onClick={() => navigate('jeevan_pragya')}
               className="w-full min-h-[46px] px-5 py-2.5 bg-gradient-to-r from-[#d4af37] via-[#fef08a] to-[#b89528] text-[#030a08] font-bold rounded-xl text-base hover:scale-[1.01] active:scale-[0.99] transition-all shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>प्रज्ञा मार्गदर्शन खोलें</span>
+              <span>{t('dashboard.openPragyaBtn') || 'प्रज्ञा मार्गदर्शन खोलें'}</span>
               <span className="text-lg">→</span>
             </button>
           </div>
@@ -396,13 +396,13 @@ export default function Dashboard({ profile, navigate, showToast, onSelectModule
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-lg sm:text-xl font-bold text-white tracking-wide">Owner Control Center</h3>
+                  <h3 className="text-lg sm:text-xl font-bold text-white tracking-wide">{t('dashboard.ownerControlTitle')}</h3>
                   <span className="text-sm bg-[#d4af37]/25 text-[#fef08a] border border-[#d4af37]/50 px-2.5 py-0.5 rounded-full font-bold">
-                    Guardian Core
+                    {currentLanguageInfo.code === 'hi' ? 'गार्जियन कोर' : 'Guardian Core'}
                   </span>
                 </div>
                 <p className="text-base text-gray-200 mt-1.5 leading-[1.65] break-words">
-                  मॉड्यूल नियंत्रण, गार्जियन स्तर (1/2/3), अनुमोदन अनुरोध एवं बैकअप
+                  {t('dashboard.ownerControlSub')}
                 </p>
               </div>
             </div>

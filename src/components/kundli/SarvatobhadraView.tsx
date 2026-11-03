@@ -40,8 +40,8 @@ const toHindiPlanet = (val: any) => {
 };
 
 export const SarvatobhadraView: React.FC<SarvatobhadraViewProps> = ({ data }) => {
-  const { t } = useTranslation();
-  const isHindi = localStorage.getItem('jeevandarpan_lang') === 'hi';
+  const { t, language } = useTranslation();
+  const isHindi = language === 'hi';
 
   const result = useMemo(() => {
     try {
