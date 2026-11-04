@@ -46,7 +46,7 @@ export const ShadbalaView: React.FC<ShadbalaViewProps> = ({ data }) => {
         <div>
           <h2 className="text-2xl font-serif text-yellow-500 flex items-center gap-2">
             <Shield className="w-6 h-6" />
-            {t('modules.shadbala.title') || 'षड्बल विश्लेषण'} ({t('shadbala.title') || 'Shadbala'})
+            {t('shadbala.title')}
           </h2>
           <p className="text-white/60 text-sm mt-1 font-sans">
             {t('shadbala.desc') || 'Six-fold strength analysis of planets for karmic impact'}

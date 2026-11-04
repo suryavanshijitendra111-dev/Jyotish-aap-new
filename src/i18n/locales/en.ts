@@ -1017,5 +1017,24 @@ export const en: TranslationDictionary = {
     desha: 'Desha Nakshatra',
     jati: 'Jati Nakshatra',
     abhisheka: 'Abhisheka Nakshatra'
+  },
+  shadbala: {
+    title: 'Shadbala Strength',
+    desc: 'Complete Vedic analysis of six-fold planetary strengths and positional capacities.',
+    subtitle: 'Shadbala Calculation',
+    planetaryStrength: 'Planetary Shadbala Strength',
+    bhavaRankings: 'Bhava Bala Rankings',
+    totalRupas: 'Total Rupas',
+    sthana: 'Sthana',
+    dig: 'Dig',
+    kala: 'Kala',
+    chesta: 'Chesta',
+    naisargika: 'Naisargika',
+    drik: 'Drik',
+    ishtaPhala: 'Ishta Phala',
+    kashtaPhala: 'Kashta Phala',
+    adhipati: 'Adhipati',
+    rank: 'Rank',
+    note: 'Classical Summary: According to Parashari Jyotish, the six-fold strength of planets determines their capacity to deliver results during dasha and transit periods. Planets with >100% strength manifest highly auspicious results.'
   }
 };

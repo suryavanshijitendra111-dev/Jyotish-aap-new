@@ -160,7 +160,7 @@ export const ModuleScreen: React.FC<ModuleScreenProps> = ({
                   {activeModule === 'yoga_dosha' && <YogaDoshaView data={kundliData} />}
                   {activeModule === 'longevity' && <LongevityArgalaView data={kundliData} />}
                   {activeModule === 'special_points' && <SpecialPointsView data={kundliData} />}
-                  {activeModule === 'shadbala' && <ShadbalaView data={kundliData} />}
+                  {['shadbala', 'shadbala_bal', 'shadbalabal'].includes(activeModule) && <ShadbalaView data={kundliData} />}
                   {activeModule === 'lal_kitab' && (
                     <div className="p-5 bg-black/40 border border-[#d4af37]/30 rounded-2xl space-y-4">
                       <h3 className="text-lg font-bold text-[#d4af37]">लाल किताब ज्योतिष (Lal Kitab Analysis)</h3>
