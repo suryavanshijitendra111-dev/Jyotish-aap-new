@@ -23,6 +23,7 @@ import JeevanPragyaDashboard from './components/jeevanPragya/JeevanPragyaDashboa
 import { ModuleScreen } from './components/kundli/ModuleScreen';
 import { ProfileManagerView } from './components/profile/ProfileManagerView';
 import { MysticReadingsHub } from './components/mystic/MysticReadingsHub';
+import { PanchangTableDashboard } from './components/panchang/PanchangTableDashboard';
 import { GuardianErrorBoundary } from './components/guardian/GuardianErrorBoundary';
 import { guardianMonitor } from './services/guardian/guardianMonitor';
 import { 
@@ -223,6 +224,7 @@ export default function App() {
               else if (modId === 'meditation') setView('meditation');
               else if (modId === 'yoga') setView('yoga');
               else if (modId === 'mystic_readings') setView('mystic_readings');
+              else if (modId === 'panchang_table') setView('panchang_table');
               else if (modId === 'settings') setShowLanguageModal(true);
               else {
                 setActiveModule(modId);
@@ -285,6 +287,8 @@ export default function App() {
         );
       case 'mystic_readings':
         return <MysticReadingsHub key={activeProfile?.id || 'default'} onBack={() => setView('dashboard')} language={currentLanguageInfo.code} />;
+      case 'panchang_table':
+        return <PanchangTableDashboard key={activeProfile?.id || 'default'} profile={activeProfile} onBack={() => setView('dashboard')} showToast={setToastMessage} />;
       default:
         return null;
     }

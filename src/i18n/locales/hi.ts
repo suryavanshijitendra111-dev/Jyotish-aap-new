@@ -41,7 +41,8 @@ export const hi: TranslationDictionary = {
     sarvatobhadra: { title: 'सर्वतोभद्र चक्र', subtitle: 'नक्षत्र वेध', desc: 'सर्वतोभद्र चक्र एवं वेध विचार' },
     yoga_dosha: { title: 'योग एवं दोष', subtitle: 'राजयोग व दुर्योग', desc: 'शुभ योग एवं दोष निवारण' },
     shadbala: { title: 'षडबल बल', subtitle: 'षड्बल गणना', desc: 'स्थान, दिक्, चेष्टा व कालगल बल' },
-    mysticReadings: { title: 'दैवीय रहस्य', subtitle: 'फेस, हस्तरेखा व टैरो', desc: 'फेस रीडिंग, हस्तरेखा एवं टैरो कार्ड रीडिंग' }
+    mysticReadings: { title: 'दैवीय रहस्य', subtitle: 'फेस, हस्तरेखा व टैरो', desc: 'फेस रीडिंग, हस्तरेखा एवं टैरो कार्ड रीडिंग' },
+    panchangTable: { title: 'वैदिक पंचांग एवं लग्न सारणी', subtitle: 'पंचांग एवं लग्न चक्र', desc: 'तिथि, नक्षत्र, लग्न सारणी, ग्रह स्पष्ट एवं मुहूर्त' }
   },
   profile: {
     self: '(स्वयं)',

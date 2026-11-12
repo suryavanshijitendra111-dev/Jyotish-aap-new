@@ -41,7 +41,8 @@ export const en: TranslationDictionary = {
     sarvatobhadra: { title: 'Sarvatobhadra', subtitle: 'Nakshatra Vedha', desc: 'Sarvatobhadra chakra and vedha analysis' },
     yoga_dosha: { title: 'Yoga & Dosha', subtitle: 'Rajyoga & Dosha', desc: 'Auspicious yogas and remedial solutions' },
     shadbala: { title: 'Shadbala', subtitle: 'Sixfold Strength', desc: 'Positional, directional and temporal strength' },
-    mysticReadings: { title: 'Mystic Readings', subtitle: 'Face, Palm & Tarot', desc: 'Face reading, palmistry & tarot card reading' }
+    mysticReadings: { title: 'Mystic Readings', subtitle: 'Face, Palm & Tarot', desc: 'Face reading, palmistry & tarot card reading' },
+    panchangTable: { title: 'Traditional Panchang & Kundli Table', subtitle: 'Panchang & Lagna', desc: 'Tithi, nakshatra, lagna table, planetary degrees & muhurat' }
   },
   profile: {
     self: '(Self)',
