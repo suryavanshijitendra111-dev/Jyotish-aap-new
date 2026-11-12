@@ -524,6 +524,7 @@ export default function Dashboard({ profile, navigate, showToast, onSelectModule
               { id: 'lifeJournal', isLive: true, action: () => onSelectModule ? onSelectModule('lifeJournal') : navigate('daily_report_card') },
               { id: 'meditation', isLive: true, action: () => onSelectModule ? onSelectModule('meditation') : navigate('meditation') },
               { id: 'yoga', isLive: true, action: () => onSelectModule ? onSelectModule('yoga') : navigate('yoga') },
+              { id: 'mysticReadings', isLive: true, action: () => onSelectModule ? onSelectModule('mystic_readings') : navigate('mystic_readings') },
               { id: 'mantraJaap', isLive: false, action: () => showToast('मंत्र जाप एवं माला गणना केंद्र शीघ्र उपलब्ध होगा।') },
               { id: 'puja3d', isLive: false, action: () => showToast('3D डिजिटल पूजा स्वतंत्र मॉड्यूल के रूप में शीघ्र उपलब्ध होगी।') },
               { id: 'templeExplorer', isLive: false, action: () => showToast('तीर्थ एवं मंदिर दर्शन मार्गदर्शिका शीघ्र उपलब्ध होगी।') },

@@ -530,7 +530,7 @@ Respond with strictly valid JSON only.`;
     }
   });
 
-app.post('/api/calculate', async (req, res) => {
+  app.post('/api/calculate', async (req, res) => {
     try {
       const { dob, time, latitude, longitude, timezone, ayanamsa = 'Lahiri' } = req.body;
 

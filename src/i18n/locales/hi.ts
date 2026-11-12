@@ -40,7 +40,8 @@ export const hi: TranslationDictionary = {
     sudarshana: { title: 'सुदर्शन चक्र', subtitle: 'त्रय दृष्टि', desc: 'सूर्य, चंद्र एवं लग्न त्रय चक्र' },
     sarvatobhadra: { title: 'सर्वतोभद्र चक्र', subtitle: 'नक्षत्र वेध', desc: 'सर्वतोभद्र चक्र एवं वेध विचार' },
     yoga_dosha: { title: 'योग एवं दोष', subtitle: 'राजयोग व दुर्योग', desc: 'शुभ योग एवं दोष निवारण' },
-    shadbala: { title: 'षडबल बल', subtitle: 'षड्बल गणना', desc: 'स्थान, दिक्, चेष्टा व कालगल बल' }
+    shadbala: { title: 'षडबल बल', subtitle: 'षड्बल गणना', desc: 'स्थान, दिक्, चेष्टा व कालगल बल' },
+    mysticReadings: { title: 'दैवीय रहस्य', subtitle: 'फेस, हस्तरेखा व टैरो', desc: 'फेस रीडिंग, हस्तरेखा एवं टैरो कार्ड रीडिंग' }
   },
   profile: {
     self: '(स्वयं)',

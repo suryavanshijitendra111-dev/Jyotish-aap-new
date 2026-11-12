@@ -29,6 +29,8 @@ import { YogaDoshaView } from './YogaDoshaView';
 import { LongevityArgalaView } from './LongevityArgalaView';
 import { SpecialPointsView } from './SpecialPointsView';
 import { ShadbalaView } from './ShadbalaView';
+import { NumerologyView } from './NumerologyView';
+import { LoShuGridView } from './LoShuGridView';
 import LiveTransitChart from './LiveTransitChart';
 
 interface ModuleScreenProps {
@@ -46,6 +48,12 @@ export const ModuleScreen: React.FC<ModuleScreenProps> = ({
   if (!activeModule) {
     onBack();
     return null;
+  }
+  if (['numerology', 'ankashastra'].includes(activeModule)) {
+    return <NumerologyView onBack={onBack} />;
+  }
+  if (['loshu', 'loshu_grid'].includes(activeModule)) {
+    return <LoShuGridView onBack={onBack} />;
   }
   const { t, currentLanguageInfo } = useTranslation();
   const language = currentLanguageInfo.code;
@@ -161,6 +169,7 @@ export const ModuleScreen: React.FC<ModuleScreenProps> = ({
                   {activeModule === 'longevity' && <LongevityArgalaView data={kundliData} />}
                   {activeModule === 'special_points' && <SpecialPointsView data={kundliData} />}
                   {['shadbala', 'shadbala_bal', 'shadbalabal'].includes(activeModule) && <ShadbalaView data={kundliData} />}
+                  {['numerology', 'ankashastra'].includes(activeModule) && <NumerologyView profile={profile} language={language} />}
                   {activeModule === 'lal_kitab' && (
                     <div className="p-5 bg-black/40 border border-[#d4af37]/30 rounded-2xl space-y-4">
                       <h3 className="text-lg font-bold text-[#d4af37]">लाल किताब ज्योतिष (Lal Kitab Analysis)</h3>
@@ -168,7 +177,7 @@ export const ModuleScreen: React.FC<ModuleScreenProps> = ({
                       <ShadbalaView data={kundliData} />
                     </div>
                   )}
-                  {!['kundli', 'kundli_janmang', 'kundliJanmang', 'kundli_shell', 'kp', 'dasha', 'vimshottari', 'vimshottari_dasha', 'vimshottaridasha', 'yogini_dasha', 'ashtottari', 'gochar', 'varga', 'varga_kundliyan', 'vargakundliyan', 'divisional_charts', 'sphutas', 'upagrahas', 'bnn', 'house_speaks', 'ashtakavarga', 'jaimini', 'arudha', 'arudha_chara', 'arudha_pada', 'arudhapada', 'sudarshan', 'sudarshana', 'sudarshan_chakra', 'sarvatobhadra', 'yoga_dosha', 'longevity', 'special_points', 'shadbala', 'lal_kitab'].includes(activeModule) && (
+                  {!['kundli', 'kundli_janmang', 'kundliJanmang', 'kundli_shell', 'kp', 'dasha', 'vimshottari', 'vimshottari_dasha', 'vimshottaridasha', 'yogini_dasha', 'ashtottari', 'gochar', 'varga', 'varga_kundliyan', 'vargakundliyan', 'divisional_charts', 'sphutas', 'upagrahas', 'bnn', 'house_speaks', 'ashtakavarga', 'jaimini', 'arudha', 'arudha_chara', 'arudha_pada', 'arudhapada', 'sudarshan', 'sudarshana', 'sudarshan_chakra', 'sarvatobhadra', 'yoga_dosha', 'longevity', 'special_points', 'shadbala', 'numerology', 'ankashastra', 'lal_kitab'].includes(activeModule) && (
                     <div className="p-6 bg-black/40 border border-[#d4af37]/30 rounded-2xl text-center space-y-3">
                       <h3 className="text-xl font-bold text-[#d4af37]">{moduleTitle}</h3>
                       <p className="text-sm text-gray-300">{t(`modules.${activeModule}.desc`) || 'Dedicated module analysis.'}</p>

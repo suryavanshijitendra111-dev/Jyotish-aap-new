@@ -60,13 +60,11 @@ interface Props {
 }
 
 const CATEGORIES = [
-  'All',
-  'Material & Wealth',
-  'Life & Health',
-  'Work & Enterprise',
-  'Relationships',
-  'Intellect & Movement',
-  'Spirituality & Decision'
+  'सभी',
+  'अर्थ व संपत्ति',
+  'आयु व स्वास्थ्य',
+  'कार्य व व्यवसाय',
+  'संबंध व परिवार'
 ] as const;
 
 export default function PrashnaDashboard({ profile, navigate, showToast }: Props) {
@@ -75,7 +73,7 @@ export default function PrashnaDashboard({ profile, navigate, showToast }: Props
 
   // Mode Selection State
   const [selectedMode, setSelectedMode] = useState<PrashnaQuestionMode>('general');
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [selectedCategory, setSelectedCategory] = useState<string>('सभी');
   const [modeSearch, setModeSearch] = useState('');
   const [isModeDropdownOpen, setIsModeDropdownOpen] = useState(false);
 
@@ -186,7 +184,7 @@ export default function PrashnaDashboard({ profile, navigate, showToast }: Props
 
   // Filter modes by category & search
   const filteredModes = PRASHNA_MODES.filter(m => {
-    const matchesCat = selectedCategory === 'All' || m.category === selectedCategory;
+    const matchesCat = selectedCategory === 'सभी' || m.category === selectedCategory;
     const matchesSearch = !modeSearch.trim() || 
       m.labelHindi.toLowerCase().includes(modeSearch.toLowerCase()) || 
       m.labelEnglish.toLowerCase().includes(modeSearch.toLowerCase()) ||
@@ -474,9 +472,6 @@ export default function PrashnaDashboard({ profile, navigate, showToast }: Props
                 <h1 className="text-xl sm:text-2xl font-bold text-[#d4af37] tracking-wide">
                   प्रश्न कुंडली — 25 वैदिक प्रश्न विधाएं
                 </h1>
-                <span className="text-[10px] uppercase font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full">
-                  Phase 22.1.1
-                </span>
               </div>
               <p className="text-xs sm:text-sm text-gray-300 mt-1 leading-relaxed">
                 25 विशिष्ट वैदिक प्रश्न विधाओं में खोई वस्तु, स्वास्थ्य, द्विविकल्प, करियर व विवाह आदि का तात्कालिक खगोलीय व पारंपरिक विश्लेषण।
@@ -494,7 +489,7 @@ export default function PrashnaDashboard({ profile, navigate, showToast }: Props
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-bold text-[#d4af37] uppercase tracking-wider flex items-center gap-1.5">
                   <Layers className="w-4 h-4 text-[#d4af37]" />
-                  1. प्रश्न विधा चुनें (Select Question Mode — 25 Modes):
+                  1. प्रश्न विधा चुनें (25 वैदिक विधाएं):
                 </label>
                 <span className="text-[11px] text-emerald-300 font-semibold">
                   विधा: #{activeModeConfig.number} {activeModeConfig.labelHindi}
@@ -541,7 +536,7 @@ export default function PrashnaDashboard({ profile, navigate, showToast }: Props
                   onClick={() => setIsModeDropdownOpen(!isModeDropdownOpen)}
                   className="text-xs bg-[#d4af37]/10 hover:bg-[#d4af37]/20 border border-[#d4af37]/40 text-[#d4af37] px-3 py-1.5 rounded-xl font-medium transition-all flex items-center gap-1 shrink-0"
                 >
-                  {isModeDropdownOpen ? 'बंद करें (Close)' : 'विधाएं बदलें (Browse)'}
+                  {isModeDropdownOpen ? 'बंद करें' : 'विधाएं बदलें'}
                   <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isModeDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
               </div>
@@ -727,7 +722,7 @@ export default function PrashnaDashboard({ profile, navigate, showToast }: Props
             {/* Quick Example Chips for Active Mode */}
             <div>
               <span className="text-[11px] text-gray-400 block mb-1.5">
-                विधा अनुसार शीघ्र प्रश्न (Quick Examples for {activeModeConfig.labelEnglish}):
+                त्वरित उदाहरण प्रश्न:
               </span>
               <div className="flex flex-wrap gap-2">
                 {activeModeConfig.quickExamples.map((eq, idx) => (
@@ -823,7 +818,7 @@ export default function PrashnaDashboard({ profile, navigate, showToast }: Props
               className="w-full py-4 px-6 bg-gradient-to-r from-[#d4af37] via-[#c29e2e] to-[#a3801c] text-[#030a08] font-bold rounded-2xl tracking-wider text-sm shadow-[0_4px_25px_rgba(212,175,55,0.4)] hover:shadow-[0_4px_35px_rgba(212,175,55,0.6)] hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Sparkles className="w-5 h-5" />
-              प्रश्न विचारें एवं कुंडली बनाएं (Ask Question & Calculate)
+              ✨ प्रश्न विचारें एवं कुंडली बनाएं
             </button>
           </div>
         ) : (

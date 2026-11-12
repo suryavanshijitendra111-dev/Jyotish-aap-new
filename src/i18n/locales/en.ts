@@ -40,7 +40,8 @@ export const en: TranslationDictionary = {
     sudarshana: { title: 'Sudarshana Chakra', subtitle: 'Triple View', desc: 'Sun, Moon and Ascendant triple wheel' },
     sarvatobhadra: { title: 'Sarvatobhadra', subtitle: 'Nakshatra Vedha', desc: 'Sarvatobhadra chakra and vedha analysis' },
     yoga_dosha: { title: 'Yoga & Dosha', subtitle: 'Rajyoga & Dosha', desc: 'Auspicious yogas and remedial solutions' },
-    shadbala: { title: 'Shadbala', subtitle: 'Sixfold Strength', desc: 'Positional, directional and temporal strength' }
+    shadbala: { title: 'Shadbala', subtitle: 'Sixfold Strength', desc: 'Positional, directional and temporal strength' },
+    mysticReadings: { title: 'Mystic Readings', subtitle: 'Face, Palm & Tarot', desc: 'Face reading, palmistry & tarot card reading' }
   },
   profile: {
     self: '(Self)',

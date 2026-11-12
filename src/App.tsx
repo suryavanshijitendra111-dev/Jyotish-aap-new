@@ -22,6 +22,7 @@ import YogaDashboard from './components/yogaSadhana/YogaDashboard';
 import JeevanPragyaDashboard from './components/jeevanPragya/JeevanPragyaDashboard';
 import { ModuleScreen } from './components/kundli/ModuleScreen';
 import { ProfileManagerView } from './components/profile/ProfileManagerView';
+import { MysticReadingsHub } from './components/mystic/MysticReadingsHub';
 import { GuardianErrorBoundary } from './components/guardian/GuardianErrorBoundary';
 import { guardianMonitor } from './services/guardian/guardianMonitor';
 import { 
@@ -204,7 +205,11 @@ export default function App() {
             navigate={handleNavigate} 
             showToast={setToastMessage} 
             onSelectModule={(modId) => {
-              if (modId === 'numerology' || modId === 'loshu') setView('numerology');
+              if (modId === 'numerology') setView('numerology');
+              else if (['loshu', 'loshu_grid', 'lo_shu', 'lo_shu_grid'].includes(modId)) {
+                setActiveModule('loshu');
+                setView('module_screen');
+              }
               else if (modId === 'pragya') setView('jeevan_pragya');
               else if (modId === 'aiJyotish' || modId === 'lifeQuestions') setView('intelligence_dashboard');
               else if (modId === 'prashna') setView('prashna_kundli');
@@ -217,6 +222,7 @@ export default function App() {
               else if (modId === 'lifeJournal') setView('daily_report_card');
               else if (modId === 'meditation') setView('meditation');
               else if (modId === 'yoga') setView('yoga');
+              else if (modId === 'mystic_readings') setView('mystic_readings');
               else if (modId === 'settings') setShowLanguageModal(true);
               else {
                 setActiveModule(modId);
@@ -277,6 +283,8 @@ export default function App() {
             showToast={setToastMessage} 
           />
         );
+      case 'mystic_readings':
+        return <MysticReadingsHub key={activeProfile?.id || 'default'} onBack={() => setView('dashboard')} language={currentLanguageInfo.code} />;
       default:
         return null;
     }
