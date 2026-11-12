@@ -288,7 +288,17 @@ export default function App() {
       case 'mystic_readings':
         return <MysticReadingsHub key={activeProfile?.id || 'default'} onBack={() => setView('dashboard')} language={currentLanguageInfo.code} />;
       case 'panchang_table':
-        return <PanchangTableDashboard key={activeProfile?.id || 'default'} profile={activeProfile} onBack={() => setView('dashboard')} showToast={setToastMessage} />;
+        return (
+          <PanchangTableDashboard 
+            key={activeProfile?.id || 'default'} 
+            profile={activeProfile} 
+            onBack={() => setView('dashboard')} 
+            showToast={setToastMessage} 
+            onOpenKundli={(customProfile) => {
+              setView('kundli_shell');
+            }}
+          />
+        );
       default:
         return null;
     }

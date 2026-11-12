@@ -13,7 +13,7 @@ import {
 import { MasterKundliData } from '../../types/kundli';
 import { RealTransitPlanetDetail, TransitAnalysisResult, TransitEngine } from '../../services/jyotish/transitEngine';
 import { useTranslation } from '../../i18n';
-import { getLocalizedPlanet, getLocalizedRashi } from '../../i18n/astrology';
+import { getLocalizedPlanet, getLocalizedRashi, getPlanetAbbreviation } from '../../i18n/astrology';
 import { SpeechEngine } from '../../services/companion/speechEngine';
 import OrnateCorner from '../ui/OrnateCorner';
 import YantraMotif from '../ui/YantraMotif';

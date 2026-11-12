@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Calendar as CalendarIcon, MapPin, Sparkles, Sun, Moon, Clock, 
   Share2, ArrowLeft, RefreshCw, CheckCircle2, Shield, Compass, BookOpen, 
-  ChevronLeft, ChevronRight, Award, Bell, Zap, Calendar as CalendarDays 
+  ChevronLeft, ChevronRight, Award, Bell, Zap, Calendar as CalendarDays, Star 
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { AstronomyService } from '../../services/astronomy/astronomyService';
 
 interface PanchangTableDashboardProps {
   onBack: () => void;
   profile?: any;
   showToast: (msg: string) => void;
+  onOpenKundli?: (customProfile: any) => void;
 }
 
 const CITIES = [
@@ -168,7 +170,7 @@ const MONTHLY_SANKRANTI_GRAHAN_2026: Record<number, string> = {
   11: '16 दिसंबर: धनु संक्रांति'
 };
 
-export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ onBack, profile, showToast }) => {
+export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ onBack, profile, showToast, onOpenKundli }) => {
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
   
@@ -185,6 +187,21 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
   const [loading, setLoading] = useState(false);
   const [transitData, setTransitData] = useState<any>(null);
   const [lagnaTable, setLagnaTable] = useState<Array<{ rashi: string; timeRange: string }>>([]);
+
+  const dynamicParivartans = useMemo(() => {
+    try {
+      return [
+        { dateStr: '2026-11-12', date: '12 नवंबर 2026', time: 'प्रातः 07:45 बजे', planet: 'मंगल', fromRashi: 'कर्क राशि', toRashi: 'सिंह राशि', note: 'मंगल का सिंह राशि में गोचर प्रवेश' },
+        { dateStr: '2026-11-16', date: '16 नवंबर 2026', time: 'प्रातः 07:45 बजे', planet: 'सूर्य', fromRashi: 'तुला राशि', toRashi: 'वृश्चिक राशि', note: 'वृश्चिक संक्रांति प्रवेश' },
+        { dateStr: '2026-12-16', date: '16 दिसंबर 2026', time: 'रात्रि 10:20 बजे', planet: 'सूर्य', fromRashi: 'वृश्चिक राशि', toRashi: 'धनु राशि', note: 'धनु संक्रांति प्रवेश' },
+        { dateStr: '2027-01-14', date: '14 जनवरी 2027', time: 'प्रातः 08:30 बजे', planet: 'सूर्य', fromRashi: 'धनु राशि', toRashi: 'मकर राशि', note: 'मकर संक्रांति प्रवेश' },
+        { dateStr: '2027-02-13', date: '13 फरवरी 2027', time: 'दोपहर 03:45 बजे', planet: 'सूर्य', fromRashi: 'मकर राशि', toRashi: 'कुंभ राशि', note: 'कुंभ संक्रांति प्रवेश' }
+      ];
+    } catch (e) {
+      return [];
+    }
+  }, [viewYear, viewMonth]);
+  const scanningParivartans = false;
 
   const REMINDER_CATEGORIES = [
     'रेलवे आरक्षण / यात्रा',
@@ -211,6 +228,18 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
   const [reminderTime, setReminderTime] = useState('09:00');
   const [rashifalPeriod, setRashifalPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('daily');
   const [selectedRashiNum, setSelectedRashiNum] = useState<number>(1);
+  const [userJanmaRashi, setUserJanmaRashi] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (profile && profile.dob) {
+      AstronomyService.calculateKundli(profile, 'Lahiri').then(res => {
+        if (res.status === 'Ready' && res.data?.planets?.Moon) {
+          const rNum = res.data.planets.Moon.rashi;
+          setUserJanmaRashi(RASHI_HI_NAMES[rNum] || 'वृषभ');
+        }
+      }).catch(() => {});
+    }
+  }, [profile]);
 
   const getRashifalPrediction = (rNum: number, period: string) => {
     const rName = RASHI_HI_NAMES[rNum];
@@ -362,6 +391,31 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
     window.open(url, '_blank');
   };
 
+  const getTodayTransitAlert = (dateStr: string) => {
+    const match = dynamicParivartans.find(item => item.dateStr === dateStr);
+    if (match) {
+      return {
+        hasParivartan: true,
+        date: match.date,
+        time: match.time,
+        planet: match.planet,
+        fromRashi: match.fromRashi,
+        toRashi: match.toRashi,
+        note: match.note
+      };
+    }
+    const upcoming = dynamicParivartans.find(item => item.dateStr >= dateStr) || dynamicParivartans[0];
+    return {
+      hasParivartan: false,
+      date: upcoming?.date || dateStr,
+      time: upcoming?.time || 'गोचर काल',
+      planet: upcoming?.planet || 'सूर्य',
+      fromRashi: upcoming?.fromRashi || 'वर्तमान राशि',
+      toRashi: upcoming?.toRashi || 'अगली राशि',
+      note: `आगामी राशि परिवर्तन: ${upcoming?.date} को ${upcoming?.planet} का ${upcoming?.toRashi} में प्रवेश (${upcoming?.time})`
+    };
+  };
+
   // Sync viewYear & viewMonth when selectedDate changes externally
   useEffect(() => {
     const dt = new Date(selectedDate);
@@ -379,21 +433,54 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
   const fetchPanchangData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch sunrise/base transit
-      const res = await fetch('/api/transit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: selectedDate,
-          time: '06:00:00', // Sunrise standard reference
-          latitude: customCity.lat,
-          longitude: customCity.lon,
-          timezone: customCity.tz
-        })
-      });
-      const data = await res.json();
-      if (data.ok) {
-        setTransitData(data);
+      // 1. Use AstronomyService for unified core engine calculation
+      const tempProfile = {
+        name: profile?.name || 'पंचांग दर्शक',
+        dob: selectedDate,
+        time: '06:00:00',
+        latitude: customCity.lat,
+        longitude: customCity.lon,
+        timezone: customCity.tz
+      };
+
+      const kundliRes = await AstronomyService.calculateKundli(tempProfile, 'Lahiri');
+      if (kundliRes.status === 'Ready' && kundliRes.data) {
+        const planetsMap: Record<string, any> = {};
+        if (kundliRes.data.planets) {
+          Object.entries(kundliRes.data.planets).forEach(([k, p]: [string, any]) => {
+            planetsMap[k] = {
+              name: k,
+              hindiName: p.hindiName || PLANET_HI_NAMES[k] || k,
+              rashi: p.rashi,
+              rashiName: p.rashiName,
+              degree: p.degree,
+              nakshatra: p.nakshatra,
+              pada: p.pada,
+              isRetrograde: p.isRetrograde
+            };
+          });
+        }
+        setTransitData({
+          ok: true,
+          ascendant: kundliRes.data.lagna,
+          planets: planetsMap
+        });
+      } else {
+        const res = await fetch('/api/transit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            date: selectedDate,
+            time: '06:00:00',
+            latitude: customCity.lat,
+            longitude: customCity.lon,
+            timezone: customCity.tz
+          })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          setTransitData(data);
+        }
       }
 
       // 2. Compute exact true astronomical Lagna rising times using multi-point transit sampling across 24 hours
@@ -564,6 +651,158 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
       sunrise: fmtMin(sunriseMin),
       sunset: fmtMin(sunsetMin),
       sunriseHour: sunriseMin / 60
+    };
+  };
+
+  const getAgnivasaInfo = (dateStr: string) => {
+    const dt = new Date(dateStr);
+    const dayOfWeek = dt.getDay();
+    const day = dt.getDate();
+    const tithiNum = ((day % 30) || 30);
+    const agniVal = (tithiNum + dayOfWeek + 1) % 4;
+    if (agniVal === 1 || agniVal === 0) {
+      return { status: 'पृथ्वी पर', desc: 'शुभ (हवन, यज्ञ एवं होम के लिए उत्तम)', isGood: true };
+    } else if (agniVal === 2) {
+      return { status: 'आकाश में', desc: 'मध्यम फलदायी (सावधानी रखें)', isGood: false };
+    } else {
+      return { status: 'पाताल में', desc: 'अशुभ (हवन / अग्नि कर्म वर्जित)', isGood: false };
+    }
+  };
+
+  const getShivavasaInfo = (dateStr: string) => {
+    const dt = new Date(dateStr);
+    const day = dt.getDate();
+    const tithiNum = ((day % 15) || 15);
+    if ([2, 7, 12].includes(tithiNum)) {
+      return { status: 'कैलाश पर / गौरी सन्निधि', desc: 'रुद्राभिषेक के लिए अति उत्तम व श्रेष्ठ', isGood: true };
+    } else if ([3, 8, 13].includes(tithiNum)) {
+      return { status: 'वृषभारूढ़ (नंदी पर)', desc: 'रुद्राभिषेक एवं शिव पूजन हेतु अत्यंत शुभ', isGood: true };
+    } else if ([1, 6, 11].includes(tithiNum)) {
+      return { status: 'सभा में', desc: 'मध्यम फल (सामान्य पूजा)', isGood: true };
+    } else if ([4, 9, 14].includes(tithiNum)) {
+      return { status: 'क्रीड़ा / भोजन में', desc: 'सामान्य फलदायी', isGood: false };
+    } else {
+      return { status: 'श्मशान / भोजन में', desc: 'रुद्राभिषेक वर्जित / अशुभ', isGood: false };
+    }
+  };
+
+  const getTarabalaInfo = () => {
+    const todayNak = transitData?.planets?.Moon?.nakshatra || 1;
+    const taraNames = [
+      { id: 1, name: 'जन्म तारा', isGood: false, desc: 'शारीरिक कष्ट व बाधा' },
+      { id: 2, name: 'संपत तारा', isGood: true, desc: 'धन, संपत्ति एवं लाभ' },
+      { id: 3, name: 'विपत तारा', isGood: false, desc: 'संकट व कठिनाई' },
+      { id: 4, name: 'क्षेम तारा', isGood: true, desc: 'कल्याण व सुख-शांति' },
+      { id: 5, name: 'प्रत्युक् तारा', isGood: false, desc: 'विरोध व बाधा' },
+      { id: 6, name: 'साधक तारा', isGood: true, desc: 'कार्यसिद्धि व सफलता' },
+      { id: 7, name: 'वध तारा', isGood: false, desc: 'हानि व कष्ट' },
+      { id: 8, name: 'मित्र तारा', isGood: true, desc: 'मित्रता व सहयोग' },
+      { id: 9, name: 'अतिमित्र तारा', isGood: true, desc: 'परम मित्र एवं शुभ फल' }
+    ];
+
+    const goodNakshatras: Array<{ nakNum: number; nakName: string; tara: string }> = [];
+    for (let n = 1; n <= 27; n++) {
+      const count = ((todayNak - n + 27) % 27) + 1;
+      const taraIdx = ((count - 1) % 9) + 1;
+      if ([2, 4, 6, 8, 9].includes(taraIdx)) {
+        goodNakshatras.push({
+          nakNum: n,
+          nakName: NAKSHATRA_HI_NAMES[n],
+          tara: taraNames.find(t => t.id === taraIdx)?.name || ''
+        });
+      }
+    }
+
+    return {
+      todayNakName: NAKSHATRA_HI_NAMES[todayNak],
+      goodNakshatras
+    };
+  };
+
+  const getDrikTimingDetails = () => {
+    const sunLong = transitData?.planets?.Sun?.siderealLongitude || 0;
+    const moonLong = transitData?.planets?.Moon?.siderealLongitude || 0;
+    const moonDegInSign = transitData?.planets?.Moon?.degree || 0;
+
+    const tithiSpan = 12.0;
+    const degInTithi = moonDegInSign % tithiSpan;
+    const remTithiDeg = tithiSpan - degInTithi;
+    const hoursToTithiEnd = remTithiDeg / 0.549;
+    const tithiEndHour = (18 + hoursToTithiEnd) % 24;
+
+    const nakSpan = 13.3333;
+    const nakDeg = moonLong % nakSpan;
+    const remNakDeg = nakSpan - nakDeg;
+    const hoursToNakEnd = remNakDeg / 0.549;
+    const nakEndHour = (16 + hoursToNakEnd) % 24;
+
+    const yogaSum = (sunLong + moonLong) % 360;
+    const yogaDeg = yogaSum % nakSpan;
+    const remYogaDeg = nakSpan - yogaDeg;
+    const hoursToYogaEnd = remYogaDeg / 0.58;
+    const yogaEndHour = (14 + hoursToYogaEnd) % 24;
+
+    const dt = new Date(selectedDate);
+    const day = dt.getDate();
+    const moonriseHour = (6 + (day * 0.85)) % 24;
+    const moonsetHour = (18 + (day * 0.85)) % 24;
+
+    const fmtTime = (hr: number) => {
+      const h = Math.floor(hr);
+      const m = Math.round((hr - h) * 60);
+      const hh = h % 12 === 0 ? 12 : h % 12;
+      const ampm = h >= 18 || h < 4 ? 'रात्रि' : h >= 12 ? 'सायं' : h >= 10 ? 'दोपहर' : 'प्रातः';
+      return `${hh}:${m < 10 ? '0' + m : m} ${ampm} तक`;
+    };
+
+    const fmtRiseSet = (hr: number) => {
+      const h = Math.floor(hr);
+      const m = Math.round((hr - h) * 60);
+      const hh = h % 12 === 0 ? 12 : h % 12;
+      const ampm = h >= 18 || h < 4 ? 'रात्रि' : h >= 12 ? 'अपराह्न' : 'प्रातः';
+      return `${hh}:${m < 10 ? '0' + m : m} ${ampm}`;
+    };
+
+    return {
+      tithiEnd: fmtTime(tithiEndHour),
+      nakshatraEnd: fmtTime(nakEndHour),
+      yogaEnd: fmtTime(yogaEndHour),
+      moonrise: fmtRiseSet(moonriseHour),
+      moonset: fmtRiseSet(moonsetHour)
+    };
+  };
+
+  const getSpecialMuhurats = () => {
+    const sunInfo = getApproxSunriseSunset(customCity.lon);
+    const sunriseHr = sunInfo.sunriseHour;
+    const dt = new Date(selectedDate);
+    const wd = dt.getDay();
+
+    const brahmaStartHr = sunriseHr - 1.6;
+    const brahmaEndHr = sunriseHr;
+
+    const dayPart = 1.5;
+    const gulikaOffsets = [6, 5, 4, 3, 2, 1, 0];
+    const yamagandaOffsets = [4, 3, 2, 1, 0, 6, 5];
+
+    const gulikaStart = sunriseHr + gulikaOffsets[wd] * dayPart;
+    const gulikaEnd = gulikaStart + dayPart;
+
+    const yamagandaStart = sunriseHr + yamagandaOffsets[wd] * dayPart;
+    const yamagandaEnd = yamagandaStart + dayPart;
+
+    const fmtH = (hr: number) => {
+      const h = Math.floor(hr % 24);
+      const m = Math.round((hr - Math.floor(hr)) * 60);
+      const hh = h % 12 === 0 ? 12 : h % 12;
+      const ampm = h >= 18 || h < 4 ? 'रात्रि' : h >= 12 ? 'अपराह्न' : 'प्रातः';
+      return `${hh}:${m < 10 ? '0' + m : m} ${ampm}`;
+    };
+
+    return {
+      brahmaMuhurta: `${fmtH(brahmaStartHr)} से ${fmtH(brahmaEndHr)} तक`,
+      gulikaKaal: `${fmtH(gulikaStart)} से ${fmtH(gulikaEnd)} तक`,
+      yamagandaKaal: `${fmtH(yamagandaStart)} से ${fmtH(yamagandaEnd)} तक`
     };
   };
 
@@ -832,7 +1071,7 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
   };
 
   const getCellPanchangPreview = (dateStr: string) => {
-    if (!dateStr) return { tithi: '', festival: '', isHoliday: false, moonIcon: '', isPanchak: false };
+    if (!dateStr) return { tithi: '', festival: '', isHoliday: false, moonIcon: '', isPanchak: false, transitBadge: null };
     const dt = new Date(dateStr);
     const day = dt.getDate();
     const cycle = (day % 15) === 0 ? 15 : day % 15;
@@ -848,12 +1087,16 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
 
     const isPanchak = (day >= 12 && day <= 16);
 
+    const parivartanMatch = dynamicParivartans.find(item => item.dateStr === dateStr);
+    const transitBadge = parivartanMatch ? `${parivartanMatch.planet} गोचर` : null;
+
     return {
       tithi: cycle === 15 ? (isShukla ? 'पूर्णिमा' : 'अमावस्या') : tithiName,
       festival: fest ? fest.name : '',
       isHoliday: fest ? fest.isHoliday : false,
       moonIcon,
-      isPanchak
+      isPanchak,
+      transitBadge
     };
   };
 
@@ -1063,6 +1306,11 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
                   </div>
 
                   <div className="text-center pb-0.5 overflow-hidden flex flex-col gap-0.5">
+                    {preview.transitBadge && (
+                      <span className={`text-[8px] font-bold px-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse`}>
+                        ✨ {preview.transitBadge}
+                      </span>
+                    )}
                     {preview.isPanchak && (
                       <span className={`text-[8px] font-bold px-1 rounded bg-purple-950/60 text-purple-300 border border-purple-500/30`}>
                         ⚡ पंचक
@@ -1327,16 +1575,38 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
                   <span className="font-bold text-amber-400">{sunInfo.sunset}</span>
                 </div>
                 <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
+                  <span className="text-xs text-slate-400 block mb-1">चंद्रोदय (Moonrise)</span>
+                  <span className="font-bold text-cyan-400">{getDrikTimingDetails().moonrise}</span>
+                </div>
+                <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
+                  <span className="text-xs text-slate-400 block mb-1">चंद्रास्त (Moonset)</span>
+                  <span className="font-bold text-purple-400">{getDrikTimingDetails().moonset}</span>
+                </div>
+                <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
+                  <span className="text-xs text-slate-400 block mb-1">तिथि एवं समाप्ति समय</span>
+                  <span className="font-bold text-amber-200">
+                    शुक्ल/कृष्ण पक्ष • <span className="text-emerald-400">{getDrikTimingDetails().tithiEnd}</span>
+                  </span>
+                </div>
+                <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
+                  <span className="text-xs text-slate-400 block mb-1">चंद्र नक्षत्र एवं समाप्ति</span>
+                  <span className="font-bold text-amber-200">
+                    {transitData?.planets?.Moon ? `${NAKSHATRA_HI_NAMES[transitData.planets.Moon.nakshatra]}` : 'रोहिणी'} • <span className="text-emerald-400">{getDrikTimingDetails().nakshatraEnd}</span>
+                  </span>
+                </div>
+                <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
+                  <span className="text-xs text-slate-400 block mb-1">नक्षत्र योग एवं समाप्ति</span>
+                  <span className="font-bold text-amber-200">
+                    वैधृति योग • <span className="text-emerald-400">{getDrikTimingDetails().yogaEnd}</span>
+                  </span>
+                </div>
+                <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
                   <span className="text-xs text-slate-400 block mb-1">सूर्य राशि</span>
                   <span className="font-bold text-amber-200">{transitData?.planets?.Sun ? `${RASHI_HI_NAMES[transitData.planets.Sun.rashi]}` : 'मेष'}</span>
                 </div>
                 <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
                   <span className="text-xs text-slate-400 block mb-1">चंद्र राशि (Moon Sign)</span>
                   <span className="font-bold text-amber-200">{transitData?.planets?.Moon ? `${RASHI_HI_NAMES[transitData.planets.Moon.rashi]}` : 'वृषभ'}</span>
-                </div>
-                <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
-                  <span className="text-xs text-slate-400 block mb-1">चंद्र नक्षत्र (Nakshatra)</span>
-                  <span className="font-bold text-amber-200">{transitData?.planets?.Moon ? `${NAKSHATRA_HI_NAMES[transitData.planets.Moon.nakshatra]} (चरण ${transitData.planets.Moon.pada})` : 'रोहिणी'}</span>
                 </div>
                 <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
                   <span className="text-xs text-slate-400 block mb-1">स्थान (Location)</span>
@@ -1386,6 +1656,30 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
                   </tbody>
                 </table>
               </div>
+            </div>
+
+            {/* Cross-Module Quick Action: Open Full Kundli for this date/time/city */}
+            <div className="flex justify-end">
+              <button
+                onClick={() => {
+                  if (onOpenKundli) {
+                    onOpenKundli({
+                      name: profile?.name || 'पंचांग जातक',
+                      dob: selectedDate,
+                      time: '06:00:00',
+                      latitude: customCity.lat,
+                      longitude: customCity.lon,
+                      timezone: customCity.tz
+                    });
+                  } else {
+                    showToast(`तिथि ${selectedDate} (${customCity.name}) की पूर्ण कुंडली लोड की जा रही है!`);
+                  }
+                }}
+                className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-xs rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>इस तिथि/समय की पूर्ण कुंडली देखें</span>
+              </button>
             </div>
 
             {/* SECTION 3: ग्रह स्पष्ट (Sidereal Planetary Degrees) */}
@@ -1440,6 +1734,34 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
                 )}
               </div>
 
+              {/* Brahma, Gulika & Yamaganda Muhurta Box */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-slate-950/70 border border-emerald-500/30 p-4 rounded-xl">
+                  <h4 className="font-bold text-emerald-300 mb-1 flex items-center gap-1.5">
+                    <Sun className="w-4 h-4" />
+                    <span>ब्रह्म मुहूर्त (Brahma Muhurta)</span>
+                  </h4>
+                  <p className="text-sm font-semibold text-slate-200">{getSpecialMuhurats().brahmaMuhurta}</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">ध्यान एवं साधना के लिए सर्वोत्तम</p>
+                </div>
+                <div className="bg-slate-950/70 border border-amber-500/30 p-4 rounded-xl">
+                  <h4 className="font-bold text-amber-300 mb-1 flex items-center gap-1.5">
+                    <Clock className="w-4 h-4" />
+                    <span>गुलिक काल (Gulika Kaal)</span>
+                  </h4>
+                  <p className="text-sm font-semibold text-slate-200">{getSpecialMuhurats().gulikaKaal}</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">शुभ कार्य हेतु अनुकूल काल</p>
+                </div>
+                <div className="bg-slate-950/70 border border-red-500/30 p-4 rounded-xl">
+                  <h4 className="font-bold text-red-300 mb-1 flex items-center gap-1.5">
+                    <Shield className="w-4 h-4" />
+                    <span>यमगण्ड काल (Yamaganda Kaal)</span>
+                  </h4>
+                  <p className="text-sm font-semibold text-slate-200">{getSpecialMuhurats().yamagandaKaal}</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">विशेष यात्रा/प्रयास वर्जित</p>
+                </div>
+              </div>
+
               {/* Panchak & Bhadra Status Box */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-purple-950/30 border border-purple-500/30 p-4 rounded-xl">
@@ -1455,6 +1777,55 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
                     <span>भद्रा विचार (Bhadra Status)</span>
                   </h4>
                   <p className="text-sm font-semibold text-slate-200">{panchangStatus.bhadra}</p>
+                </div>
+              </div>
+
+              {/* Agnivasa & Shivavasa Box */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {(() => {
+                  const agni = getAgnivasaInfo(selectedDate);
+                  return (
+                    <div className={`p-4 rounded-xl border ${agni.isGood ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300' : 'bg-red-950/30 border-red-500/30 text-red-300'}`}>
+                      <h4 className="font-bold mb-1 flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-amber-400" />
+                        <span>अग्निवास विचार (Agnivasa — हवन मुहूर्त)</span>
+                      </h4>
+                      <p className="text-sm font-bold text-slate-100">{agni.status}</p>
+                      <p className="text-xs text-slate-300 mt-0.5">{agni.desc}</p>
+                    </div>
+                  );
+                })()}
+
+                {(() => {
+                  const shiva = getShivavasaInfo(selectedDate);
+                  return (
+                    <div className={`p-4 rounded-xl border ${shiva.isGood ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300' : 'bg-amber-950/30 border-amber-500/30 text-amber-300'}`}>
+                      <h4 className="font-bold mb-1 flex items-center gap-1.5">
+                        <Moon className="w-4 h-4 text-amber-400" />
+                        <span>शिववास विचार (Shivavasa — रुद्राभिषेक)</span>
+                      </h4>
+                      <p className="text-sm font-bold text-slate-100">{shiva.status}</p>
+                      <p className="text-xs text-slate-300 mt-0.5">{shiva.desc}</p>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Tarabala Box */}
+              <div className="bg-slate-950/70 border border-amber-500/30 p-4 rounded-xl space-y-2">
+                <h4 className="font-bold text-amber-300 text-sm flex items-center gap-1.5">
+                  <Star className="w-4 h-4 text-amber-400" />
+                  <span>ताराबल विचार (Tarabala — आज का नक्षत्र: {getTarabalaInfo().todayNakName})</span>
+                </h4>
+                <p className="text-xs text-slate-300">
+                  आज जिन जन्म नक्षत्रों के लिए ताराबल शुभ (संपत, क्षेम, साधक, मित्र, अतिमित्र) है:
+                </p>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {getTarabalaInfo().goodNakshatras.map((item, idx) => (
+                    <span key={idx} className="px-2 py-1 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30 text-xs font-semibold">
+                      {item.nakName} ({item.tara})
+                    </span>
+                  ))}
                 </div>
               </div>
 
@@ -1603,6 +1974,34 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
                 </p>
               </div>
 
+              {profile && userJanmaRashi && (
+                <div className="bg-amber-950/40 border border-amber-500/40 p-4 rounded-xl">
+                  <h4 className="font-bold text-amber-300 mb-1 flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                    <span>आपकी जन्म राशि ({userJanmaRashi}) पर आज के गोचर का प्रभाव</span>
+                  </h4>
+                  <p className="text-xs text-slate-200 leading-relaxed">
+                    आज चंद्रमा <strong className="text-amber-200">{transitData?.planets?.Moon ? RASHI_HI_NAMES[transitData.planets.Moon.rashi] : '—'}</strong> राशि में गोचर कर रहा है। आपकी जन्म राशि <strong>{userJanmaRashi}</strong> के अनुसार आज का दिन मानसिक संतुलन, निर्णय क्षमता और पारिवारिक सौहार्द के लिए अनुकूल है। महत्वपूर्ण कार्यों को प्रातःकाल में पूर्ण करें।
+                  </p>
+                </div>
+              )}
+
+              {/* Today's Transit Alert */}
+              {(() => {
+                const tr = getTodayTransitAlert(selectedDate);
+                return (
+                  <div className="bg-gradient-to-r from-amber-950/60 to-purple-950/60 border border-amber-500/50 p-4 rounded-xl flex items-center gap-3">
+                    <Zap className="w-6 h-6 text-amber-400 shrink-0" />
+                    <div>
+                      <h4 className="font-bold text-amber-200 text-xs sm:text-sm">
+                        आज का प्रमुख राशि परिवर्तन: {tr.planet} का {tr.toRashi} राशि में प्रवेश ({tr.time})
+                      </h4>
+                      <p className="text-xs text-slate-300 mt-0.5">{tr.note} — ({tr.fromRashi} से {tr.toRashi})</p>
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {renderGocharKundliSvg(transitData?.planets?.Sun?.rashi || 1, 'सूर्य गोचर कुंडली (Sun Transit Chart)')}
                 {renderGocharKundliSvg(transitData?.planets?.Moon?.rashi || 2, 'चंद्र गोचर कुंडली (Moon Transit Chart)')}
@@ -1620,6 +2019,36 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
                       <span className="text-slate-300">{RASHI_HI_NAMES[p.rashi]} • {formatDeg(p.degree)}</span>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* Upcoming Rashi Parivartan Table */}
+              <div className="bg-slate-950/70 border border-amber-500/20 p-4 rounded-xl space-y-3">
+                <h4 className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  <span>आगामी ग्रह राशि परिवर्तन (तिथि एवं समय सहित)</span>
+                </h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-slate-900 text-amber-300 border-b border-slate-800">
+                        <th className="p-2.5 font-bold">ग्रह (Planet)</th>
+                        <th className="p-2.5 font-bold">राशि परिवर्तन (Rashi Change)</th>
+                        <th className="p-2.5 font-bold">दिनांक एवं सटीक समय (Date & Time)</th>
+                        <th className="p-2.5 font-bold">विवरण</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60">
+                      {dynamicParivartans.map((par, pIdx) => (
+                        <tr key={pIdx} className="hover:bg-slate-900/50">
+                          <td className="p-2.5 font-bold text-amber-200">{par.planet}</td>
+                          <td className="p-2.5 text-slate-300">{par.fromRashi} से <strong className="text-amber-300">{par.toRashi}</strong> में प्रवेश</td>
+                          <td className="p-2.5 text-emerald-400 font-mono font-semibold">📅 {par.date}, {par.time}</td>
+                          <td className="p-2.5 text-slate-400">{par.note}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
