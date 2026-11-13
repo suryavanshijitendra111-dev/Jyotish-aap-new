@@ -21,6 +21,7 @@ import YantraMotif from '../ui/YantraMotif';
 interface LiveTransitChartProps {
   masterData?: MasterKundliData | null;
   className?: string;
+  initialViewMode?: TransitViewMode;
 }
 
 type TransitViewMode = 'birth_moon' | 'birth_lagna' | 'live_lagna';
@@ -210,7 +211,7 @@ const GOCHAR_EFFECTS_FROM_MOON: Record<string, Record<number, { quality: 'Shubha
   }
 };
 
-export default function LiveTransitChart({ masterData, className = '' }: LiveTransitChartProps) {
+export default function LiveTransitChart({ masterData, className = '', initialViewMode }: LiveTransitChartProps) {
   const { language } = useTranslation();
   const currentLang = language;
   const isHindi = currentLang === 'hi' || currentLang === 'sa';
@@ -225,7 +226,7 @@ export default function LiveTransitChart({ masterData, className = '' }: LiveTra
   });
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<TransitViewMode>('birth_moon');
+  const [viewMode, setViewMode] = useState<TransitViewMode>(initialViewMode || 'birth_moon');
   const [selectedPlanet, setSelectedPlanet] = useState<string | null>(null);
   const [selectedHouse, setSelectedHouse] = useState<number | null>(null);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);

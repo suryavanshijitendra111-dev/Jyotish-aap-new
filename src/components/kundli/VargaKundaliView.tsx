@@ -36,6 +36,33 @@ import {
 import OrnateCorner from '../ui/OrnateCorner';
 import YantraMotif from '../ui/YantraMotif';
 
+const NAKSHATRA_SHORT_NAMES_HI = [
+  'अश्वि', 'भरणि', 'कृत्ति', 'रोहि', 'मृग', 'आर्द्रा', 'पुनर्व', 'पुष्य', 'अश्ले',
+  'मघा', 'पूर्वा', 'उत्तरा', 'हस्त', 'चित्रा', 'स्वाति', 'विशा', 'अनुरा', 'ज्येष्ठा',
+  'मूल', 'पूर्वाषा', 'उत्तराषा', 'श्रवण', 'धनिष्ठा', 'शतभि', 'पूर्वाभा', 'उत्तराभा', 'रेवती'
+];
+
+const NAKSHATRA_NAMES_HI_LIST = [
+  'अश्विनी', 'भरणी', 'कृत्तिका', 'रोहिणी', 'मृगशिरा', 'आर्द्रा', 'पुनर्वसु', 'पुष्य', 'आश्लेषा',
+  'मघा', 'पूर्वा फाल्गुनी', 'उत्तरा फाल्गुनी', 'हस्त', 'चित्रा', 'स्वाति', 'विशाखा', 'अनुराधा', 'ज्येष्ठा',
+  'मूल', 'पूर्वाषाढ़ा', 'उत्तराषाढ़ा', 'श्रवण', 'धनिष्ठा', 'शतभिषा', 'पूर्वाभाद्रपद', 'उत्तराभाद्रपद', 'रेवती'
+];
+
+const NAKSHATRA_LORDS_LIST = [
+  'केतु', 'शुक्र', 'सूर्य', 'चंद्र', 'मंगल', 'राहु', 'गुरु', 'शनि', 'बुध',
+  'केतु', 'शुक्र', 'सूर्य', 'चंद्र', 'मंगल', 'राहु', 'गुरु', 'शनि', 'बुध',
+  'केतु', 'शुक्र', 'सूर्य', 'चंद्र', 'मंगल', 'राहु', 'गुरु', 'शनि', 'बुध'
+];
+
+const formatExactDegree = (degNum?: number) => {
+  if (degNum == null || isNaN(degNum)) return '00°00\'00\"';
+  const d = Math.floor(degNum);
+  const mFloat = (degNum - d) * 60;
+  const m = Math.floor(mFloat);
+  const s = Math.floor((mFloat - m) * 60);
+  return `${d.toString().padStart(2, '0')}°${m.toString().padStart(2, '0')}'${s.toString().padStart(2, '0')}\"`;
+};
+
 export interface VargaDefinition {
   key: string;
   nameHi: string;
@@ -48,24 +75,53 @@ export interface VargaDefinition {
   category: 'core' | 'higher' | 'subtle';
 }
 
-export const COMPLETE_SHODASHAVARGA: VargaDefinition[] = [
-  { key: 'D1', nameHi: 'राशि कुंडली (D1)', nameEn: 'Rashi (D1)', division: 1, significanceHi: 'सम्पूर्ण व्यक्तित्व, देह, रूप, आयु व समग्र जीवन का मूल आधार', significanceEn: 'Overall Life, Physique, Temperament & Core Destiny', isAvailable: true, signProp: 'd1Sign', category: 'core' },
-  { key: 'D2', nameHi: 'होरा कुंडली (D2)', nameEn: 'Hora (D2)', division: 2, significanceHi: 'धन, संपदा, पैतृक संपत्ति, वाणी व वित्तीय समृद्धि', significanceEn: 'Wealth, Liquid Assets, Speech & Prosperity', isAvailable: true, signProp: 'd2Sign', category: 'core' },
-  { key: 'D3', nameHi: 'द्रेष्काण कुंडली (D3)', nameEn: 'Drekkana (D3)', division: 3, significanceHi: 'सहोदर, भाई-बहन, अदम्य साहस, पराक्रम व ऊर्जा', significanceEn: 'Siblings, Courage, Vitality & Energy', isAvailable: true, signProp: 'd3Sign', category: 'core' },
-  { key: 'D4', nameHi: 'चतुर्थांश कुंडली (D4)', nameEn: 'Chaturthamsha (D4)', division: 4, significanceHi: 'अचल संपत्ति, भवन, वाहन, गृह सुख व मातृक भाग्य', significanceEn: 'Fixed Assets, Real Estate, Home & Fortune', isAvailable: true, signProp: 'd4Sign', category: 'core' },
-  { key: 'D7', nameHi: 'सप्तांश कुंडली (D7)', nameEn: 'Saptamsha (D7)', division: 7, significanceHi: 'संतान, संतति सुख, वंश वृद्धि व पौत्र-प्रपौत्र', significanceEn: 'Children, Progeny, Lineage & Descendants', isAvailable: true, signProp: 'd7Sign', category: 'core' },
-  { key: 'D9', nameHi: 'नवांश कुंडली (D9)', nameEn: 'Navamsha (D9)', division: 9, significanceHi: 'जीवनसाथी, वैवाहिक जीवन, धर्म, भाग्य व ग्रहों का आंतरिक सूक्ष्म बल', significanceEn: 'Spouse, Marriage, Dharma, Fortune & Soul Strength', isAvailable: true, signProp: 'd9Sign', category: 'core' },
-  { key: 'D10', nameHi: 'दशमांश कुंडली (D10)', nameEn: 'Dasamsha (D10)', division: 10, significanceHi: 'कर्म, पेशा, आजीविका, सामाजिक पद-प्रतिष्ठा, अधिकार व ख्याति', significanceEn: 'Career, Profession, Leadership, Status & Fame', isAvailable: true, signProp: 'd10Sign', category: 'core' },
-  { key: 'D12', nameHi: 'द्वादशांश कुंडली (D12)', nameEn: 'Dwadashamsha (D12)', division: 12, significanceHi: 'माता-पिता, पूर्वज, पैतृक संस्कार, वंश परंपरा व आनुवंशिकता', significanceEn: 'Parents, Ancestors, Heredity & Lineage Karma', isAvailable: true, signProp: 'd12Sign', category: 'core' },
-  { key: 'D16', nameHi: 'षोडशांश कुंडली (D16)', nameEn: 'Shodashamsha (D16)', division: 16, significanceHi: 'वाहन, भौतिक ऐश्वर्य, सुख-सुविधाएं, यात्राएं व मानसिक शांति', significanceEn: 'Vehicles, Luxuries, Inner Comfort & Pleasures', isAvailable: true, signProp: 'd16Sign', category: 'higher' },
-  { key: 'D20', nameHi: 'विंशांश कुंडली (D20)', nameEn: 'Vimshamsha (D20)', division: 20, significanceHi: 'उपासना, भक्ति, आध्यात्मिक साधना, मंत्र सिद्धि व ईश्वरीय कृपा', significanceEn: 'Spiritual Progress, Worship, Mantra Sadhana & Devotion', isAvailable: true, signProp: 'd20Sign', category: 'higher' },
-  { key: 'D24', nameHi: 'चतुर्विंशांश कुंडली (D24)', nameEn: 'Chaturvimshamsha (D24)', division: 24, significanceHi: 'ज्ञान, विद्या, उच्च शिक्षा, प्रज्ञा, अनुसंधान व मेधा शक्ति', significanceEn: 'Higher Education, Intellect, Learning & Wisdom', isAvailable: true, signProp: 'd24Sign', category: 'higher' },
-  { key: 'D27', nameHi: 'सप्तविंशांश कुंडली (D27)', nameEn: 'Saptavimshamsha (D27)', division: 27, significanceHi: 'शारीरिक बल, अंतर्निहित सामर्थ्य, सहनशक्ति व नक्षत्र पद फल', significanceEn: 'Physical Strength, Stamina, Inherent Capacities & Padas', isAvailable: true, signProp: 'd27Sign', category: 'higher' },
-  { key: 'D30', nameHi: 'त्रिंशांश कुंडली (D30)', nameEn: 'Trimshamsha (D30)', division: 30, significanceHi: 'अरिष्ट, रोग, गुप्त शत्रु, जीवन के संकट, भय व बाधाओं का विचार', significanceEn: 'Misfortunes, Evils, Diseases, Adversities & Obstacles', isAvailable: true, signProp: 'd30Sign', category: 'higher' },
-  { key: 'D40', nameHi: 'खवेदांश कुंडली (D40)', nameEn: 'Khavedamsha (D40)', division: 40, significanceHi: 'शुभ-अशुभ फल, मातृक कुल के पूर्वज व शुभ संस्कारों की स्थिति', significanceEn: 'Auspicious & Inauspicious Events, Maternal Heritage', isAvailable: true, signProp: 'd40Sign', category: 'subtle' },
-  { key: 'D45', nameHi: 'अक्षवेदांश कुंडली (D45)', nameEn: 'Akshavedamsha (D45)', division: 45, significanceHi: 'नैतिक चरित्र, सामान्य शुभ-अशुभ स्थिति, सत्यनिष्ठा व पितृक प्रभाव', significanceEn: 'Character, Integrity, General Indications & Moral Ethics', isAvailable: true, signProp: 'd45Sign', category: 'subtle' },
-  { key: 'D60', nameHi: 'षष्ट्यंश कुंडली (D60)', nameEn: 'Shashtiamsha (D60)', division: 60, significanceHi: 'सूक्ष्म प्रारब्ध, पूर्व जन्म के संचित कर्म व जीवन का अंतिम रहस्य', significanceEn: 'Past Life Karma, Root Destiny & Ultimate Subconscious Blueprint', isAvailable: true, signProp: 'd60Sign', category: 'subtle' }
-];
+const SPECIAL_VARGA_NAMES: Record<number, { hi: string; en: string; sigHi: string; sigEn: string; cat: 'core' | 'higher' | 'subtle' | 'higher_jhora' }> = {
+  1: { hi: 'राशि कुंडली (D1)', en: 'Rashi (D1)', sigHi: 'सम्पूर्ण व्यक्तित्व, देह, रूप, आयु व समग्र जीवन का मूल आधार', sigEn: 'Overall Life, Physique, Temperament & Core Destiny', cat: 'core' },
+  2: { hi: 'होरा कुंडली (D2)', en: 'Hora (D2)', sigHi: 'धन, संपदा, पैतृक संपत्ति, वाणी व वित्तीय समृद्धि', sigEn: 'Wealth, Liquid Assets, Speech & Prosperity', cat: 'core' },
+  3: { hi: 'द्रेष्काण कुंडली (D3)', en: 'Drekkana (D3)', sigHi: 'सहोदर, भाई-बहन, अदम्य साहस, पराक्रम व ऊर्जा', sigEn: 'Siblings, Courage, Vitality & Energy', cat: 'core' },
+  4: { hi: 'चतुर्थांश कुंडली (D4)', en: 'Chaturthamsha (D4)', sigHi: 'अचल संपत्ति, भवन, वाहन, गृह सुख व मातृक भाग्य', sigEn: 'Fixed Assets, Real Estate, Home & Fortune', cat: 'core' },
+  7: { hi: 'सप्तांश कुंडली (D7)', en: 'Saptamsha (D7)', sigHi: 'संतान, संतति सुख, वंश वृद्धि व पौत्र-प्रपौत्र', sigEn: 'Children, Progeny, Lineage & Descendants', cat: 'core' },
+  9: { hi: 'नवांश कुंडली (D9)', en: 'Navamsha (D9)', sigHi: 'जीवनसाथी, वैवाहिक जीवन, धर्म, भाग्य व ग्रहों का आंतरिक सूक्ष्म बल', sigEn: 'Spouse, Marriage, Dharma, Fortune & Soul Strength', cat: 'core' },
+  10: { hi: 'दशमांश कुंडली (D10)', en: 'Dasamsha (D10)', sigHi: 'कर्म, पेशा, आजीविका, सामाजिक पद-प्रतिष्ठा, अधिकार व ख्याति', sigEn: 'Career, Profession, Leadership, Status & Fame', cat: 'core' },
+  12: { hi: 'द्वादशांश कुंडली (D12)', en: 'Dwadashamsha (D12)', sigHi: 'माता-पिता, पूर्वज, पैतृक संस्कार, वंश परंपरा व आनुवंशिकता', sigEn: 'Parents, Ancestors, Heredity & Lineage Karma', cat: 'core' },
+  16: { hi: 'षोडशांश कुंडली (D16)', en: 'Shodashamsha (D16)', sigHi: 'वाहन, भौतिक ऐश्वर्य, सुख-सुविधाएं, यात्राएं व मानसिक शांति', sigEn: 'Vehicles, Luxuries, Inner Comfort & Pleasures', cat: 'higher' },
+  20: { hi: 'विंशांश कुंडली (D20)', en: 'Vimshamsha (D20)', sigHi: 'उपासना, भक्ति, आध्यात्मिक साधना, मंत्र सिद्धि व ईश्वरीय कृपा', sigEn: 'Spiritual Progress, Worship, Mantra Sadhana & Devotion', cat: 'higher' },
+  24: { hi: 'चतुर्विंशांश कुंडली (D24)', en: 'Chaturvimshamsha (D24)', sigHi: 'ज्ञान, विद्या, उच्च शिक्षा, प्रज्ञा, अनुसंधान व मेधा शक्ति', sigEn: 'Higher Education, Intellect, Learning & Wisdom', cat: 'higher' },
+  27: { hi: 'सप्तविंशांश कुंडली (D27)', en: 'Saptavimshamsha (D27)', sigHi: 'शारीरिक बल, अंतर्निहित सामर्थ्य, सहनशक्ति व नक्षत्र पद फल', sigEn: 'Physical Strength, Stamina, Inherent Capacities & Padas', cat: 'higher' },
+  30: { hi: 'त्रिंशांश कुंडली (D30)', en: 'Trimshamsha (D30)', sigHi: 'अरिष्ट, रोग, गुप्त शत्रु, जीवन के संकट, भय व बाधाओं का विचार', sigEn: 'Misfortunes, Evils, Diseases, Adversities & Obstacles', cat: 'higher' },
+  40: { hi: 'खवेदांश कुंडली (D40)', en: 'Khavedamsha (D40)', sigHi: 'शुभ-अशुभ फल, मातृक कुल के पूर्वज व शुभ संस्कारों की स्थिति', sigEn: 'Auspicious & Inauspicious Events, Maternal Heritage', cat: 'subtle' },
+  45: { hi: 'अक्षवेदांश कुंडली (D45)', en: 'Akshavedamsha (D45)', sigHi: 'नैतिक चरित्र, सामान्य शुभ-अशुभ स्थिति, सत्यनिष्ठा व पितृक प्रभाव', sigEn: 'Character, Integrity, General Indications & Moral Ethics', cat: 'subtle' },
+  60: { hi: 'षष्ट्यंश कुंडली (D60)', en: 'Shashtiamsha (D60)', sigHi: 'सूक्ष्म प्रारब्ध, पूर्व जन्म के संचित कर्म व जीवन का अंतिम रहस्य', sigEn: 'Past Life Karma, Root Destiny & Ultimate Subconscious Blueprint', cat: 'subtle' },
+  72: { hi: 'अष्टोत्तरांश / नाड़ी (D72)', en: 'Ashtottaramsha / Nadi (D72)', sigHi: 'नाड़ी व सूक्ष्म जीवन स्पंदन विश्लेषण', sigEn: 'Nadi & Subtle Life Pulsation Analysis', cat: 'higher_jhora' },
+  81: { hi: 'नव-नवांश (D81)', en: 'Nav-Navamsha (D81)', sigHi: 'नवम नवांश सूक्ष्म प्रारब्ध व आध्यात्मिक बल', sigEn: 'Subtle Navamsha & Spiritual Potential', cat: 'higher_jhora' },
+  96: { hi: 'प्रभाव (D96)', en: 'Prabhava (D96)', sigHi: 'सूक्ष्म प्रभाव व उच्चतर जीवन चक्र', sigEn: 'Subtle Influence & Higher Life Cycles', cat: 'higher_jhora' },
+  108: { hi: 'अष्टोत्तरांश (D108)', en: 'Ashtottaramsha (D108)', sigHi: 'अष्टोत्तर चक्र व गहन सूक्ष्म भाग्य', sigEn: 'Ashtottara Chakra & Deep Subtle Fortune', cat: 'higher_jhora' },
+  120: { hi: 'द्वादश-दशमांश (D120)', en: 'Dwadash-Dasamsha (D120)', sigHi: 'महा-कर्म व सूक्ष्म आजीविका स्पंदन', sigEn: 'Macro-Karma & Subtle Career Pulsation', cat: 'higher_jhora' },
+  144: { hi: 'द्वादश-द्वादशांश (D144)', en: 'Dwadash-Dwadashamsha (D144)', sigHi: 'द्वादशांश का सूक्ष्म विस्तार व वंशानुगत डीएनए', sigEn: 'Extended Dwadashamsha & Genetic Blueprint', cat: 'higher_jhora' },
+  145: { hi: 'महा-चतुर्थांश (D145)', en: 'Maha-Chaturthamsha (D145)', sigHi: 'अंतिम चतुर्थांश सुख व स्थायित्व स्पंदन', sigEn: 'Ultimate Fixed Asset & Foundation Pulsation', cat: 'higher_jhora' }
+};
+
+export const COMPLETE_SHODASHAVARGA: VargaDefinition[] = Array.from({ length: 145 }, (_, i) => {
+  const n = i + 1;
+  const spec = SPECIAL_VARGA_NAMES[n] || {
+    hi: `विभागांश D${n}`,
+    en: `Divisional D${n}`,
+    sigHi: `भाग ${n} आधारित सूक्ष्म ज्योतिषीय स्पंदन व जीवन विश्लेषण`,
+    sigEn: `Division ${n} based subtle astrological pulsation & life analysis`,
+    cat: n <= 60 ? (n <= 12 ? 'core' : n <= 30 ? 'higher' : 'subtle') : 'higher_jhora'
+  };
+  return {
+    key: `D${n}`,
+    nameHi: spec.hi,
+    nameEn: spec.en,
+    division: n,
+    significanceHi: spec.sigHi,
+    significanceEn: spec.sigEn,
+    isAvailable: true,
+    signProp: `d${n}Sign`,
+    category: spec.cat as any
+  };
+});
 
 const HOUSE_POLYGONS: Record<number, string> = {
   1: '50,0 75,25 50,50 25,25',
@@ -377,6 +433,15 @@ export const VargaKundaliView: React.FC<VargaKundaliViewProps> = ({
               <optgroup label={isHindi ? 'सूक्ष्म प्रारब्ध वर्ग (Subtle & Karma)' : 'Subtle & Karma Vargas'}>
                 {(COMPLETE_SHODASHAVARGA || [])
                   .filter(v => v.category === 'subtle')
+                  .map(v => (
+                    <option key={v.key} value={v.key}>
+                      {v.key} - {isHindi ? v.nameHi : v.nameEn}
+                    </option>
+                  ))}
+              </optgroup>
+              <optgroup label={isHindi ? 'जगन्नाथ होरा उच्च वर्ग D61-D145 (JHora Higher Vargas)' : 'JHora Higher Vargas D61-D145'}>
+                {(COMPLETE_SHODASHAVARGA || [])
+                  .filter(v => v.category === 'higher_jhora')
                   .map(v => (
                     <option key={v.key} value={v.key}>
                       {v.key} - {isHindi ? v.nameHi : v.nameEn}
@@ -757,6 +822,9 @@ export const VargaKundaliView: React.FC<VargaKundaliViewProps> = ({
                 <tr>
                   <th className="p-2.5">{isHindi ? 'ग्रह' : 'Planet'}</th>
                   <th className="p-2.5">{isHindi ? 'राशि' : 'Sign'}</th>
+                  <th className="p-2.5">{isHindi ? 'अंश-कला-विकला' : 'Exact Degree'}</th>
+                  <th className="p-2.5">{isHindi ? 'नक्षत्र-चरण' : 'Nakshatra & Pada'}</th>
+                  <th className="p-2.5">{isHindi ? 'नक्षत्र स्वामी' : 'Nakshatra Lord'}</th>
                   <th className="p-2.5">{isHindi ? 'भाव' : 'House'}</th>
                   <th className="p-2.5">{isHindi ? 'राशि स्वामी' : 'Sign Lord'}</th>
                   <th className="p-2.5">{isHindi ? 'स्थिति' : 'Motion'}</th>
@@ -769,6 +837,10 @@ export const VargaKundaliView: React.FC<VargaKundaliViewProps> = ({
                   const pMaster = masterData?.planets?.[item.planet];
                   const isRetro = pMaster?.isRetrograde;
                   const isSel = selectedPlanet === item.planet;
+                  const degExact = formatExactDegree(pMaster?.degree);
+                  const nakName = pMaster?.nakshatra ? NAKSHATRA_NAMES_HI_LIST[pMaster.nakshatra - 1] : 'अश्विनी';
+                  const padaNum = pMaster?.pada || 1;
+                  const nakLord = pMaster?.nakshatra ? NAKSHATRA_LORDS_LIST[pMaster.nakshatra - 1] : 'केतु';
 
                   return (
                     <tr
@@ -782,6 +854,9 @@ export const VargaKundaliView: React.FC<VargaKundaliViewProps> = ({
                         {getLocalizedPlanet(item.planet, currentLang)}
                       </td>
                       <td className="p-2.5">{getLocalizedRashi(rashiName, currentLang)}</td>
+                      <td className="p-2.5 font-mono text-amber-200">{degExact}</td>
+                      <td className="p-2.5">{nakName} (चरण {padaNum})</td>
+                      <td className="p-2.5 text-emerald-300">{nakLord}</td>
                       <td className="p-2.5 font-mono">{isHindi ? `भाव ${item.house}` : `House ${item.house}`}</td>
                       <td className="p-2.5 text-gray-400">{getLocalizedPlanet(lordKey, currentLang)}</td>
                       <td className="p-2.5">

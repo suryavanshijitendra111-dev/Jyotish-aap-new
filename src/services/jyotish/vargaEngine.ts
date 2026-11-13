@@ -3,22 +3,7 @@ import { RuleEngine } from '../../types/systemRegistry';
 
 export interface VargaPlanet {
   planet: string;
-  d1Sign?: number;
-  d2Sign: number;
-  d3Sign: number;
-  d4Sign: number;
-  d7Sign: number;
-  d9Sign: number;
-  d10Sign: number;
-  d12Sign: number;
-  d16Sign: number;
-  d20Sign: number;
-  d24Sign: number;
-  d27Sign: number;
-  d30Sign: number;
-  d40Sign: number;
-  d45Sign: number;
-  d60Sign: number;
+  [key: string]: any;
 }
 
 export interface VargaAnalysisResult {
@@ -190,28 +175,45 @@ export class VargaEngine implements RuleEngine<VargaAnalysisResult> {
     return ((sign + part - 1) % 12) + 1;
   }
 
-  // Universal helper to get Varga Sign for any varga key and longitude
+  // Generic harmonic Varga calculation for any division N from 1 to 145
+  static getGenericVargaSign(longitude: number, n: number): number {
+    if (n <= 1) return Math.floor(longitude / 30) + 1;
+    const sign = Math.floor(longitude / 30); // 0-11
+    const degreeInSign = longitude % 30;
+    const part = Math.min(Math.floor((degreeInSign + 1e-10) * n / 30), n - 1);
+    const totalPart = sign * n + part;
+    return (totalPart % 12) + 1;
+  }
+
+  // Universal helper to get Varga Sign for any varga key and longitude (D1 to D145)
   static getVargaSign(vKey: string, longitude: number): number {
     const isOdd = (Math.floor(longitude / 30) + 1) % 2 !== 0;
-    switch (vKey) {
-      case 'D1': return Math.floor(longitude / 30) + 1;
-      case 'D2': return VargaEngine.getD2Sign(longitude, isOdd);
-      case 'D3': return VargaEngine.getD3Sign(longitude);
-      case 'D4': return VargaEngine.getD4Sign(longitude);
-      case 'D7': return VargaEngine.getD7Sign(longitude, isOdd);
-      case 'D9': return VargaEngine.getD9Sign(longitude);
-      case 'D10': return VargaEngine.getD10Sign(longitude, isOdd);
-      case 'D12': return VargaEngine.getD12Sign(longitude);
-      case 'D16': return VargaEngine.getD16Sign(longitude);
-      case 'D20': return VargaEngine.getD20Sign(longitude);
-      case 'D24': return VargaEngine.getD24Sign(longitude, isOdd);
-      case 'D27': return VargaEngine.getD27Sign(longitude);
-      case 'D30': return VargaEngine.getD30Sign(longitude, isOdd);
-      case 'D40': return VargaEngine.getD40Sign(longitude, isOdd);
-      case 'D45': return VargaEngine.getD45Sign(longitude);
-      case 'D60': return VargaEngine.getD60Sign(longitude);
-      default: return VargaEngine.getD9Sign(longitude);
+    const upper = vKey.toUpperCase();
+    if (upper.startsWith('D')) {
+      const n = parseInt(upper.substring(1));
+      if (!isNaN(n) && n >= 1 && n <= 145) {
+        switch (n) {
+          case 1: return Math.floor(longitude / 30) + 1;
+          case 2: return VargaEngine.getD2Sign(longitude, isOdd);
+          case 3: return VargaEngine.getD3Sign(longitude);
+          case 4: return VargaEngine.getD4Sign(longitude);
+          case 7: return VargaEngine.getD7Sign(longitude, isOdd);
+          case 9: return VargaEngine.getD9Sign(longitude);
+          case 10: return VargaEngine.getD10Sign(longitude, isOdd);
+          case 12: return VargaEngine.getD12Sign(longitude);
+          case 16: return VargaEngine.getD16Sign(longitude);
+          case 20: return VargaEngine.getD20Sign(longitude);
+          case 24: return VargaEngine.getD24Sign(longitude, isOdd);
+          case 27: return VargaEngine.getD27Sign(longitude);
+          case 30: return VargaEngine.getD30Sign(longitude, isOdd);
+          case 40: return VargaEngine.getD40Sign(longitude, isOdd);
+          case 45: return VargaEngine.getD45Sign(longitude);
+          case 60: return VargaEngine.getD60Sign(longitude);
+          default: return VargaEngine.getGenericVargaSign(longitude, n);
+        }
+      }
     }
+    return VargaEngine.getD9Sign(longitude);
   }
 
   evaluate(data: MasterKundliData): VargaAnalysisResult {
@@ -223,54 +225,21 @@ export class VargaEngine implements RuleEngine<VargaAnalysisResult> {
       if (pd) {
         const pLong = pd.siderealLongitude ?? (pd.rashi != null ? (pd.rashi - 1) * 30 + (pd.degree || 0) : null);
         if (pLong != null) {
-          const isOdd = (Math.floor(pLong / 30) + 1) % 2 !== 0;
-          planets.push({
-            planet: p,
-            d1Sign: Math.floor(pLong / 30) + 1,
-            d2Sign: VargaEngine.getD2Sign(pLong, isOdd),
-            d3Sign: VargaEngine.getD3Sign(pLong),
-            d4Sign: VargaEngine.getD4Sign(pLong),
-            d7Sign: VargaEngine.getD7Sign(pLong, isOdd),
-            d9Sign: VargaEngine.getD9Sign(pLong),
-            d10Sign: VargaEngine.getD10Sign(pLong, isOdd),
-            d12Sign: VargaEngine.getD12Sign(pLong),
-            d16Sign: VargaEngine.getD16Sign(pLong),
-            d20Sign: VargaEngine.getD20Sign(pLong),
-            d24Sign: VargaEngine.getD24Sign(pLong, isOdd),
-            d27Sign: VargaEngine.getD27Sign(pLong),
-            d30Sign: VargaEngine.getD30Sign(pLong, isOdd),
-            d40Sign: VargaEngine.getD40Sign(pLong, isOdd),
-            d45Sign: VargaEngine.getD45Sign(pLong),
-            d60Sign: VargaEngine.getD60Sign(pLong)
-          });
+          const planetObj: VargaPlanet = { planet: p };
+          for (let n = 1; n <= 145; n++) {
+            planetObj[`d${n}Sign`] = VargaEngine.getVargaSign(`D${n}`, pLong);
+          }
+          planets.push(planetObj);
         }
       }
     }
 
-    const ascendantVargas: Record<string, number | null> = {
-      D1: null, D2: null, D3: null, D4: null, D7: null, D9: null, D10: null, D12: null,
-      D16: null, D20: null, D24: null, D27: null, D30: null, D40: null, D45: null, D60: null
-    };
-
+    const ascendantVargas: Record<string, number | null> = {};
     const lagnaLong = data.lagna?.siderealLongitude ?? (data.lagna?.rashi != null ? (data.lagna.rashi - 1) * 30 + (data.lagna.degree || 0) : null);
     if (lagnaLong != null) {
-      const isOdd = (Math.floor(lagnaLong / 30) + 1) % 2 !== 0;
-      ascendantVargas.D1 = Math.floor(lagnaLong / 30) + 1;
-      ascendantVargas.D2 = VargaEngine.getD2Sign(lagnaLong, isOdd);
-      ascendantVargas.D3 = VargaEngine.getD3Sign(lagnaLong);
-      ascendantVargas.D4 = VargaEngine.getD4Sign(lagnaLong);
-      ascendantVargas.D7 = VargaEngine.getD7Sign(lagnaLong, isOdd);
-      ascendantVargas.D9 = VargaEngine.getD9Sign(lagnaLong);
-      ascendantVargas.D10 = VargaEngine.getD10Sign(lagnaLong, isOdd);
-      ascendantVargas.D12 = VargaEngine.getD12Sign(lagnaLong);
-      ascendantVargas.D16 = VargaEngine.getD16Sign(lagnaLong);
-      ascendantVargas.D20 = VargaEngine.getD20Sign(lagnaLong);
-      ascendantVargas.D24 = VargaEngine.getD24Sign(lagnaLong, isOdd);
-      ascendantVargas.D27 = VargaEngine.getD27Sign(lagnaLong);
-      ascendantVargas.D30 = VargaEngine.getD30Sign(lagnaLong, isOdd);
-      ascendantVargas.D40 = VargaEngine.getD40Sign(lagnaLong, isOdd);
-      ascendantVargas.D45 = VargaEngine.getD45Sign(lagnaLong);
-      ascendantVargas.D60 = VargaEngine.getD60Sign(lagnaLong);
+      for (let n = 1; n <= 145; n++) {
+        ascendantVargas[`D${n}`] = VargaEngine.getVargaSign(`D${n}`, lagnaLong);
+      }
     }
 
     return {
