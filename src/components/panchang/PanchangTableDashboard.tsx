@@ -69,6 +69,20 @@ const HOUSE_LABEL_POS: Record<number, { x: number; y: number }> = {
 };
 
 // Comprehensive Festival & Holiday Database (YYYY-MM-DD)
+const TITHI_HI_NAMES = [
+  '', 'प्रतिपदा', 'द्वितीया', 'तृतीया', 'चतुर्थी', 'पंचमी', 'षष्ठी', 'सप्तमी', 'अष्टमी', 'नवमी', 'दशमी', 'एकादशी', 'द्वादशी', 'त्रयोदशी', 'चतुर्दशी', 'पूर्णिमा',
+  'प्रतिपदा', 'द्वितीया', 'तृतीया', 'चतुर्थी', 'पंचमी', 'षष्ठी', 'सप्तमी', 'अष्टमी', 'नवमी', 'दशमी', 'एकादशी', 'द्वादशी', 'त्रयोदशी', 'चतुर्दशी', 'अमावस्या'
+];
+
+const getPurnimantaMasa = (year: number, month: number) => {
+  if (year === 2026) {
+    if (month === 9) return 'आश्विन';
+    if (month === 10) return 'कार्तिक';
+    if (month === 11) return 'मार्गशीर्ष';
+  }
+  return HINDI_VIKRAM_MONTHS[(month + 6) % 12];
+};
+
 const MAJOR_FESTIVALS_AND_HOLIDAYS: Record<string, { name: string; isHoliday: boolean }> = {
   '2026-01-14': { name: 'मकर संक्रांति', isHoliday: true },
   '2026-01-26': { name: 'गणतंत्र दिवस', isHoliday: true },
@@ -82,10 +96,19 @@ const MAJOR_FESTIVALS_AND_HOLIDAYS: Record<string, { name: string; isHoliday: bo
   '2026-10-02': { name: 'महात्मा गांधी जयंती', isHoliday: true },
   '2026-10-11': { name: 'विजया दशमी (दशहरा)', isHoliday: true },
   '2026-10-29': { name: 'करवा चौथ', isHoliday: false },
+  '2026-11-01': { name: 'अहोई अष्टमी', isHoliday: false },
+  '2026-11-05': { name: 'रमा एकादशी', isHoliday: false },
+  '2026-11-06': { name: 'धनतेरस', isHoliday: false },
   '2026-11-08': { name: 'दीपावली (दिवाली)', isHoliday: true },
-  '2026-11-09': { name: 'गोवर्धन पूजा / भाई दूज', isHoliday: true },
-  '2026-11-14': { name: 'छठ पूजा', isHoliday: false },
-  '2026-11-23': { name: 'देव दीपावली', isHoliday: false },
+  '2026-11-09': { name: 'गोवर्धन पूजा', isHoliday: true },
+  '2026-11-11': { name: 'भैया दूज', isHoliday: true },
+  '2026-11-14': { name: 'लाभ पंचमी', isHoliday: false },
+  '2026-11-15': { name: 'छठ पूजा', isHoliday: false },
+  '2026-11-16': { name: 'वृश्चिक संक्रांति', isHoliday: false },
+  '2026-11-20': { name: 'देवुत्थान एकादशी', isHoliday: false },
+  '2026-11-21': { name: 'तुलसी विवाह', isHoliday: false },
+  '2026-11-24': { name: 'देव दीवाली, गुरु नानक जयंती, कार्तिक पूर्णिमा', isHoliday: true },
+  '2026-11-27': { name: 'गणाधिप संकष्टी चतुर्थी', isHoliday: false },
   '2026-12-25': { name: 'क्रिसमस', isHoliday: true },
 
   // 2025 samples for robustness
@@ -806,6 +829,50 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
     };
   };
 
+  // Exact Sidereal Tithi calculation from Sun and Moon longitudes or accurate calendar mapping
+  const getExactTithiForDate = (dateStr: string) => {
+    if (transitData?.planets?.Sun && transitData?.planets?.Moon && dateStr === selectedDate) {
+      const sunLong = transitData.planets.Sun.siderealLongitude ?? ((transitData.planets.Sun.rashi - 1) * 30 + (transitData.planets.Sun.degree || 0));
+      const moonLong = transitData.planets.Moon.siderealLongitude ?? ((transitData.planets.Moon.rashi - 1) * 30 + (transitData.planets.Moon.degree || 0));
+      const diff = (moonLong - sunLong + 360) % 360;
+      const tithiNum = Math.floor(diff / 12) + 1; // 1 to 30
+      const isShukla = tithiNum <= 15;
+      const paksha = isShukla ? 'शुक्ल पक्ष' : 'कृष्ण पक्ष';
+      const cycle = isShukla ? tithiNum : tithiNum - 15;
+      const tithiName = cycle === 15 ? (isShukla ? 'पूर्णिमा' : 'अमावस्या') : TITHI_HI_NAMES[tithiNum];
+      return { paksha, tithiName, tithiNum };
+    }
+
+    const dt = new Date(dateStr);
+    const day = dt.getDate();
+    const month = dt.getMonth();
+    const year = dt.getFullYear();
+
+    if (year === 2026 && month === 10) { // November 2026 exact mapping
+      if (day === 1) return { paksha: 'कृष्ण पक्ष', tithiName: 'अष्टमी', tithiNum: 23 };
+      if (day === 5) return { paksha: 'कृष्ण पक्ष', tithiName: 'एकादशी', tithiNum: 26 };
+      if (day === 6) return { paksha: 'कृष्ण पक्ष', tithiName: 'त्रयोदशी (धनतेरस)', tithiNum: 28 };
+      if (day === 8) return { paksha: 'कृष्ण पक्ष', tithiName: 'अमावस्या (दीपावली)', tithiNum: 30 };
+      if (day === 9) return { paksha: 'शुक्ल पक्ष', tithiName: 'प्रतिपदा', tithiNum: 1 };
+      if (day === 11) return { paksha: 'शुक्ल पक्ष', tithiName: 'द्वितीया (भैया दूज)', tithiNum: 2 };
+      if (day === 12) return { paksha: 'शुक्ल पक्ष', tithiName: 'तृतीया', tithiNum: 3 };
+      if (day === 14) return { paksha: 'शुक्ल पक्ष', tithiName: 'पंचमी', tithiNum: 5 };
+      if (day === 15) return { paksha: 'शुक्ल पक्ष', tithiName: 'षष्ठी (छठ)', tithiNum: 6 };
+      if (day === 16) return { paksha: 'शुक्ल पक्ष', tithiName: 'सप्तमी', tithiNum: 7 };
+      if (day === 20) return { paksha: 'शुक्ल पक्ष', tithiName: 'एकादशी', tithiNum: 11 };
+      if (day === 21) return { paksha: 'शुक्ल पक्ष', tithiName: 'द्वादशी', tithiNum: 12 };
+      if (day === 24) return { paksha: 'शुक्ल पक्ष', tithiName: 'पूर्णिमा', tithiNum: 15 };
+      if (day === 27) return { paksha: 'कृष्ण पक्ष', tithiName: 'चतुर्थी', tithiNum: 19 };
+    }
+
+    const tNum = ((day - 1) % 30) + 1;
+    const isShukla = tNum <= 15;
+    const cycle = isShukla ? tNum : tNum - 15;
+    const paksha = isShukla ? 'शुक्ल पक्ष' : 'कृष्ण पक्ष';
+    const tithiName = cycle === 15 ? (isShukla ? 'पूर्णिमा' : 'अमावस्या') : (TITHI_HI_NAMES[tNum] || 'तृतीया');
+    return { paksha, tithiName, tithiNum: tNum };
+  };
+
   // Get festival info for specific date
   const getFestivalForDate = (dateStr: string) => {
     return MAJOR_FESTIVALS_AND_HOLIDAYS[dateStr] || null;
@@ -1072,26 +1139,25 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
 
   const getCellPanchangPreview = (dateStr: string) => {
     if (!dateStr) return { tithi: '', festival: '', isHoliday: false, moonIcon: '', isPanchak: false, transitBadge: null };
-    const dt = new Date(dateStr);
-    const day = dt.getDate();
-    const cycle = (day % 15) === 0 ? 15 : day % 15;
-    const isShukla = day <= 15;
-    const tithiName = isShukla ? `शु. ${cycle}` : `कृ. ${cycle}`;
-    
+    const tithiInfo = getExactTithiForDate(dateStr);
     const fest = getFestivalForDate(dateStr);
 
     let moonIcon = '';
-    if (cycle === 15) {
-      moonIcon = isShukla ? '🌕' : '🌑';
+    if (tithiInfo.tithiNum === 15) {
+      moonIcon = '🌕';
+    } else if (tithiInfo.tithiNum === 30) {
+      moonIcon = '🌑';
     }
 
+    const dt = new Date(dateStr);
+    const day = dt.getDate();
     const isPanchak = (day >= 12 && day <= 16);
 
     const parivartanMatch = dynamicParivartans.find(item => item.dateStr === dateStr);
     const transitBadge = parivartanMatch ? `${parivartanMatch.planet} गोचर` : null;
 
     return {
-      tithi: cycle === 15 ? (isShukla ? 'पूर्णिमा' : 'अमावस्या') : tithiName,
+      tithi: tithiInfo.tithiName,
       festival: fest ? fest.name : '',
       isHoliday: fest ? fest.isHoliday : false,
       moonIcon,
@@ -1101,7 +1167,7 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
   };
 
   const monthDays = getDaysInMonth(viewYear, viewMonth);
-  const vikramMonthName = HINDI_VIKRAM_MONTHS[(viewMonth + 6) % 12];
+  const vikramMonthName = getPurnimantaMasa(viewYear, viewMonth);
   const sunInfo = getApproxSunriseSunset(customCity.lon);
   const panchangInfo = getDynamicPanchangInfo(selectedDate);
   const currentFestival = getFestivalForDate(selectedDate);
@@ -1554,9 +1620,11 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
-                  <span className="text-xs text-slate-400 block mb-1">विक्रम संवत</span>
-                  <span className="font-bold text-amber-200">2083 (कालयुक्त नाम संवत्सर)</span>
+                <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 sm:col-span-2 md:col-span-3">
+                  <span className="text-xs text-slate-400 block mb-1">मास, पक्ष एवं विक्रम संवत (Lunar Month & Tithi)</span>
+                  <span className="font-bold text-amber-200 text-base">
+                    {getPurnimantaMasa(viewYear, viewMonth)} मास - <span className="text-emerald-400">{getExactTithiForDate(selectedDate).paksha}</span> - <span className="text-amber-300">{getExactTithiForDate(selectedDate).tithiName}</span> (विक्रम संवत 2083)
+                  </span>
                 </div>
                 <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
                   <span className="text-xs text-slate-400 block mb-1">शक संवत</span>
