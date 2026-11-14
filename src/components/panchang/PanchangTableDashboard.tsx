@@ -211,6 +211,7 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
   const [loading, setLoading] = useState(false);
   const [transitData, setTransitData] = useState<any>(null);
   const [lagnaTable, setLagnaTable] = useState<Array<{ rashi: string; timeRange: string }>>([]);
+  const [ephemerisPanchang, setEphemerisPanchang] = useState<any>(null);
 
   const dynamicParivartans = useMemo(() => {
     try {
@@ -531,6 +532,16 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
       // 2. Compute exact true astronomical Lagna rising times using multi-point transit sampling across 24 hours
       const calculatedLagnas = await computeTrueAstronomicalLagnas(selectedDate, customCity);
       setLagnaTable(calculatedLagnas);
+
+      // 3. Fetch authoritative ephemeris panchang data from MuhuratPanchangCalculator
+      const dayPanchang = await MuhuratPanchangCalculator.calculateDayPanchang(
+        selectedDate,
+        customCity.lat,
+        customCity.lon,
+        customCity.name,
+        customCity.tz
+      );
+      setEphemerisPanchang(dayPanchang);
     } catch (err) {
       console.error('Panchang fetch error:', err);
     } finally {
@@ -853,6 +864,14 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
 
   // Exact Sidereal Tithi calculation from Sun and Moon longitudes or accurate calendar mapping
   const getExactTithiForDate = (dateStr: string) => {
+    if (ephemerisPanchang && dateStr === selectedDate) {
+      return {
+        paksha: ephemerisPanchang.tithi.pakshaHindi,
+        tithiName: ephemerisPanchang.tithi.nameHindi,
+        tithiNum: ephemerisPanchang.tithi.number
+      };
+    }
+
     if (transitData?.planets?.Sun && transitData?.planets?.Moon && dateStr === selectedDate) {
       const sunLong = transitData.planets.Sun.siderealLongitude ?? ((transitData.planets.Sun.rashi - 1) * 30 + (transitData.planets.Sun.degree || 0));
       const moonLong = transitData.planets.Moon.siderealLongitude ?? ((transitData.planets.Moon.rashi - 1) * 30 + (transitData.planets.Moon.degree || 0));
