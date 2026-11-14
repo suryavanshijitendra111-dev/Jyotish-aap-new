@@ -159,11 +159,11 @@ export class HoraEngine {
   /**
    * Evaluates the 24 Dynamic Vedic Horas strictly tailored to local Sunrise and Sunset
    */
-  public static calculateVedicHoras(
+  public static async calculateVedicHoras(
     profile: BirthProfile,
     targetDate: Date = new Date(),
     overrideTimezone?: string
-  ): VedicHoraDayAnalysis {
+  ): Promise<VedicHoraDayAnalysis> {
     const lat = profile.latitude ?? 22.7196; // Default Indore, MP
     const lon = profile.longitude ?? 75.8577;
     const tz = overrideTimezone || profile.timezone || 'Asia/Kolkata';
@@ -174,7 +174,7 @@ export class HoraEngine {
     const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
     // 1. Calculate Astronomical Solar Times (Sunrise & Sunset)
-    const solarTimes = MuhuratPanchangCalculator.calculateSolarTimes(dateStr, lat, lon, tz);
+    const solarTimes = await MuhuratPanchangCalculator.calculateSolarTimes(dateStr, lat, lon, tz);
     const sunriseDecimal = parseTimeToDecimal(solarTimes.sunrise);
     const sunsetDecimal = parseTimeToDecimal(solarTimes.sunset);
 

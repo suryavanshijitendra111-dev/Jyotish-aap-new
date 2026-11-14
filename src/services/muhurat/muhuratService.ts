@@ -35,7 +35,7 @@ export class MuhuratService {
     for (let i = 0; i < daysDiff; i++) {
       const curDate = new Date(start.getTime() + i * (1000 * 60 * 60 * 24));
       const curDateStr = this.formatDateIso(curDate);
-      const solar = MuhuratPanchangCalculator.calculateSolarTimes(
+      const solar = await MuhuratPanchangCalculator.calculateSolarTimes(
         curDateStr,
         query.latitude,
         query.longitude,

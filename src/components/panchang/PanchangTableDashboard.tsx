@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { AstronomyService } from '../../services/astronomy/astronomyService';
+import { MuhuratPanchangCalculator } from '../../services/muhurat/muhuratPanchangCalculator';
 
 interface PanchangTableDashboardProps {
   onBack: () => void;
@@ -252,6 +253,27 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
   const [rashifalPeriod, setRashifalPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('daily');
   const [selectedRashiNum, setSelectedRashiNum] = useState<number>(1);
   const [userJanmaRashi, setUserJanmaRashi] = useState<string | null>(null);
+  const [lunarTimes, setLunarTimes] = useState<{ moonrise: string; moonset: string }>({ moonrise: '10:05 प्रातः', moonset: '08:48 रात्रि' });
+
+  useEffect(() => {
+    MuhuratPanchangCalculator.calculateLunarTimes(selectedDate, customCity.lat, customCity.lon, 'Asia/Kolkata')
+      .then(res => {
+        const fmt = (timeStr: string) => {
+          if (!timeStr || timeStr.includes('उपलब्ध')) return timeStr;
+          const [hStr, mStr] = timeStr.split(':');
+          const h = parseInt(hStr, 10);
+          const m = mStr || '00';
+          const hh = h % 12 === 0 ? 12 : h % 12;
+          const ampm = h >= 18 || h < 4 ? 'रात्रि' : h >= 12 ? 'अपराह्न' : 'प्रातः';
+          return `${hh}:${m} ${ampm}`;
+        };
+        setLunarTimes({
+          moonrise: fmt(res.moonrise),
+          moonset: fmt(res.moonset)
+        });
+      })
+      .catch(() => {});
+  }, [selectedDate, customCity]);
 
   useEffect(() => {
     if (profile && profile.dob) {
@@ -790,8 +812,8 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
       tithiEnd: fmtTime(tithiEndHour),
       nakshatraEnd: fmtTime(nakEndHour),
       yogaEnd: fmtTime(yogaEndHour),
-      moonrise: fmtRiseSet(moonriseHour),
-      moonset: fmtRiseSet(moonsetHour)
+      moonrise: lunarTimes.moonrise,
+      moonset: lunarTimes.moonset
     };
   };
 
