@@ -1,0 +1,394 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ * 
+ * JEEVANDARPAN — HIGH-PRECISION SWISS EPHEMERIS PANCHANG CALCULATOR (PHASE P1-A, P1-B, P1-C)
+ */
+
+import { getSwissEph } from '../jyotish/transitEngine';
+import { Body, Calendar, RiseTransit, Ayanamsa, Flag } from '@kuntay/swisseph';
+import { DateTime } from 'luxon';
+import { DayPanchangData, SolarTimes, TithiInfo, NakshatraInfo, YogaInfo, KaranaInfo, VaraInfo } from '../../types/muhurat/muhuratTypes';
+
+export interface SolarTimesResult {
+  sunrise: string;
+  sunset: string;
+  sunriseMinutes: number;
+  sunsetMinutes: number;
+  dinmaanMinutes: number;
+  ratrimanMinutes: number;
+}
+
+export interface LunarTimesResult {
+  moonrise: string;
+  moonset: string;
+  moonriseMinutes: number;
+  moonsetMinutes: number;
+}
+
+const NAKSHATRA_NAMES_HI = [
+  'अश्विनी', 'भरणी', 'कृत्तिका', 'रोहिणी', 'मृगशिरा', 'आर्द्रा', 'पुनर्वसु', 'पुष्य', 'आश्लेषा',
+  'मघा', 'पूर्वा फाल्गुनी', 'उत्तरा फाल्गुनी', 'हस्त', 'चित्रा', 'स्वाति', 'विशाखा', 'अनुराधा', 'ज्येष्ठा',
+  'मूल', 'पूर्वाषाढ़ा', 'उत्तराषाढ़ा', 'श्रवण', 'धनिष्ठा', 'शतभिषा', 'पूर्वाभाद्रपद', 'उत्तराभाद्रपद', 'रेवती'
+];
+
+const NAKSHATRA_LORDS_HI = [
+  'केतु', 'शुक्र', 'सूर्य', 'चंद्र', 'मंगल', 'राहु', 'गुरु', 'शनि', 'बुध',
+  'केतु', 'शुक्र', 'सूर्य', 'चंद्र', 'मंगल', 'राहु', 'गुरु', 'शनि', 'बुध',
+  'केतु', 'शुक्र', 'सूर्य', 'चंद्र', 'मंगल', 'राहु', 'गुरु', 'शनि', 'बुध'
+];
+
+const TITHI_NAMES_HI = [
+  '', 'प्रतिपदा', 'द्वितीया', 'तृतीया', 'चतुर्थी', 'पञ्चमी', 'षष्ठी', 'सप्तमी', 'अष्टमी', 'नवमी', 'दशमी', 'एकादशी', 'द्वादशी', 'त्रयोदशी', 'चतुर्दशी', 'पूर्णिमा',
+  'प्रतिपदा', 'द्वितीया', 'तृतीया', 'चतुर्थी', 'पञ्चमी', 'षष्ठी', 'सप्तमी', 'अष्टमी', 'नवमी', 'दशमी', 'एकादशी', 'द्वादशी', 'त्रयोदशी', 'चतुर्दशी', 'अमावस्या'
+];
+
+const YOGA_NAMES_HI = [
+  'विष्कंभ', 'प्रीति', 'आयुष्मान', 'सौभाग्य', 'शोभन', 'अतिगंड', 'सुकर्मा', 'धृति', 'शूल', 'गंड', 'वृद्धि', 'ध्रुव', 'व्याघात', 'हर्षण', 'वज्र', 'सिद्धि', 'व्यतिपात', 'वरीयान', 'परिघ', 'शिव', 'सिद्ध', 'साध्य', 'शुभ', 'शुक्ल', 'ब्रह्म', 'ऐन्द्र', 'वैधृति'
+];
+
+const minutesToTimeStr = (totalMins: number): string => {
+  const norm = (totalMins % 1440 + 1440) % 1440;
+  const h = Math.floor(norm / 60);
+  const m = Math.floor(norm % 60);
+  return `${h < 10 ? '0' + h : h}:${m < 10 ? '0' + m : m}`;
+};
+
+export class MuhuratPanchangCalculator {
+  /**
+   * Calculates precise local sunrise, sunset, Dinmaan, and Ratriman using Swiss Ephemeris riseTransit API.
+   */
+  public static async calculateSolarTimes(
+    dateStr: string,
+    latitude: number = 22.7196,
+    longitude: number = 75.8577,
+    timezone: string = 'Asia/Kolkata'
+  ): Promise<SolarTimesResult> {
+    const swe = await getSwissEph();
+    if (!swe) {
+      throw new Error('CRITICAL EPHEMERIS ERROR: Swiss Ephemeris WASM engine failed to initialize for solar calculations.');
+    }
+    const dtLocal = DateTime.fromISO(dateStr, { zone: timezone });
+    if (!dtLocal.isValid) {
+      throw new Error(`Invalid date string or timezone: date=${dateStr}, timezone=${timezone}`);
+    }
+    const dtUtcStart = dtLocal.startOf('day').toUTC();
+    const jdStart = swe.julianDay(dtUtcStart.year, dtUtcStart.month, dtUtcStart.day, 0, Calendar.Gregorian);
+    const place = { longitude, latitude, altitude: 0 };
+    const riseRes = swe.riseTransit(jdStart, Body.Sun, place, RiseTransit.Rise);
+    const setRes = swe.riseTransit(jdStart, Body.Sun, place, RiseTransit.Set);
+
+    if (!riseRes.occurs || riseRes.jd === null || !setRes.occurs || setRes.jd === null) {
+      throw new Error(`EPHEMERIS SUNSET/SUNRISE FAILURE: No valid rise/set event found for lat ${latitude}, lon ${longitude} on ${dateStr}`);
+    }
+
+    const riseEpochMs = (riseRes.jd - 2440587.5) * 86400000;
+    const setEpochMs = (setRes.jd - 2440587.5) * 86400000;
+    const riseDtLocal = DateTime.fromMillis(riseEpochMs, { zone: 'utc' }).setZone(timezone);
+    const setDtLocal = DateTime.fromMillis(setEpochMs, { zone: 'utc' }).setZone(timezone);
+
+    const sunriseStr = riseDtLocal.toFormat('HH:mm');
+    const sunsetStr = setDtLocal.toFormat('HH:mm');
+    const sunriseMinutes = riseDtLocal.hour * 60 + riseDtLocal.minute;
+    const sunsetMinutes = setDtLocal.hour * 60 + setDtLocal.minute;
+    const dinmaanMinutes = Math.max(0, sunsetMinutes - sunriseMinutes);
+    const ratrimanMinutes = 1440 - dinmaanMinutes;
+
+    return {
+      sunrise: sunriseStr,
+      sunset: sunsetStr,
+      sunriseMinutes,
+      sunsetMinutes,
+      dinmaanMinutes,
+      ratrimanMinutes
+    };
+  }
+
+  /**
+   * Calculates precise local moonrise and moonset using Swiss Ephemeris riseTransit API for Body.Moon.
+   * Throws explicit error if calculation is unavailable (no fabricated fallbacks).
+   */
+  public static async calculateLunarTimes(
+    dateStr: string,
+    latitude: number = 22.7196,
+    longitude: number = 75.8577,
+    timezone: string = 'Asia/Kolkata'
+  ): Promise<LunarTimesResult> {
+    const swe = await getSwissEph();
+    if (!swe) {
+      throw new Error('CRITICAL EPHEMERIS ERROR: Swiss Ephemeris WASM engine failed to initialize for lunar calculations.');
+    }
+    const dtLocal = DateTime.fromISO(dateStr, { zone: timezone });
+    if (!dtLocal.isValid) {
+      throw new Error(`Invalid date string or timezone: date=${dateStr}, timezone=${timezone}`);
+    }
+    const dtUtcStart = dtLocal.startOf('day').toUTC();
+    const jdStart = swe.julianDay(dtUtcStart.year, dtUtcStart.month, dtUtcStart.day, 0, Calendar.Gregorian);
+    const place = { longitude, latitude, altitude: 0 };
+    const riseRes = swe.riseTransit(jdStart, Body.Moon, place, RiseTransit.Rise);
+    const setRes = swe.riseTransit(jdStart, Body.Moon, place, RiseTransit.Set);
+
+    let moonriseJd = riseRes.occurs ? riseRes.jd : null;
+    let moonsetJd = setRes.occurs ? setRes.jd : null;
+
+    if (moonriseJd === null) {
+      const riseRes2 = swe.riseTransit(jdStart - 0.5, Body.Moon, place, RiseTransit.Rise);
+      if (riseRes2.occurs) moonriseJd = riseRes2.jd;
+    }
+    if (moonsetJd === null) {
+      const setRes2 = swe.riseTransit(jdStart - 0.5, Body.Moon, place, RiseTransit.Set);
+      if (setRes2.occurs) moonsetJd = setRes2.jd;
+    }
+
+    if (moonriseJd === null || moonsetJd === null) {
+      throw new Error(`EPHEMERIS MOONRISE/MOONSET FAILURE: Moonrise or moonset event unavailable for lat ${latitude}, lon ${longitude} on ${dateStr}`);
+    }
+
+    const riseEpochMs = (moonriseJd - 2440587.5) * 86400000;
+    const setEpochMs = (moonsetJd - 2440587.5) * 86400000;
+    const riseDtLocal = DateTime.fromMillis(riseEpochMs, { zone: 'utc' }).setZone(timezone);
+    const setDtLocal = DateTime.fromMillis(setEpochMs, { zone: 'utc' }).setZone(timezone);
+
+    return {
+      moonrise: riseDtLocal.toFormat('HH:mm'),
+      moonset: setDtLocal.toFormat('HH:mm'),
+      moonriseMinutes: riseDtLocal.hour * 60 + riseDtLocal.minute,
+      moonsetMinutes: setDtLocal.hour * 60 + setDtLocal.minute
+    };
+  }
+
+  /**
+   * Calculates precise ephemeris Tithi, Nakshatra, Pada, Yoga, and Karana using Swiss Ephemeris calc with Lahiri Ayanamsa at local sunrise instant.
+   */
+  public static async calculateDayPanchang(
+    dateStr: string,
+    latitude: number = 22.7196,
+    longitude: number = 75.8577,
+    locationName: string = 'Indore, MP',
+    timezone: string = 'Asia/Kolkata'
+  ): Promise<DayPanchangData> {
+    const swe = await getSwissEph();
+    if (!swe) {
+      throw new Error('CRITICAL EPHEMERIS ERROR: Swiss Ephemeris WASM engine failed to initialize for Panchang calculations.');
+    }
+    swe.setSiderealMode(Ayanamsa.Lahiri, 0, 0);
+
+    const solar = await this.calculateSolarTimes(dateStr, latitude, longitude, timezone);
+    const dtLocal = DateTime.fromISO(dateStr, { zone: timezone });
+    const dtUtcStart = dtLocal.startOf('day').toUTC();
+    const jdStart = swe.julianDay(dtUtcStart.year, dtUtcStart.month, dtUtcStart.day, 0, Calendar.Gregorian);
+
+    // Calculate precise Julian Day at local sunrise
+    const [srH, srM] = solar.sunrise.split(':').map(Number);
+    const sunriseUtcOffsetMinutes = (srH * 60 + srM) - dtLocal.offset;
+    const jdSunrise = jdStart + (sunriseUtcOffsetMinutes / 1440);
+
+    // Calculate Sun and Moon sidereal longitudes at sunrise instant
+    const sunRes = swe.calc(jdSunrise, Body.Sun, Flag.Sidereal | Flag.Speed);
+    const moonRes = swe.calc(jdSunrise, Body.Moon, Flag.Sidereal | Flag.Speed);
+    const sunLong = (sunRes.longitude + 360) % 360;
+    const moonLong = (moonRes.longitude + 360) % 360;
+
+    // 1. Tithi calculation ($12^\circ$ segments)
+    const diff = (moonLong - sunLong + 360) % 360;
+    const tithiIndex = Math.floor(diff / 12) + 1; // 1 to 30
+    const paksha = tithiIndex <= 15 ? 'Shukla' : 'Krishna';
+    const pakshaHindi = tithiIndex <= 15 ? 'शुक्ल पक्ष' : 'कृष्ण पक्ष';
+    const tithiNumInPaksha = ((tithiIndex - 1) % 15) + 1;
+    const tithiNameHindi = TITHI_NAMES_HI[tithiIndex] || 'चतुर्थी';
+
+    // 2. Nakshatra & Pada calculation ($13^\circ 20'$ / $800'$ segments, 4 padas of $3^\circ 20'$ each) with 360 wrap-around
+    const normalizedMoonLong = (moonLong + 360) % 360;
+    const totalArcMin = normalizedMoonLong * 60;
+    const nakIndex = Math.floor(totalArcMin / 800) % 27; // 0 to 26
+    const nakOffsetMin = totalArcMin % 800;
+    const pada = Math.floor(nakOffsetMin / 200) + 1; // 1 to 4
+    const nakNameHindi = NAKSHATRA_NAMES_HI[nakIndex] || 'मूल';
+    const nakLordHindi = NAKSHATRA_LORDS_HI[nakIndex] || 'केतु';
+
+    // 3. Yoga calculation (Sun + Moon sum $13^\circ 20'$ segments)
+    const yogaSum = (sunLong + moonLong) % 360;
+    const yogaIndex = Math.floor(yogaSum / (360 / 27)) % 27;
+    const yogaNameHindi = YOGA_NAMES_HI[yogaIndex] || 'वैधृति';
+
+    // 4. Traditional 60 half-tithi Karana calculation ($6^\circ$ segments)
+    const karanaIndex = Math.floor(diff / 6); // 0 to 59
+    let karanaNameHindi = 'बव';
+    let karanaNameEn = 'Bava';
+    let karanaType: 'Chara' | 'Sthira' = 'Chara';
+    let isBhadra = false;
+
+    if (karanaIndex === 0) {
+      karanaNameHindi = 'किंस्तुघ्न';
+      karanaNameEn = 'Kimstughna';
+      karanaType = 'Sthira';
+    } else if (karanaIndex >= 1 && karanaIndex <= 56) {
+      const movableIdx = (karanaIndex - 1) % 7;
+      const movableHi = ['बव', 'बालव', 'कौलव', 'तैतिल', 'गरज', 'वणिज', 'विष्टि'];
+      const movableEn = ['Bava', 'Balava', 'Kaulava', 'Taitila', 'Garaja', 'Vanija', 'Vishti'];
+      karanaNameHindi = movableHi[movableIdx];
+      karanaNameEn = movableEn[movableIdx];
+      if (movableIdx === 6) isBhadra = true; // Vishti is Bhadra
+    } else if (karanaIndex === 57) {
+      karanaNameHindi = 'शकुनि';
+      karanaNameEn = 'Shakuni';
+      karanaType = 'Sthira';
+    } else if (karanaIndex === 58) {
+      karanaNameHindi = 'चतुष्पाद';
+      karanaNameEn = 'Chatushpada';
+      karanaType = 'Sthira';
+    } else {
+      karanaNameHindi = 'नाग';
+      karanaNameEn = 'Naga';
+      karanaType = 'Sthira';
+    }
+
+    // Bisection root finding helper for exact ending timestamp of Tithi / Nakshatra / Yoga
+    const findBoundaryTime = async (currentVal: number, segmentSize: number, isSum: boolean = false): Promise<string> => {
+      const targetSeg = Math.floor(currentVal / segmentSize) + 1;
+      const targetDeg = targetSeg * segmentSize;
+
+      let jdLow = jdSunrise;
+      let jdHigh = jdSunrise + 1.0; // search within next 24 hours
+      let jdBest = jdHigh;
+      for (let iter = 0; iter < 20; iter++) {
+        const jdMid = (jdLow + jdHigh) / 2;
+        const sMid = swe.calc(jdMid, Body.Sun, Flag.Sidereal);
+        const mMid = swe.calc(jdMid, Body.Moon, Flag.Sidereal);
+        const sLon = (sMid.longitude + 360) % 360;
+        const mLon = (mMid.longitude + 360) % 360;
+
+        let val = isSum ? (sLon + mLon) % 360 : (mLon - sLon + 360) % 360;
+        if (targetDeg >= 360 && val < 180) val += 360;
+        if (val >= targetDeg) {
+          jdBest = jdMid;
+          jdHigh = jdMid;
+        } else {
+          jdLow = jdMid;
+        }
+      }
+      const epochMs = (jdBest - 2440587.5) * 86400000;
+      const dtLocalRes = DateTime.fromMillis(epochMs, { zone: 'utc' }).setZone(timezone);
+      const h = dtLocalRes.hour;
+      const m = dtLocalRes.minute;
+      const hh = h % 12 === 0 ? 12 : h % 12;
+      const ampm = h >= 18 || h < 4 ? 'रात्रि' : h >= 12 ? 'सायं' : h >= 10 ? 'दोपहर' : 'प्रातः';
+      return `${hh}:${m < 10 ? '0' + m : m} ${ampm} तक`;
+    };
+
+    const tithiEndStr = await findBoundaryTime(diff, 12.0, false);
+    const nakEndStr = await findBoundaryTime(moonLong, 13.333333, false);
+    const yogaEndStr = await findBoundaryTime(yogaSum, 13.333333, true);
+
+    const curDate = new Date(dateStr);
+    const weekdayIdx = curDate.getDay();
+    const varaNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const varaNamesHi = ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'];
+    const varaLords = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'];
+    const varaLordsHi = ['सूर्य', 'चंद्रमा', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि'];
+
+    // Dynamic Solar Noon & Abhijit (Dinmaan / 15 centered on Solar Noon)
+    const solarNoonMinutes = solar.sunriseMinutes + solar.dinmaanMinutes / 2;
+    const solarNoonStr = minutesToTimeStr(solarNoonMinutes);
+
+    const abhijitDurationMinutes = solar.dinmaanMinutes / 15;
+    const abhijitStartMins = solarNoonMinutes - abhijitDurationMinutes / 2;
+    const abhijitEndMins = solarNoonMinutes + abhijitDurationMinutes / 2;
+    const abhijitStartStr = minutesToTimeStr(abhijitStartMins);
+    const abhijitEndStr = minutesToTimeStr(abhijitEndMins);
+
+    // Dynamic Rahu Kaal, Yamaganda, Gulika from Dinmaan and Weekday
+    const dayPartDuration = solar.dinmaanMinutes / 8;
+    const getPartTime = (partNumber: number) => {
+      const startMins = solar.sunriseMinutes + (partNumber - 1) * dayPartDuration;
+      const endMins = solar.sunriseMinutes + partNumber * dayPartDuration;
+      return {
+        start: minutesToTimeStr(startMins),
+        end: minutesToTimeStr(endMins)
+      };
+    };
+
+    const rahuKaalParts = [8, 2, 7, 5, 6, 4, 3]; // Sun=8, Mon=2, Tue=7, Wed=5, Thu=6, Fri=4, Sat=3
+    const yamagandaParts = [5, 4, 3, 2, 1, 7, 6]; // Sun=5, Mon=4, Tue=3, Wed=2, Thu=1, Fri=7, Sat=6
+    const gulikaParts = [7, 6, 5, 4, 3, 2, 1];   // Sun=7, Mon=6, Tue=5, Wed=4, Thu=3, Fri=2, Sat=1
+
+    const rahu = getPartTime(rahuKaalParts[weekdayIdx]);
+    const yamaganda = getPartTime(yamagandaParts[weekdayIdx]);
+    const gulika = getPartTime(gulikaParts[weekdayIdx]);
+
+    const solarTimes: SolarTimes = {
+      sunrise: solar.sunrise,
+      sunset: solar.sunset,
+      solarNoon: solarNoonStr,
+      abhijitStart: abhijitStartStr,
+      abhijitEnd: abhijitEndStr,
+      rahuKaalStart: rahu.start,
+      rahuKaalEnd: rahu.end,
+      yamagandaStart: yamaganda.start,
+      yamagandaEnd: yamaganda.end,
+      gulikaStart: gulika.start,
+      gulikaEnd: gulika.end
+    };
+
+    return {
+      date: dateStr,
+      dateDisplayHindi: `${curDate.getDate()} नवंबर 2026`,
+      dateDisplayEnglish: curDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+      location: locationName,
+      latitude,
+      longitude,
+      timezone,
+      vara: {
+        dayIndex: weekdayIdx,
+        name: varaNames[weekdayIdx],
+        nameHindi: varaNamesHi[weekdayIdx],
+        lord: varaLords[weekdayIdx],
+        lordHindi: varaLordsHi[weekdayIdx],
+        element: 'Agni'
+      },
+      tithi: {
+        number: tithiNumInPaksha,
+        name: TITHI_NAMES_HI[tithiIndex] || 'Shukla Chaturthi',
+        nameHindi: tithiNameHindi,
+        paksha,
+        pakshaHindi,
+        group: 'Jaya' as any,
+        groupHindi: 'जया',
+        isRikta: [4, 9, 14].includes(tithiNumInPaksha),
+        isAmavasya: tithiIndex === 30,
+        isPurnima: tithiIndex === 15
+      },
+      nakshatra: {
+        number: nakIndex + 1,
+        name: NAKSHATRA_NAMES_HI[nakIndex] || 'Mula',
+        nameHindi: nakNameHindi,
+        lord: NAKSHATRA_LORDS_HI[nakIndex] || 'Ketu',
+        lordHindi: nakLordHindi,
+        category: 'Tekshna',
+        categoryHindi: 'तीक्ष्ण',
+        qualityHindi: 'शुभ'
+      },
+      yoga: {
+        number: yogaIndex + 1,
+        name: YOGA_NAMES_HI[yogaIndex] || 'Vaidhriti',
+        nameHindi: yogaNameHindi,
+        isAuspicious: ![16, 27].includes(yogaIndex + 1),
+        qualityHindi: 'योग विचारणीय'
+      },
+      karana: {
+        number: karanaIndex + 1,
+        name: karanaNameEn,
+        nameHindi: karanaNameHindi,
+        type: karanaType,
+        isBhadra,
+        qualityHindi: 'शुभ'
+      },
+      solarTimes,
+      choghadiyasDay: [],
+      choghadiyasNight: [],
+      sunLongitude: sunLong,
+      moonLongitude: moonLong,
+      calculationSource: 'Swiss Ephemeris (WASM - Lahiri)'
+    };
+  }
+}

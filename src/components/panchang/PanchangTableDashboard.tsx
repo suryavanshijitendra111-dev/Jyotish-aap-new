@@ -212,6 +212,7 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
   const [transitData, setTransitData] = useState<any>(null);
   const [lagnaTable, setLagnaTable] = useState<Array<{ rashi: string; timeRange: string }>>([]);
   const [ephemerisPanchang, setEphemerisPanchang] = useState<any>(null);
+  const [calculationError, setCalculationError] = useState<string | null>(null);
 
   const dynamicParivartans = useMemo(() => {
     try {
@@ -478,6 +479,7 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
 
   const fetchPanchangData = async () => {
     setLoading(true);
+    setCalculationError(null);
     try {
       // 1. Use AstronomyService for unified core engine calculation
       const tempProfile = {
@@ -542,8 +544,9 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
         customCity.tz
       );
       setEphemerisPanchang(dayPanchang);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Panchang fetch error:', err);
+      setCalculationError(err?.message || 'खगोलीय गणना असफल रही।');
     } finally {
       setLoading(false);
     }
@@ -1241,6 +1244,18 @@ export const PanchangTableDashboard: React.FC<PanchangTableDashboardProps> = ({ 
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+        {calculationError && (
+          <div className="bg-red-950/80 border-2 border-red-500/60 rounded-2xl p-4 text-center text-red-200 flex flex-col items-center gap-2 shadow-lg">
+            <p className="font-semibold text-lg">⚠️ खगोलीय गणना त्रुटि (Ephemeris Calculation Error)</p>
+            <p className="text-sm text-red-300 font-mono">{calculationError}</p>
+            <button
+              onClick={() => fetchPanchangData()}
+              className="mt-2 px-4 py-1.5 bg-red-800 hover:bg-red-700 text-white text-sm font-bold rounded-lg transition-colors cursor-pointer"
+            >
+              पुनः प्रयास करें (Retry)
+            </button>
+          </div>
+        )}
         {/* Main Heading Banner */}
         <div className="bg-gradient-to-r from-amber-950/60 via-slate-900 to-amber-950/60 border-2 border-amber-500/40 rounded-3xl p-6 text-center shadow-xl relative overflow-hidden">
           <div className="absolute top-2 left-3 text-amber-400/20 text-4xl font-serif">ॐ</div>

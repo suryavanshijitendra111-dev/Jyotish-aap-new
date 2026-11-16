@@ -3,6 +3,7 @@ import { KpEngine } from '../services/jyotish/kpEngine';
 import { KpJudgmentEngine } from '../services/jyotish/kpJudgmentEngine';
 import { KpTimingEngine } from '../services/jyotish/kpTimingEngine';
 import { KP_EVENT_HOUSE_MAPPINGS, KPQuestionCategory } from '../types/jyotish/kpJudgment';
+import { MuhuratPanchangCalculator } from '../services/muhurat/muhuratPanchangCalculator';
 
 async function runVerification() {
   console.log('================================================================');

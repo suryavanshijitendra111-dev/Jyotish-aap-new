@@ -49,6 +49,13 @@ const YOGA_NAMES_HI = [
 
 const KARANA_NAMES_HI = ['बव', 'बालव', 'कौलव', 'तैतिल', 'गरज', 'वणिज', 'विष्टि', 'शकुतु', 'चतुष्पाद', 'नाग', 'किंस्तुघ्न'];
 
+const minutesToTimeStr = (totalMins: number): string => {
+  const norm = (totalMins % 1440 + 1440) % 1440;
+  const h = Math.floor(norm / 60);
+  const m = Math.floor(norm % 60);
+  return `${h < 10 ? '0' + h : h}:${m < 10 ? '0' + m : m}`;
+};
+
 export class MuhuratPanchangCalculator {
   /**
    * Calculates precise local sunrise, sunset, Dinmaan, and Ratriman using Swiss Ephemeris riseTransit API.
@@ -209,8 +216,9 @@ export class MuhuratPanchangCalculator {
     const tithiNumInPaksha = ((tithiIndex - 1) % 15) + 1;
     const tithiNameHindi = TITHI_NAMES_HI[tithiIndex] || 'चतुर्थी';
 
-    // 2. Nakshatra & Pada calculation ($13^\circ 20'$ / $800'$ segments, 4 padas of $3^\circ 20'$ each)
-    const totalArcMin = moonLong * 60;
+    // 2. Nakshatra & Pada calculation ($13^\circ 20'$ / $800'$ segments, 4 padas of $3^\circ 20'$ each) with robust 360 wrap-around
+    const normalizedMoonLong = ((moonLong % 360) + 360) % 360;
+    const totalArcMin = normalizedMoonLong * 60;
     const nakIndex = Math.floor(totalArcMin / 800) % 27; // 0 to 26
     const nakOffsetMin = totalArcMin % 800;
     const pada = Math.floor(nakOffsetMin / 200) + 1; // 1 to 4
@@ -267,27 +275,58 @@ export class MuhuratPanchangCalculator {
     const yogaEndStr = await findBoundaryTime(yogaSum, 13.333333, true);
 
     const solar = await this.calculateSolarTimes(dateStr, latitude, longitude, timezone);
-    const curDate = new Date(dateStr);
-    const weekdayIdx = curDate.getDay();
+    const curDt = DateTime.fromISO(dateStr, { zone: timezone });
+    if (!curDt.isValid) {
+      throw new Error(`Invalid date string or timezone: date=${dateStr}, timezone=${timezone}`);
+    }
+    const weekdayIdx = curDt.weekday === 7 ? 0 : curDt.weekday;
+    const curDate = curDt.toJSDate();
 
     const varaNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const varaNamesHi = ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'];
     const varaLords = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'];
     const varaLordsHi = ['सूर्य', 'चंद्रमा', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि'];
 
-    const solarTimes: SolarTimes = {
-      sunrise: solar.sunrise,
-      sunset: solar.sunset,
-      solarNoon: '12:15',
-      abhijitStart: '11:48',
-      abhijitEnd: '12:36',
-      rahuKaalStart: '16:30',
-      rahuKaalEnd: '18:00',
-      yamagandaStart: '12:00',
-      yamagandaEnd: '13:30',
-      gulikaStart: '15:00',
-      gulikaEnd: '16:30'
-    };
+    const solarTimes: SolarTimes = (() => {
+      const solarNoonMinutes = solar.sunriseMinutes + solar.dinmaanMinutes / 2;
+      const solarNoonStr = minutesToTimeStr(solarNoonMinutes);
+
+      const abhijitDurationMinutes = solar.dinmaanMinutes / 15;
+      const abhijitStartMins = solarNoonMinutes - abhijitDurationMinutes / 2;
+      const abhijitEndMins = solarNoonMinutes + abhijitDurationMinutes / 2;
+
+      const dayPartDuration = solar.dinmaanMinutes / 8;
+      const getPartTime = (partNumber: number) => {
+        const startMins = solar.sunriseMinutes + (partNumber - 1) * dayPartDuration;
+        const endMins = solar.sunriseMinutes + partNumber * dayPartDuration;
+        return {
+          start: minutesToTimeStr(startMins),
+          end: minutesToTimeStr(endMins)
+        };
+      };
+
+      const rahuKaalParts = [8, 2, 7, 5, 6, 4, 3];
+      const yamagandaParts = [5, 4, 3, 2, 1, 7, 6];
+      const gulikaParts = [7, 6, 5, 4, 3, 2, 1];
+
+      const rahu = getPartTime(rahuKaalParts[weekdayIdx]);
+      const yamaganda = getPartTime(yamagandaParts[weekdayIdx]);
+      const gulika = getPartTime(gulikaParts[weekdayIdx]);
+
+      return {
+        sunrise: solar.sunrise,
+        sunset: solar.sunset,
+        solarNoon: solarNoonStr,
+        abhijitStart: minutesToTimeStr(abhijitStartMins),
+        abhijitEnd: minutesToTimeStr(abhijitEndMins),
+        rahuKaalStart: rahu.start,
+        rahuKaalEnd: rahu.end,
+        yamagandaStart: yamaganda.start,
+        yamagandaEnd: yamaganda.end,
+        gulikaStart: gulika.start,
+        gulikaEnd: gulika.end
+      };
+    })();
 
     return {
       date: dateStr,
